@@ -133,6 +133,8 @@ erDiagram
 
 ```
 
+### EJEMPLOS DE TABLAS
+
 ### Tabla: lotes
 
 Agrupación lógica de animales para manejo colectivo.
