@@ -18,7 +18,7 @@ Comisión: 2.2 | Año: 2025
 | DevOps / QA          | Amarilla, Sebastián Emanuel | 29.132 | Docker, CI/CD Pipelines, Testing Automatizado. |
 
 **Docentes:** Facundo Verón / Eduardo Roig  
-**Asignatura:** Metodología de Sistemas II
+**Asignaturas:** Metodología de Sistemas II - TFI - Programación IV - Gestión de Desarrollo de Software - Análisis de Datos.
 
 ## 📖 Descripción del Producto
 
@@ -128,6 +128,7 @@ Puntos de monitoreo hídrico.
 
 ```bash
 # Clonar el repositorio
+
 git clone https://gitlab.com/fabricioduarte/nutrogan.git
 cd nutrogan
 
@@ -148,7 +149,9 @@ Copiar
 docker-compose up --build -d
 
 # Acceder a la app
+
 # La aplicación estará disponible en http://localhost:8080
+
 ✅ Testing y Calidad
 Ejecutamos una pirámide de pruebas completa antes de cada integración.
 
@@ -167,10 +170,10 @@ Simula un usuario real navegando por la aplicación (Login, Carga de datos).
 Copiar
 # Abrir interfaz de Cypress
 npm run test:e2e
+
+```
+
 📄 Licencia
 Este proyecto es de carácter académico para la Universidad Tecnológica Nacional.
 
 Distribuido bajo la licencia MIT.
-
-Generado automáticamente para la entrega final del TFI - 25/11/2025
-```
