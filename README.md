@@ -56,82 +56,79 @@ Para garantizar la estabilidad del código en un equipo distribuido, implementam
 - **feature/\*:** Ramas temporales para cada nueva funcionalidad.
 - **hotfix/\*:** Parches urgentes para producción.
 
-### Diagrama del Flujo
+### Ejemplo Real de Aplicación: "Alertas de Agua"
 
-```mermaid
-gitGraph
-   commit
-   branch develop
-   checkout develop
-   commit
-   branch feature/agua
-   checkout feature/agua
-   commit id: "feat: UI"
-   commit id: "logic: store"
-   checkout develop
-   merge feature/agua
-   branch release/1.0
-   checkout release/1.0
-   commit id: "bump version"
-   checkout main
-   merge release/1.0 tag: "v1.0"
-   checkout develop
-   merge release/1.0
-Ejemplo Real de Aplicación: "Alertas de Agua"
-Inicio: Se crea la rama feature/smart-water-alert desde develop.
-Desarrollo: Se codifica el componente SmartWaterCard.vue y la lógica en data-store.js.
-Pull Request (MR): Se abre un Merge Request hacia develop. El CI ejecuta tests automáticos.
-Merge: Tras la aprobación (Code Review), se fusiona a develop. La rama feature se elimina.
-📐 Arquitectura y Principios SOLID
+1. **Inicio:** Se crea la rama `feature/smart-water-alert` desde `develop`.
+2. **Desarrollo:** Se codifica el componente `SmartWaterCard.vue` y la lógica en `data-store.js`.
+3. **Pull Request (MR):** Se abre un Merge Request hacia `develop`. El CI ejecuta tests automáticos.
+4. **Merge:** Tras la aprobación (Code Review), se fusiona a `develop`. La rama feature se elimina.
+
+## 📐 Arquitectura y Principios SOLID
+
 El código fuente ha sido auditado para cumplir con principios de diseño robustos, evitando "code smells".
 
-1. Single Responsibility Principle (SRP)
+### 1. Single Responsibility Principle (SRP)
+
 Separamos estrictamente la Presentación (UI) de la Lógica de Negocio.
 
-Violación (Mal): Un componente .vue que calcula promedios y llama a la API directamente.
-En Nutrogan (Bien):
-SmartWaterCard.vue: Solo se encarga de mostrar el color rojo si el estado es "Peligro".
-useDataStore.js: Contiene la lógica matemática para decidir qué es "Peligro" y la conexión a la BD.
-2. Open/Closed Principle (OCP)
+- **Violación (Mal):** Un componente `.vue` que calcula promedios y llama a la API directamente.
+- **En Nutrogan (Bien):**
+  - `SmartWaterCard.vue`: Solo se encarga de mostrar el color rojo si el estado es "Peligro".
+  - `useDataStore.js`: Contiene la lógica matemática para decidir qué es "Peligro" y la conexión a la BD.
+
+### 2. Open/Closed Principle (OCP)
+
 Componentes abiertos a la extensión, cerrados a la modificación.
 
-Ejemplo: Los componentes base (ej. BaseCard.vue) utilizan Slots de Vue. Esto permite inyectar contenido nuevo (botones, gráficos) sin tocar el código fuente del componente original, evitando regresiones.
+**Ejemplo:** Los componentes base (ej. `BaseCard.vue`) utilizan Slots de Vue. Esto permite inyectar contenido nuevo (botones, gráficos) sin tocar el código fuente del componente original, evitando regresiones.
 
-3. Dependency Inversion Principle (DIP)
-Los componentes de alto nivel no dependen de implementaciones de bajo nivel (como la librería supabase-js), sino de abstracciones (Stores).
+### 3. Dependency Inversion Principle (DIP)
 
-Beneficio: Esto nos permite realizar Mocking en los tests. En SmartWaterCard.test.js, inyectamos un Store falso para probar la UI sin necesitar una base de datos real.
+Los componentes de alto nivel no dependen de implementaciones de bajo nivel (como la librería `supabase-js`), sino de abstracciones (Stores).
 
-🗃 Diccionario de Datos (Modelo Relacional)
+**Beneficio:** Esto nos permite realizar Mocking en los tests. En `SmartWaterCard.test.js`, inyectamos un Store falso para probar la UI sin necesitar una base de datos real.
+
+## 🗃 Diccionario de Datos (Modelo Relacional)
+
 El backend utiliza PostgreSQL. A continuación se describen las entidades críticas del negocio.
 
-Tabla: lotes
+### Tabla: lotes
+
 Agrupación lógica de animales para manejo colectivo.
 
-Campo	Tipo	Restricción	Descripción
-id	UUID	PK	Identificador único del lote.
-establecimiento_id	UUID	FK	Vinculación con el campo/finca (Multi-tenant).
-nombre	VARCHAR	NOT NULL	Etiqueta legible (ej. "Terneros 2025").
-cantidad_animales	INT	Check > 0	Cantidad actual de cabezas.
-gdpv_promedio	DECIMAL	-	Campo computado (cache) de ganancia diaria.
-Tabla: recursos_agua
+| Campo              | Tipo    | Restricción | Descripción                                    |
+| ------------------ | ------- | ----------- | ---------------------------------------------- |
+| id                 | UUID    | PK          | Identificador único del lote.                  |
+| establecimiento_id | UUID    | FK          | Vinculación con el campo/finca (Multi-tenant). |
+| nombre             | VARCHAR | NOT NULL    | Etiqueta legible (ej. "Terneros 2025").        |
+| cantidad_animales  | INT     | Check > 0   | Cantidad actual de cabezas.                    |
+| gdpv_promedio      | DECIMAL | -           | Campo computado (cache) de ganancia diaria.    |
+
+### Tabla: recursos_agua
+
 Puntos de monitoreo hídrico.
 
-Campo	Tipo	Restricción	Descripción
-id	UUID	PK	Identificador de la aguada.
-tipo	ENUM	-	'Tanque', 'Represa', 'Bebedero'.
-capacidad_litros	INT	-	Capacidad máxima de almacenamiento.
-ultimo_estado	VARCHAR	-	'Optimo', 'Precaución', 'Peligro'.
-fecha_medicion	TIMESTAMPTZ	-	Fecha de la última toma de muestra.
-🚀 Instalación y Despliegue
-Requisitos Previos
-Node.js v18+
-Docker & Docker Compose (Opcional, para prod)
-Cuenta en Supabase (o usar mocks locales)
-1. Desarrollo Local
-Copiar
+| Campo            | Tipo        | Restricción | Descripción                         |
+| ---------------- | ----------- | ----------- | ----------------------------------- |
+| id               | UUID        | PK          | Identificador de la aguada.         |
+| tipo             | ENUM        | -           | 'Tanque', 'Represa', 'Bebedero'.    |
+| capacidad_litros | INT         | -           | Capacidad máxima de almacenamiento. |
+| ultimo_estado    | VARCHAR     | -           | 'Optimo', 'Precaución', 'Peligro'.  |
+| fecha_medicion   | TIMESTAMPTZ | -           | Fecha de la última toma de muestra. |
+
+## 🚀 Instalación y Despliegue
+
+### Requisitos Previos
+
+- Node.js v18+
+- Docker & Docker Compose (Opcional, para prod)
+- Cuenta en Supabase (o usar mocks locales)
+
+### 1. Desarrollo Local
+
+```bash
 # Clonar el repositorio
-git clone https://gitlab.com/tu-usuario/nutrogan.git
+git clone https://gitlab.com/fabricioduarte/nutrogan.git
 cd nutrogan
 
 # Instalar dependencias
