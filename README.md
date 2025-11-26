@@ -92,6 +92,47 @@ Los componentes de alto nivel no dependen de implementaciones de bajo nivel (com
 
 El backend utiliza PostgreSQL. A continuación se describen las entidades críticas del negocio.
 
+### Diagrama Entidad-Relación
+
+```mermaid
+erDiagram
+    establecimientos ||--o{ perfiles_usuarios : tiene
+    establecimientos ||--o{ potreros : contiene
+    establecimientos ||--o{ fuentes_de_agua : tiene
+    establecimientos ||--o{ alimentos : almacena
+    establecimientos ||--o{ dietas : define
+    establecimientos ||--o{ categorias_zootecnicas : clasifica
+    establecimientos ||--o{ lotes : maneja
+    establecimientos ||--o{ registros_lluvia : registra
+    establecimientos ||--o{ equipo_trabajo : emplea
+    establecimientos ||--o{ inventario_items : gestiona
+    establecimientos ||--o{ notificaciones_programadas : genera
+
+    potreros ||--o{ fuentes_de_agua : contiene
+    potreros ||--o{ lotes : aloja
+    potreros ||--o{ movimientos_de_lotes : registra
+
+    fuentes_de_agua ||--o{ analisis_de_agua : tiene
+
+    alimentos ||--o{ dietas_items : compone
+    alimentos ||--o{ consumos_de_dieta : consume
+
+    dietas ||--o{ dietas_items : contiene
+    dietas ||--o{ consumos_de_dieta : asigna
+
+    categorias_zootecnicas ||--o{ lotes : clasifica
+
+    lotes ||--o{ evaluaciones : recibe
+    lotes ||--o{ movimientos_de_lotes : realiza
+    lotes ||--o{ eventos_sanitarios : registra
+    lotes ||--o{ eventos_reproductivos : registra
+    lotes ||--o{ consumos_de_dieta : consume
+    lotes ||--o{ inventario_movimientos : utiliza
+
+    inventario_items ||--o{ inventario_movimientos : registra
+
+```
+
 ### Tabla: lotes
 
 Agrupación lógica de animales para manejo colectivo.
