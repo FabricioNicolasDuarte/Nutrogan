@@ -458,7 +458,7 @@ import NewsGridItem from 'components/about/NewsGridItem.vue'
 const tab = ref('vision')
 const newsScrollRef = ref(null)
 
-// --- SISTEMA DE GUÍAS ---
+
 const guideDialog = ref(false)
 const guideSlide = ref(0)
 const currentGuide = ref({ title: '', color: '#fff', steps: [] })
@@ -595,7 +595,7 @@ function scrollNews(direction) {
 </script>
 
 <style lang="scss" scoped>
-/* ESTILOS BÁSICOS Y HERO */
+
 .dashboard-pro-bg {
   background-color: #0505058b;
   background-image:
@@ -644,7 +644,7 @@ function scrollNews(direction) {
   }
 }
 
-/* TABS */
+
 .sticky-nav {
   position: sticky;
   top: 20px;
@@ -671,7 +671,7 @@ function scrollNews(direction) {
   display: none;
 }
 
-/* === NUEVAS TARJETAS VISIÓN PRO === */
+
 .pro-vision-card {
   position: relative;
   height: 320px;
@@ -759,7 +759,7 @@ function scrollNews(direction) {
   }
 }
 
-/* MANUAL CARDS */
+
 .manual-card {
   background: rgba(20, 20, 25, 0.8);
   backdrop-filter: blur(20px);
@@ -787,7 +787,7 @@ function scrollNews(direction) {
   color: white !important;
 }
 
-/* FOOTER & MISC */
+
 .separator-glow {
   background: linear-gradient(90deg, transparent, #2bcc0e, transparent);
   height: 1px;
