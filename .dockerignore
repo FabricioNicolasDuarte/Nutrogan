@@ -2,6 +2,5 @@ node_modules
 .git
 .quasar
 dist
-.env
 npm-debug.log
 tests

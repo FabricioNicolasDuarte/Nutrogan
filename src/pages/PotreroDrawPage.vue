@@ -146,7 +146,7 @@ async function onMapReady(mapObject) {
     try {
       mapObject.fitBounds(layer.getBounds(), { padding: [50, 50] })
     } catch {
-       // Ignorar error de fitBounds
+      // Ignorar error de fitBounds
     }
   }
 
@@ -302,7 +302,7 @@ onMounted(async () => {
   border: 1px solid #ccc;
 }
 .dashboard-pro-bg {
-  background-image: url('src/assets/nutrogan-bg.jpg');
+  background-image: url('src/assets/nutrogan-bg.png');
   background-size: cover;
   min-height: 100vh;
 }

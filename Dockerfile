@@ -1,25 +1,27 @@
-# --- ETAPA 1: CONSTRUCCIÓN (Build) ---
-FROM node:20-alpine as build-stage
 
-# Carpeta de trabajo
+FROM node:20-alpine AS build-stage
+
 WORKDIR /app
 
-# Copiamos dependencias y las instalamos
 COPY package*.json ./
-RUN npm install
 
-# Copiamos el código y construimos la app
+
+RUN npm install --ignore-scripts
+
 COPY . .
+
+
 RUN npx quasar build --mode spa
 
-# --- ETAPA 2: PRODUCCIÓN (Nginx) ---
-FROM nginx:stable-alpine as production-stage
 
-# Copiamos el resultado de la etapa anterior al servidor Nginx
+FROM nginx:stable-alpine AS production-stage
+
+
 COPY --from=build-stage /app/dist/spa /usr/share/nginx/html
 
-# Exponemos el puerto 80
+
+COPY nginx.conf /etc/nginx/conf.d/default.conf
+
 EXPOSE 80
 
-# Iniciamos el servidor
 CMD ["nginx", "-g", "daemon off;"]

@@ -417,7 +417,7 @@ function abrirDialogoMover(lote) {
 // Fondo "Pro" (copiado de DashboardPage)
 .dashboard-pro-bg {
   // ¡¡IMPORTANTE!! Asegúrate que esta ruta sea correcta
-  background-image: url('src/assets/nutrogan-bg.jpg');
+  background-image: url('src/assets/nutrogan-bg.png');
   background-size: cover;
   background-position: center;
   background-attachment: fixed;

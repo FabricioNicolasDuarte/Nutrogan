@@ -125,17 +125,30 @@ export const useDataStore = defineStore('data', () => {
   async function fetchFuentesAgua() {
     const establecimientoId = authStore.profile?.establecimiento_id
     if (!establecimientoId) return
+
+    // Se agrega ', analisis_de_agua(*)' para traer los datos relacionados
     const { data, error } = await supabase
       .from('fuentes_de_agua')
-      .select('*, potreros:potrero_id(nombre)')
+      .select('*, potreros:potrero_id(nombre), analisis_de_agua(*)')
       .eq('establecimiento_id', establecimientoId)
       .eq('activo', true)
       .order('updated_at', { ascending: false })
+
     if (error) {
+      console.error('Error cargando fuentes:', error)
       fuentesAgua.value = []
     } else {
-      // Inicializamos el array para cada fuente para evitar errores al hacer push/unshift
-      data.forEach((fuente) => (fuente.analisis_de_agua = []))
+      // Ordenamos los análisis por fecha descendente para que el [0] sea el actual
+      data.forEach((fuente) => {
+        if (fuente.analisis_de_agua && fuente.analisis_de_agua.length > 0) {
+          fuente.analisis_de_agua.sort((a, b) => {
+            return new Date(b.fecha_analisis) - new Date(a.fecha_analisis)
+          })
+        } else {
+          fuente.analisis_de_agua = []
+        }
+      })
+
       fuentesAgua.value = data
     }
   }
@@ -416,7 +429,31 @@ export const useDataStore = defineStore('data', () => {
     inventarioMovimientos.value = data || []
   }
 
-  // --- ESCRITURA GENÉRICA ---
+  // --- ESCRITURA GENÉRICA REACTIVA ---
+
+  // Helper para mapear tabla -> referencia local
+  function getLocalListByTableName(tableName) {
+    switch (tableName) {
+      case 'lotes':
+        return lotes
+      case 'potreros':
+        return potreros
+      case 'fuentes_de_agua':
+        return fuentesAgua
+      case 'inventario_items':
+        return inventarioItems
+      case 'registros_lluvia':
+        return registrosLluvia
+      case 'dietas':
+        return dietas
+      case 'equipo_trabajo':
+        return equipo
+      // Las tablas de detalle (evaluaciones, eventos) se manejan con lógica específica abajo
+      default:
+        return null
+    }
+  }
+
   async function createRegistro(tabla, registro) {
     const tablasSinEstablecimiento = [
       'evaluaciones',
@@ -426,28 +463,98 @@ export const useDataStore = defineStore('data', () => {
       'analisis_de_agua',
       'movimientos_de_lotes',
     ]
+
+    // 1. Inyectar ID de establecimiento si hace falta
     if (!registro.establecimiento_id && !tablasSinEstablecimiento.includes(tabla)) {
       registro.establecimiento_id = authStore.profile?.establecimiento_id
     }
+
+    // 2. Insertar en Supabase
     const { data, error } = await supabase.from(tabla).insert(registro).select()
     if (error) throw error
-    if (tabla === 'evaluaciones' && loteActual.value && registro.lote_id === loteActual.value.id) {
-      evaluaciones.value.unshift(data[0])
+    const nuevoRegistro = data[0]
+
+    // 3. ACTUALIZACIÓN REACTIVA AUTOMÁTICA
+
+    // Caso A: Tablas principales (Lotes, Potreros, Fuentes, etc.)
+    const listaLocal = getLocalListByTableName(tabla)
+    if (listaLocal) {
+      // Agregamos al principio para que se vea inmediato en la UI
+      listaLocal.value.unshift(nuevoRegistro)
     }
-    return data[0]
+
+    // Caso B: Tablas de detalle (lógica específica para cuando estamos viendo un lote)
+    if (tabla === 'evaluaciones' && loteActual.value && registro.lote_id === loteActual.value.id) {
+      evaluaciones.value.unshift(nuevoRegistro)
+    }
+    if (
+      tabla === 'eventos_sanitarios' &&
+      loteActual.value &&
+      registro.lote_id === loteActual.value.id
+    ) {
+      eventosSanitarios.value.unshift(nuevoRegistro)
+    }
+    if (
+      tabla === 'eventos_reproductivos' &&
+      loteActual.value &&
+      registro.lote_id === loteActual.value.id
+    ) {
+      eventosReproductivos.value.unshift(nuevoRegistro)
+    }
+    if (
+      tabla === 'consumos_de_dieta' &&
+      loteActual.value &&
+      registro.lote_id === loteActual.value.id
+    ) {
+      consumos.value.unshift(nuevoRegistro)
+    }
+
+    return nuevoRegistro
   }
 
   async function updateRegistro(tabla, id, dataObject) {
+    // 1. Actualizar en Supabase
     const { data, error } = await supabase.from(tabla).update(dataObject).eq('id', id).select()
     if (error) throw error
-    return data[0]
+    const registroActualizado = data[0]
+
+    // 2. ACTUALIZACIÓN REACTIVA LOCAL
+    const listaLocal = getLocalListByTableName(tabla)
+    if (listaLocal) {
+      const index = listaLocal.value.findIndex((item) => item.id === id)
+      if (index !== -1) {
+        // Fusionamos los datos nuevos con los existentes para mantener la reactividad del objeto
+        Object.assign(listaLocal.value[index], registroActualizado)
+      }
+    }
+
+    // Caso especial: Si editamos el lote que estamos viendo en detalle actualmente
+    if (tabla === 'lotes' && loteActual.value && loteActual.value.id === id) {
+      Object.assign(loteActual.value, registroActualizado)
+    }
+
+    return registroActualizado
   }
 
   async function deactivateRegistro(tabla, id) {
-    const { data, error } = await supabase.from(tabla).update({ activo: false }).eq('id', id)
+    // 1. Soft Delete en Supabase (campo 'activo')
+    const { data, error } = await supabase
+      .from(tabla)
+      .update({ activo: false })
+      .eq('id', id)
+      .select()
     if (error) throw error
-    if (tabla === 'lotes') lotes.value = lotes.value.filter((l) => l.id !== id)
-    if (tabla === 'potreros') potreros.value = potreros.value.filter((l) => l.id !== id)
+
+    // 2. ACTUALIZACIÓN REACTIVA (Eliminar de la lista visual)
+    const listaLocal = getLocalListByTableName(tabla)
+    if (listaLocal) {
+      listaLocal.value = listaLocal.value.filter((item) => item.id !== id)
+    } else {
+      // Fallback para tablas que quizás no están en el mapa pero se manejan manualmente
+      if (tabla === 'lotes') lotes.value = lotes.value.filter((l) => l.id !== id)
+      if (tabla === 'potreros') potreros.value = potreros.value.filter((l) => l.id !== id)
+    }
+
     return data
   }
 
