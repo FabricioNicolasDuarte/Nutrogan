@@ -346,7 +346,7 @@ const markerPositions = ref({})
 const currentTileLayer = computed(() =>
   mapMode.value === 'satellite'
     ? 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}'
-    : 'https://tiles.stadiamaps.com/tiles/alidade_smooth_dark/{z}/{x}/{y}{r}.png',
+    : 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',
 )
 
 const kpis = computed(() => {

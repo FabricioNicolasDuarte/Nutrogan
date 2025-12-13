@@ -83,6 +83,7 @@ import axios from 'axios'
 import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
 import 'leaflet-draw/dist/leaflet.draw.css'
+window.L = L
 import 'leaflet-draw'
 // Fix iconos Leaflet
 import iconRetinaUrl from 'leaflet/dist/images/marker-icon-2x.png'
