@@ -83,8 +83,14 @@ import axios from 'axios'
 import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
 import 'leaflet-draw/dist/leaflet.draw.css'
-window.L = L
+
+// --- FIX CRÍTICO PARA LEAFLET-DRAW EN VITE ---
+// Creamos una COPIA mutable de L (usando spread operator)
+// para que leaflet-draw pueda escribir propiedades como 'drawVersion' sin error.
+window.L = { ...L }
+
 import 'leaflet-draw'
+
 // Fix iconos Leaflet
 import iconRetinaUrl from 'leaflet/dist/images/marker-icon-2x.png'
 import iconUrl from 'leaflet/dist/images/marker-icon.png'
@@ -170,8 +176,7 @@ async function onMapReady(mapObject) {
 
   mapObject.addControl(drawControl)
 
-  // --- CORRECCIÓN: Usar strings literales para los eventos ---
-
+  // Eventos de dibujo
   mapObject.on('draw:created', (e) => {
     const layer = e.layer
     drawLayerGroup.value.clearLayers()
