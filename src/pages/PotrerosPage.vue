@@ -1,130 +1,183 @@
 <template>
   <q-page padding class="dashboard-pro-bg text-white">
-    <div class="row items-center justify-between q-mb-md">
-      <div class="page-title-box" style="margin-bottom: 0">Mis Potreros</div>
-      <q-btn flat round dense icon="arrow_back" @click="$router.push('/recursos')" />
-    </div>
+    <div class="relative-position q-mb-xl q-pt-sm" style="min-height: 60px">
+      <div class="absolute-left" style="z-index: 10">
+        <q-btn
+          flat
+          round
+          dense
+          icon="arrow_back"
+          color="white"
+          @click="$router.push('/recursos')"
+          class="glass-btn"
+        />
+      </div>
 
-    <div class="row q-col-gutter-md q-mb-md">
-      <div class="col-12 col-sm-6 col-md-3">
-        <q-card flat class="kpi-card">
-          <q-card-section>
-            <div class="text-h6">{{ estadisticas.total }}</div>
-            <div class="text-caption text-grey-4">Total Potreros</div>
-          </q-card-section>
-        </q-card>
-      </div>
-      <div class="col-12 col-sm-6 col-md-3">
-        <q-card flat class="kpi-card">
-          <q-card-section>
-            <div class="text-h6">{{ estadisticas.conGeometria }}</div>
-            <div class="text-caption text-grey-4">Con Polígono</div>
-            <q-linear-progress
-              :value="estadisticas.porcentajeConGeometria"
-              color="primary"
-              class="q-mt-sm"
-            />
-          </q-card-section>
-        </q-card>
-      </div>
-      <div class="col-12 col-sm-6 col-md-3">
-        <q-card flat class="kpi-card">
-          <q-card-section>
-            <div class="text-h6">{{ estadisticas.conNdvi }}</div>
-            <div class="text-caption text-grey-4">Con NDVI</div>
-            <q-linear-progress
-              :value="estadisticas.porcentajeConNdvi"
-              color="green"
-              class="q-mt-sm"
-            />
-          </q-card-section>
-        </q-card>
-      </div>
-      <div class="col-12 col-sm-6 col-md-3">
-        <q-card flat class="kpi-card">
-          <q-card-section>
-            <div class="text-h6">{{ estadisticas.areaTotal.toFixed(1) }} ha</div>
-            <div class="text-caption text-grey-4">Área Total (Calculada)</div>
-          </q-card-section>
-        </q-card>
-      </div>
-    </div>
-
-    <q-card flat class="q-mb-md filter-card">
-      <q-card-section>
-        <div class="row q-col-gutter-md items-center">
-          <div class="col-12 col-md-6">
-            <q-input
-              v-model="filtro"
-              placeholder="Buscar potrero..."
-              outlined
-              dense
-              dark
-              color="white"
-              clearable
-              @clear="filtro = ''"
-            >
-              <template v-slot:prepend>
-                <q-icon name="search" color="white" />
-              </template>
-            </q-input>
-          </div>
-          <div class="col-12 col-md-6">
-            <div class="row q-gutter-sm justify-end">
-              <q-btn-dropdown color="white" outline label="Ordenar" icon="sort" class="btn-glass">
-                <q-list dark>
-                  <q-item clickable v-close-popup @click="ordenarPor = 'nombre'">
-                    <q-item-section> <q-item-label>Por nombre</q-item-label> </q-item-section>
-                  </q-item>
-                  <q-item clickable v-close-popup @click="ordenarPor = 'area'">
-                    <q-item-section> <q-item-label>Por área</q-item-label> </q-item-section>
-                  </q-item>
-                  <q-item clickable v-close-popup @click="ordenarPor = 'ndvi'">
-                    <q-item-section> <q-item-label>Por NDVI</q-item-label> </q-item-section>
-                  </q-item>
-                </q-list>
-              </q-btn-dropdown>
-              <q-btn
-                color="primary"
-                label="Nuevo Potrero"
-                icon="add"
-                @click="mostrarDialogoNuevo = true"
-              />
-            </div>
-          </div>
+      <div class="absolute-center full-width text-center pointer-events-none" style="z-index: 0">
+        <div class="page-title-box shadow-5" style="margin: 0; pointer-events: auto">
+          Mis Potreros
         </div>
-      </q-card-section>
-    </q-card>
+      </div>
+    </div>
 
-    <div class="row q-col-gutter-md">
-      <div v-for="potrero in potrerosFiltrados" :key="potrero.id" class="col-12 col-md-6 col-lg-4">
-        <q-card flat class="kpi-card potrero-card" :class="{ 'sin-geometria': !potrero.geometria }">
+    <div class="row q-col-gutter-md q-mb-xl">
+      <div class="col-12 col-sm-6 col-md-3">
+        <q-card flat class="kpi-card relative-position overflow-hidden border-neon-left">
+          <div class="absolute-right q-ma-md opacity-20">
+            <q-icon name="grid_view" size="3em" color="primary" />
+          </div>
+          <q-card-section>
+            <div class="text-caption text-grey-4 text-uppercase font-mono tracking-wide">
+              Inventario
+            </div>
+            <div class="text-h3 text-weight-bold text-primary font-numeric text-glow">
+              {{ estadisticas.total }}
+            </div>
+            <div class="text-caption text-grey-5 q-mt-xs">Lotes de tierra</div>
+          </q-card-section>
+        </q-card>
+      </div>
+
+      <div class="col-12 col-sm-6 col-md-3">
+        <q-card flat class="kpi-card relative-position overflow-hidden border-cyan-left">
+          <div class="absolute-right q-ma-md opacity-20">
+            <q-icon name="draw" size="3em" color="cyan-4" />
+          </div>
+          <q-card-section>
+            <div class="text-caption text-grey-4 text-uppercase font-mono tracking-wide">
+              Digitalizados
+            </div>
+            <div class="text-h3 text-weight-bold text-cyan-4 font-numeric">
+              {{ estadisticas.conGeometria }}
+            </div>
+            <div class="text-caption text-grey-5 q-mt-xs">Con polígono GPS</div>
+          </q-card-section>
+          <q-linear-progress
+            :value="estadisticas.porcentajeConGeometria"
+            color="cyan-4"
+            track-color="dark"
+            class="absolute-bottom"
+            size="4px"
+          />
+        </q-card>
+      </div>
+
+      <div class="col-12 col-sm-6 col-md-3">
+        <q-card flat class="kpi-card relative-position overflow-hidden border-blue-left">
+          <div class="absolute-right q-ma-md opacity-20">
+            <q-icon name="satellite_alt" size="3em" color="secondary" />
+          </div>
+          <q-card-section>
+            <div class="text-caption text-grey-4 text-uppercase font-mono tracking-wide">
+              Monitoreados
+            </div>
+            <div class="text-h3 text-weight-bold text-secondary font-numeric">
+              {{ estadisticas.conNdvi }}
+            </div>
+            <div class="text-caption text-grey-5 q-mt-xs">Con datos satelitales</div>
+          </q-card-section>
+          <q-linear-progress
+            :value="estadisticas.porcentajeConNdvi"
+            color="secondary"
+            track-color="dark"
+            class="absolute-bottom"
+            size="4px"
+          />
+        </q-card>
+      </div>
+
+      <div class="col-12 col-sm-6 col-md-3">
+        <q-card flat class="kpi-card relative-position overflow-hidden border-white-left">
+          <div class="absolute-right q-ma-md opacity-20">
+            <q-icon name="layers" size="3em" color="white" />
+          </div>
+          <q-card-section>
+            <div class="text-caption text-grey-4 text-uppercase font-mono tracking-wide">
+              Superficie
+            </div>
+            <div class="text-h3 text-weight-bold text-white font-numeric">
+              {{ estadisticas.areaTotal.toFixed(0) }}
+            </div>
+            <div class="text-caption text-grey-5 q-mt-xs">Hectáreas totales</div>
+          </q-card-section>
+        </q-card>
+      </div>
+    </div>
+
+    <div class="row items-center justify-between q-mb-lg q-col-gutter-md">
+      <div class="col-12 col-md-5">
+        <q-input
+          v-model="filtro"
+          placeholder="Buscar potrero..."
+          outlined
+          dense
+          dark
+          color="primary"
+          class="glass-input"
+        >
+          <template v-slot:prepend>
+            <q-icon name="search" color="grey-5" />
+          </template>
+        </q-input>
+      </div>
+
+      <div class="col-12 col-md-7 text-right row justify-end q-gutter-x-sm">
+        <q-btn-dropdown outline color="white" label="Ordenar" icon="sort" class="glass-btn" no-caps>
+          <q-list class="bg-dark text-white border-neon">
+            <q-item clickable v-close-popup @click="ordenarPor = 'nombre'">
+              <q-item-section>Nombre (A-Z)</q-item-section>
+            </q-item>
+            <q-item clickable v-close-popup @click="ordenarPor = 'area'">
+              <q-item-section>Superficie (Mayor a Menor)</q-item-section>
+            </q-item>
+            <q-item clickable v-close-popup @click="ordenarPor = 'ndvi'">
+              <q-item-section>Vigor NDVI (Mayor a Menor)</q-item-section>
+            </q-item>
+          </q-list>
+        </q-btn-dropdown>
+
+        <q-btn
+          color="primary"
+          icon="add"
+          label="Nuevo Potrero"
+          class="text-black text-weight-bold shadow-glow"
+          @click="mostrarDialogoNuevo = true"
+        />
+      </div>
+    </div>
+
+    <div class="row q-col-gutter-lg">
+      <div v-for="potrero in potrerosPaginados" :key="potrero.id" class="col-12 col-md-6 col-lg-4">
+        <q-card
+          class="potrero-card full-height column justify-between"
+          :class="!potrero.geometria ? 'border-orange-card' : 'border-neon-card'"
+        >
           <q-card-section class="q-pb-sm">
             <div class="row items-center no-wrap">
-              <q-avatar rounded size="48px" class="bg-dark-soft q-mr-md shadow-2">
+              <div class="potrero-icon-wrapper q-mr-md">
                 <div
-                  class="potrero-type-icon"
+                  class="potrero-icon-shape"
                   :style="{
                     '-webkit-mask-image': `url(${getPotreroIconPath(potrero)})`,
                     'mask-image': `url(${getPotreroIconPath(potrero)})`,
-                    'background-color': getNdviColorHex(potrero.ultimo_ndvi),
+                    backgroundColor: getNdviColorHex(potrero.ultimo_ndvi),
                   }"
                 ></div>
-              </q-avatar>
-              <div class="col">
+              </div>
+
+              <div class="col overflow-hidden">
                 <div class="text-h6 ellipsis">{{ potrero.nombre }}</div>
-                <div class="text-caption text-grey-4">
-                  {{ potrero.tipo || 'Sin tipo' }}
-                  <span v-if="potrero.ciudad">
-                    • <q-icon name="location_on" size="xs" /> {{ potrero.ciudad }}
-                  </span>
+                <div class="text-caption text-grey-5 font-mono">
+                  {{ potrero.tipo || 'General' }}
+                  <span v-if="potrero.ciudad" class="text-cyan-4"> | {{ potrero.ciudad }}</span>
                 </div>
               </div>
-              <q-btn flat round dense icon="more_vert" @click.stop>
-                <q-menu dark>
-                  <q-list dense style="min-width: 150px">
+
+              <q-btn flat round dense icon="more_vert" color="grey-5">
+                <q-menu class="bg-dark text-white border-neon">
+                  <q-list dense style="min-width: 140px">
                     <q-item clickable v-close-popup @click="editarPotrero(potrero)">
-                      <q-item-section avatar> <q-icon name="edit" /> </q-item-section>
+                      <q-item-section avatar><q-icon name="edit" size="xs" /></q-item-section>
                       <q-item-section>Editar</q-item-section>
                     </q-item>
                     <q-item
@@ -132,10 +185,10 @@
                       v-close-popup
                       @click="$router.push(`/recursos/potreros/draw/${potrero.id}`)"
                     >
-                      <q-item-section avatar> <q-icon name="draw" /> </q-item-section>
-                      <q-item-section>
-                        {{ potrero.geometria ? 'Editar' : 'Dibujar' }} polígono
-                      </q-item-section>
+                      <q-item-section avatar><q-icon name="draw" size="xs" /></q-item-section>
+                      <q-item-section>{{
+                        potrero.geometria ? 'Editar Polígono' : 'Dibujar'
+                      }}</q-item-section>
                     </q-item>
                     <q-separator dark />
                     <q-item
@@ -144,7 +197,7 @@
                       @click="confirmarEliminar(potrero)"
                       class="text-red"
                     >
-                      <q-item-section avatar> <q-icon name="delete" color="red" /> </q-item-section>
+                      <q-item-section avatar><q-icon name="delete" size="xs" /></q-item-section>
                       <q-item-section>Eliminar</q-item-section>
                     </q-item>
                   </q-list>
@@ -153,119 +206,125 @@
             </div>
           </q-card-section>
 
-          <q-separator dark />
+          <q-separator dark inset class="opacity-10" />
 
-          <q-card-section class="q-pt-sm">
+          <q-card-section class="q-py-md">
             <div class="row q-col-gutter-sm">
               <div class="col-6">
-                <div class="text-caption text-grey-4">Área</div>
-                <div class="text-weight-medium">
-                  <span v-if="potrero.superficie_ha && potrero.superficie_ha > 0">
-                    {{ potrero.superficie_ha.toFixed(2) }} ha
-                  </span>
-                  <span v-else class="text-grey-5">
-                    0 ha <q-icon name="warning" color="warning" size="xs" />
-                  </span>
+                <div class="metric-box">
+                  <div class="label text-grey-5">Superficie</div>
+                  <div class="value font-numeric text-white">
+                    {{ potrero.superficie_ha ? potrero.superficie_ha.toFixed(1) : '0' }}
+                    <span class="text-caption">ha</span>
+                  </div>
                 </div>
               </div>
               <div class="col-6">
-                <div class="text-caption text-grey-4">NDVI</div>
-                <div class="text-weight-medium">
-                  <span
-                    v-if="typeof potrero.ultimo_ndvi === 'number'"
+                <div class="metric-box">
+                  <div class="label text-grey-5">Vigor (NDVI)</div>
+                  <div
+                    class="value font-numeric"
                     :style="{ color: getNdviColorHex(potrero.ultimo_ndvi) }"
                   >
-                    {{ potrero.ultimo_ndvi.toFixed(3) }}
-                  </span>
-                  <span v-else class="text-grey-5"> Sin datos </span>
-                </div>
-              </div>
-              <div class="col-6">
-                <div class="text-caption text-grey-4">Estado</div>
-                <q-chip
-                  :style="{ backgroundColor: getNdviColorHex(potrero.ultimo_ndvi) }"
-                  text-color="black"
-                  size="sm"
-                  dense
-                >
-                  {{ getEstadoPotrero(potrero) }}
-                </q-chip>
-              </div>
-              <div class="col-6">
-                <div class="text-caption text-grey-4">Actualizado</div>
-                <div class="text-caption text-grey-4">
-                  {{ formatearFecha(potrero.fecha_ultimo_ndvi || potrero.updated_at) }}
+                    {{
+                      typeof potrero.ultimo_ndvi === 'number' ? potrero.ultimo_ndvi.toFixed(2) : '-'
+                    }}
+                  </div>
                 </div>
               </div>
             </div>
 
             <div v-if="typeof potrero.ultimo_ndvi === 'number'" class="q-mt-md">
-              <div class="text-caption text-grey-4 q-mb-xs">Vigor del forraje</div>
-              <q-linear-progress
-                :value="normalizeNdvi(potrero.ultimo_ndvi)"
-                :style="{ color: getNdviColorHex(potrero.ultimo_ndvi) }"
-                size="8px"
-                rounded
-                dark
-              />
+              <div class="row justify-between text-caption text-grey-6 font-mono q-mb-xs">
+                <span>Salud</span>
+                <span>{{ getEstadoPotrero(potrero) }}</span>
+              </div>
+              <div class="ndvi-track-mini relative-position">
+                <div
+                  class="ndvi-bar-fill"
+                  :style="{
+                    width: getNdviPercentage(potrero.ultimo_ndvi) + '%',
+                    backgroundColor: getNdviColorHex(potrero.ultimo_ndvi),
+                  }"
+                ></div>
+              </div>
             </div>
 
-            <div v-if="!potrero.geometria" class="q-mt-md">
-              <q-banner class="bg-orange-9 text-white" dense rounded>
-                <template v-slot:avatar>
-                  <q-icon name="warning" color="white" />
-                </template>
-                <span class="text-caption">
-                  Dibuja el polígono para habilitar el análisis NDVI y la ubicación.
-                </span>
-              </q-banner>
+            <div v-if="!potrero.geometria" class="q-mt-md text-center">
+              <q-chip
+                color="orange-9"
+                text-color="white"
+                icon="warning"
+                label="Sin Polígono"
+                size="sm"
+              />
             </div>
           </q-card-section>
 
-          <q-separator dark />
+          <div>
+            <q-separator dark class="opacity-10" />
+            <q-card-actions align="right" class="bg-dark-soft q-py-sm">
+              <span class="text-caption text-grey-7 q-mr-auto q-pl-sm font-mono">
+                {{ formatearFecha(potrero.fecha_ultimo_ndvi || potrero.updated_at) }}
+              </span>
 
-          <q-card-actions>
-            <q-btn
-              v-if="!potrero.geometria"
-              flat
-              color="primary"
-              icon="draw"
-              label="Dibujar polígono"
-              @click="$router.push(`/recursos/potreros/draw/${potrero.id}`)"
-              class="full-width"
-            />
-            <template v-else>
               <q-btn
+                v-if="!potrero.geometria"
                 flat
-                color="primary"
-                icon="satellite_alt"
-                label="Analizar"
-                @click="analizarPotrero(potrero)"
-                :loading="analizando[potrero.id]"
+                dense
+                color="white"
+                icon="draw"
+                label="Dibujar"
+                @click="$router.push(`/recursos/potreros/draw/${potrero.id}`)"
               />
-              <q-space />
-
-            </template>
-          </q-card-actions>
+              <template v-else>
+                <q-btn
+                  flat
+                  dense
+                  color="primary"
+                  icon="satellite_alt"
+                  @click="analizarPotrero(potrero)"
+                  :loading="analizando[potrero.id]"
+                >
+                  <q-tooltip class="bg-dark border-neon">Actualizar Satélite</q-tooltip>
+                </q-btn>
+              </template>
+            </q-card-actions>
+          </div>
         </q-card>
       </div>
     </div>
 
+    <div class="row justify-center q-mt-xl" v-if="totalPages > 1">
+      <q-pagination
+        v-model="page"
+        :max="totalPages"
+        :max-pages="6"
+        direction-links
+        boundary-links
+        color="primary"
+        active-color="primary"
+        text-color="grey-6"
+        active-text-color="black"
+        class="glass-pagination"
+      />
+    </div>
+
     <q-dialog v-model="mostrarDialogoNuevo" persistent class="glass-dialog-form">
-      <q-card style="min-width: 400px">
+      <q-card style="min-width: 400px" class="bg-dark text-white border-neon">
         <q-form @submit="guardarPotrero" class="q-gutter-md">
-          <q-card-section>
+          <q-card-section class="bg-dark-header">
             <div class="text-h6">{{ potreroEditando ? 'Editar' : 'Nuevo' }} Potrero</div>
           </q-card-section>
 
-          <q-card-section class="q-pt-none">
+          <q-card-section class="q-pt-none q-gutter-md">
             <q-input
               v-model="formPotrero.nombre"
               label="Nombre del potrero"
               outlined
               dark
-              color="white"
-              :rules="[(val) => !!val || 'El nombre es requerido']"
+              color="primary"
+              :rules="[(val) => !!val || 'Requerido']"
               autofocus
             />
             <q-select
@@ -273,11 +332,11 @@
               label="Tipo"
               outlined
               dark
-              color="white"
+              color="primary"
               :options="tiposPotrero"
               emit-value
               map-options
-              class="q-mt-md"
+              popup-content-class="glass-dialog-form"
             />
             <q-input
               v-model="formPotrero.descripcion"
@@ -285,22 +344,20 @@
               type="textarea"
               outlined
               dark
-              color="white"
+              color="primary"
               rows="3"
-              class="q-mt-md"
             />
-            <q-banner inline-actions rounded class="bg-grey-9 text-white q-mt-md">
+            <q-banner inline-actions rounded class="bg-dark-soft text-grey-4 border-white-left">
               <template v-slot:avatar>
-                <q-icon name="info" />
+                <q-icon name="info" color="white" />
               </template>
               <span class="text-caption">
-                La <strong>superficie (ha)</strong> y la <strong>ubicación</strong> se calcularán
-                automáticamente después de <strong>dibujar el polígono</strong>.
+                La superficie se calculará automáticamente al dibujar el polígono.
               </span>
             </q-banner>
           </q-card-section>
 
-          <q-card-actions align="right" class="q-pa-md">
+          <q-card-actions align="right" class="q-pa-md bg-dark-soft">
             <q-btn flat label="Cancelar" color="white" v-close-popup @click="resetForm" />
             <q-btn label="Guardar" color="primary" type="submit" :loading="guardando" />
           </q-card-actions>
@@ -311,15 +368,21 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, reactive } from 'vue'
+import { ref, computed, onMounted, reactive, watch } from 'vue'
 import { useDataStore } from 'stores/data-store'
 import { useAuthStore } from 'stores/auth-store'
 import { supabase } from 'boot/supabase'
 import { useQuasar } from 'quasar'
+import { useSound } from 'src/composables/useSound'
 
 const dataStore = useDataStore()
 const authStore = useAuthStore()
 const $q = useQuasar()
+const { playNdvi } = useSound()
+
+// --- Paginación ---
+const page = ref(1)
+const pageSize = 6
 
 const filtro = ref('')
 const ordenarPor = ref('nombre')
@@ -343,12 +406,15 @@ const tiposPotrero = [
   { label: 'Otro', value: 'otro' },
 ]
 
+// --- CORRECCIÓN AQUÍ: Aseguramos suma numérica para evitar concatenación de strings ---
 const estadisticas = computed(() => {
   const potreros = dataStore.potreros || []
   const total = potreros.length
   const conGeometria = potreros.filter((p) => p.geometria).length
   const conNdvi = potreros.filter((p) => typeof p.ultimo_ndvi === 'number').length
-  const areaTotal = potreros.reduce((sum, p) => sum + (p.superficie_ha || 0), 0)
+
+  // Usamos Number() para convertir cualquier string numérico de la DB
+  const areaTotal = potreros.reduce((sum, p) => sum + Number(p.superficie_ha || 0), 0)
 
   return {
     total,
@@ -360,6 +426,7 @@ const estadisticas = computed(() => {
   }
 })
 
+// --- Lógica de Filtrado y Paginación ---
 const potrerosFiltrados = computed(() => {
   let potreros = dataStore.potreros || []
 
@@ -375,7 +442,7 @@ const potrerosFiltrados = computed(() => {
   return [...potreros].sort((a, b) => {
     switch (ordenarPor.value) {
       case 'area':
-        return (b.superficie_ha || 0) - (a.superficie_ha || 0)
+        return (Number(b.superficie_ha) || 0) - (Number(a.superficie_ha) || 0)
       case 'ndvi':
         return (b.ultimo_ndvi || -1) - (a.ultimo_ndvi || -1)
       default: // nombre
@@ -384,52 +451,64 @@ const potrerosFiltrados = computed(() => {
   })
 })
 
-// --- NUEVA LÓGICA DE ICONOS Y COLORES HEX ---
+const totalPages = computed(() => {
+  return Math.ceil(potrerosFiltrados.value.length / pageSize)
+})
 
-// 1. Definir qué archivo SVG usar según el tipo
+const potrerosPaginados = computed(() => {
+  const start = (page.value - 1) * pageSize
+  const end = start + pageSize
+  return potrerosFiltrados.value.slice(start, end)
+})
+
+watch(filtro, () => {
+  page.value = 1
+})
+
+// --- Helper Functions Visuales ---
 function getPotreroIconPath(potrero) {
   const tipo = potrero.tipo ? potrero.tipo.toLowerCase() : 'otro'
-  let iconName = 'otro' // default
+  let iconName = 'otro'
 
   if (tipo.includes('pastura')) iconName = 'pastura'
   else if (tipo.includes('campo-natural')) iconName = 'campo-natural'
   else if (tipo.includes('verdeo')) iconName = 'verdeo'
   else if (tipo.includes('reserva')) iconName = 'reserva'
 
-  // Asegúrate de tener estos archivos en /public/icons/
   return `/icons/${iconName}.svg`
 }
 
-// 2. Definir el color HEX según NDVI
 function getNdviColorHex(ndvi) {
-  if (typeof ndvi !== 'number') return '#9e9e9e' // Grey
-  if (ndvi < 0.2) return '#ff1744' // Red (Peligro)
-  if (ndvi < 0.4) return '#ff9100' // Orange (Alerta)
-  if (ndvi < 0.6) return '#ffea00' // Yellow (Regular)
+  if (typeof ndvi !== 'number') return '#555555' // Gris
+  if (ndvi < 0.2) return '#ffffff' // Blanco (Crítico)
+  if (ndvi < 0.4) return '#0037ff' // Azul (Bajo)
+  if (ndvi < 0.6) return '#00e5ff' // Cian (Regular)
+  if (ndvi < 0.7) return '#ccff00' // Lima (Bueno)
   return '#39ff14' // Verde Neón (Excelente)
 }
 
-// Helpers antiguos (para compatibilidad o eliminar si no se usan)
 function getEstadoPotrero(potrero) {
-  if (!potrero.geometria) return 'Sin polígono'
-  if (typeof potrero.ultimo_ndvi !== 'number') return 'Sin análisis'
-  if (potrero.ultimo_ndvi >= 0.6) return 'Excelente'
-  if (potrero.ultimo_ndvi >= 0.4) return 'Bueno'
-  if (potrero.ultimo_ndvi >= 0.2) return 'Regular'
-  return 'Pobre'
+  if (!potrero.geometria) return 'Sin mapa'
+  if (typeof potrero.ultimo_ndvi !== 'number') return 'Sin datos'
+  if (potrero.ultimo_ndvi >= 0.7) return 'Excelente'
+  if (potrero.ultimo_ndvi >= 0.5) return 'Bueno'
+  if (potrero.ultimo_ndvi >= 0.4) return 'Regular'
+  if (potrero.ultimo_ndvi >= 0.2) return 'Bajo'
+  return 'Crítico'
 }
 
-function normalizeNdvi(ndvi) {
+function getNdviPercentage(ndvi) {
   if (typeof ndvi !== 'number') return 0
-  return Math.max(0, Math.min(1, (ndvi + 1) / 2))
+  return Math.max(0, Math.min(1, ndvi)) * 100
 }
 
 function formatearFecha(fecha) {
   if (!fecha) return 'Nunca'
   const date = new Date(fecha)
-  return date.toLocaleDateString('es-AR')
+  return date.toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit' })
 }
 
+// --- CRUD Operations ---
 function editarPotrero(potrero) {
   potreroEditando.value = potrero
   Object.assign(formPotrero, {
@@ -502,6 +581,7 @@ async function confirmarEliminar(potrero) {
 }
 
 async function analizarPotrero(potrero) {
+  playNdvi()
   analizando[potrero.id] = true
   try {
     const { data, error } = await supabase.functions.invoke('analizar-ndvi', {
@@ -522,7 +602,7 @@ async function analizarPotrero(potrero) {
         $q.notify({
           type: 'positive',
           message: 'Análisis completado',
-          caption: `NDVI: ${resultado.ndvi.toFixed(4)}`,
+          caption: `NDVI: ${resultado.ndvi.toFixed(2)}`,
         })
       } else {
         $q.notify({
@@ -543,8 +623,6 @@ async function analizarPotrero(potrero) {
   }
 }
 
-
-
 onMounted(() => {
   if (dataStore.potreros.length === 0) {
     dataStore.fetchPotreros()
@@ -553,23 +631,8 @@ onMounted(() => {
 </script>
 
 <style lang="scss" scoped>
-/* ESTILOS DE MÁSCARA SVG */
-.potrero-type-icon {
-  width: 28px;
-  height: 28px;
-  /* El background-color se asigna inline desde el JS (verde, rojo, etc) */
-
-  /* Máscara */
-  -webkit-mask-size: contain;
-  mask-size: contain;
-  -webkit-mask-repeat: no-repeat;
-  mask-repeat: no-repeat;
-  -webkit-mask-position: center;
-  mask-position: center;
-  /* La URL de la máscara también se asigna inline */
-}
-
-/* Fondo de la página */
+/* Estilos anteriores se mantienen igual... */
+/* Fondo Pro */
 .dashboard-pro-bg {
   background-image: url('src/assets/nutrogan-bg.jpg');
   background-size: cover;
@@ -579,60 +642,173 @@ onMounted(() => {
 }
 
 .page-title-box {
-  font-size: 2rem;
-  font-weight: 700;
+  background: #000000;
   color: #ffffff;
-  margin-bottom: 1rem;
-  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
+  border: 2px solid #ffffff;
+  border-radius: 20px;
+  padding: 8px 24px;
+  display: inline-block;
+  font-family: 'Outfit', sans-serif;
+  font-size: 1.5rem;
+  font-weight: 700;
 }
 
-.filter-card {
-  background: rgba(0, 0, 0, 0.2);
-  backdrop-filter: blur(5px);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-}
-
-.btn-glass {
-  backdrop-filter: blur(5px);
-  border: 1px solid rgba(255, 255, 255, 0.5);
-  color: white;
-}
-
+/* KPI Cards */
 .kpi-card {
-  background: rgba(0, 0, 0, 0.25);
-  backdrop-filter: blur(10px);
+  background: rgba(15, 15, 20, 0.85);
+  backdrop-filter: blur(15px);
   border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 8px;
-  color: white;
+  border-radius: 12px;
   height: 100%;
-}
-
-.bg-dark-soft {
-  background: rgba(0, 0, 0, 0.4);
-}
-
-.potrero-card {
-  transition: all 0.3s ease;
-  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  transition: transform 0.2s;
   &:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    transform: translateY(-3px);
+    background: rgba(20, 20, 25, 0.95);
   }
 }
-.potrero-card.sin-geometria {
-  border-left: 4px solid #ff9800;
+
+.border-neon-left {
+  border-left: 4px solid #39ff14;
 }
-.ellipsis {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+.border-white-left {
+  border-left: 4px solid #ffffff;
+}
+.border-cyan-left {
+  border-left: 4px solid #00e5ff;
+}
+.border-blue-left {
+  border-left: 4px solid #0037ff;
 }
 
-/* Estilos Diálogo Glass */
-:deep(.glass-dialog-form .q-card) {
-  background: rgba(40, 40, 40, 0.8) !important;
+/* Potrero Cards */
+.potrero-card {
+  background: rgba(10, 10, 12, 0.7);
   backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 16px;
+  transition: all 0.3s ease;
+  overflow: hidden;
+  &:hover {
+    box-shadow: 0 0 20px rgba(57, 255, 20, 0.15);
+    background: rgba(15, 15, 20, 0.9);
+  }
+}
+
+.border-orange-card {
+  border-left: 4px solid #ff9800; /* Alerta si no tiene geo */
+}
+.border-neon-card {
+  border-left: 4px solid #39ff14; /* OK */
+}
+
+/* Iconos Mask */
+.potrero-icon-wrapper {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.05);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+.potrero-icon-shape {
+  width: 32px;
+  height: 32px;
+  -webkit-mask-size: contain;
+  mask-size: contain;
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+  -webkit-mask-position: center;
+  mask-position: center;
+}
+
+/* Metric Box */
+.metric-box {
+  background: rgba(0, 0, 0, 0.4);
+  border-radius: 8px;
+  padding: 8px;
+  text-align: center;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  .label {
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+  }
+  .value {
+    font-size: 1.2rem;
+    font-weight: bold;
+  }
+}
+
+/* Mini Barra NDVI */
+.ndvi-track-mini {
+  height: 4px;
+  width: 100%;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 2px;
+  overflow: hidden;
+}
+.ndvi-bar-fill {
+  height: 100%;
+}
+
+/* Utils */
+.font-mono {
+  font-family: 'Fira Code', monospace;
+}
+.font-numeric {
+  font-family: 'Outfit', sans-serif;
+}
+.text-glow {
+  text-shadow: 0 0 15px rgba(57, 255, 20, 0.4);
+}
+.glass-btn {
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(5px);
+}
+.shadow-glow {
+  box-shadow: 0 0 15px rgba(57, 255, 20, 0.4);
+}
+.opacity-20 {
+  opacity: 0.2;
+}
+.opacity-10 {
+  opacity: 0.1;
+}
+.bg-dark-soft {
+  background: rgba(0, 0, 0, 0.3);
+}
+.bg-dark-header {
+  background: #050505;
+}
+
+/* Inputs y Buscador */
+.glass-input :deep(.q-field__control) {
+  background: rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(5px);
+  border-radius: 8px;
+}
+
+/* Paginación */
+:deep(.glass-pagination .q-btn) {
+  background: rgba(0, 0, 0, 0.3) !important;
+  backdrop-filter: blur(4px);
+}
+:deep(.glass-pagination .q-btn.text-black) {
+  background: #39ff14 !important;
+  color: black !important;
+  font-weight: bold;
+}
+
+/* Estilos Dialog Glass */
+:deep(.glass-dialog-form .q-card) {
+  background: rgba(40, 40, 40, 0.85) !important;
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
   color: white;
 }
 :deep(.glass-dialog-form .q-field__label) {

@@ -1,28 +1,39 @@
-{ type: uploaded file fileName: src/components/about/TechFeatureCard.vue fullContent:
 <template>
-  <div class="feature-card cursor-pointer" :style="{ '--accent-color': color }" @click="openUrl">
-    <div class="card-bg"></div>
-    <div class="card-content column justify-between full-height">
-      <div class="header">
-        <div class="icon-container flex flex-center">
-          <q-icon :name="icon" size="28px" class="text-white" />
+  <div
+    class="spotlight-card column"
+    ref="cardRef"
+    @mousemove="handleMouseMove"
+    @mouseleave="handleMouseLeave"
+    @click="openUrl"
+  >
+    <div class="spotlight-border" :style="spotlightStyle"></div>
+
+    <div class="card-inner col relative-position bg-dark-glass column">
+      <div class="row items-start justify-between q-mb-md">
+        <div
+          class="icon-box row flex-center"
+          :style="{ color: color, borderColor: color, boxShadow: `0 0 15px ${color}20` }"
+        >
+          <q-icon :name="icon" size="24px" />
         </div>
-        <div class="text-overline text-uppercase q-mt-md opacity-60">{{ subtitle }}</div>
-        <div class="text-h5 text-weight-bold leading-tight q-mt-xs">{{ title }}</div>
+        <q-icon name="arrow_outward" size="xs" :style="{ color: color }" class="arrow-anim" />
       </div>
 
-      <div class="body q-mt-md">
-        <p class="text-grey-4 text-body2">{{ description }}</p>
+      <div class="text-h6 text-weight-bold text-white leading-tight q-mb-xs">{{ title }}</div>
+      <div class="text-caption text-grey-5 text-uppercase tracking-wide q-mb-md">
+        {{ subtitle }}
       </div>
 
-      <div class="footer text-right">
-        <q-icon name="arrow_outward" size="sm" :style="{ color: color }" class="arrow-icon" />
-      </div>
+      <div class="col-grow"></div>
+
+      <p class="text-grey-4 text-body2 description q-mb-none">{{ description }}</p>
     </div>
   </div>
 </template>
 
 <script setup>
+import { ref, computed } from 'vue'
+
 const props = defineProps({
   title: String,
   subtitle: String,
@@ -32,86 +43,99 @@ const props = defineProps({
   url: { type: String, default: '' },
 })
 
+const cardRef = ref(null)
+const mouseX = ref(-100)
+const mouseY = ref(-100)
+const opacity = ref(0)
+
+function handleMouseMove(e) {
+  if (!cardRef.value) return
+  const rect = cardRef.value.getBoundingClientRect()
+  mouseX.value = e.clientX - rect.left
+  mouseY.value = e.clientY - rect.top
+  opacity.value = 1
+}
+
+function handleMouseLeave() {
+  opacity.value = 0
+}
+
+const spotlightStyle = computed(() => ({
+  background: `radial-gradient(600px circle at ${mouseX.value}px ${mouseY.value}px, ${props.color}, transparent 40%)`,
+  opacity: opacity.value,
+}))
+
 function openUrl() {
-  if (props.url) {
-    window.open(props.url, '_blank')
-  }
+  if (props.url) window.open(props.url, '_blank')
 }
 </script>
 
 <style lang="scss" scoped>
-.feature-card {
+.spotlight-card {
   position: relative;
   height: 100%;
-  border-radius: 24px;
-  padding: 2px; /* Espacio para el borde gradiente */
-  background: linear-gradient(145deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.02));
-  overflow: hidden;
-  transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  min-height: 260px; /* Altura mínima asegurada */
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.08);
   cursor: pointer;
+  overflow: hidden;
+  transition: transform 0.3s ease;
 
   &:hover {
-    transform: translateY(-5px);
-    .card-bg {
-      opacity: 1;
+    transform: translateY(-4px);
+    .arrow-anim {
+      transform: translate(2px, -2px);
     }
-    .icon-container {
-      background-color: var(--accent-color);
-      box-shadow: 0 0 20px var(--accent-color);
-      border-color: var(--accent-color);
-      transform: scale(1.1);
-
-      .q-icon {
-        color: #000 !important; /* Icono negro sobre fondo neón */
-      }
-    }
-    .arrow-icon {
-      transform: translate(5px, -5px);
+    .icon-box {
+      background: rgba(255, 255, 255, 0.1);
     }
   }
 }
 
-.card-bg {
+.spotlight-border {
   position: absolute;
-  inset: 0;
-  background: radial-gradient(
-    800px circle at var(--mouse-x, 50%) var(--mouse-y, 50%),
-    rgba(255, 255, 255, 0.06),
-    transparent 40%
-  );
-  opacity: 0;
-  transition: opacity 0.5s;
+  inset: -1px;
+  pointer-events: none;
   z-index: 0;
+  transition: opacity 0.5s ease;
 }
 
-.card-content {
+.card-inner {
   position: relative;
   z-index: 1;
-  background: rgba(10, 10, 12, 0.6); /* Fondo oscuro base */
-  backdrop-filter: blur(20px);
-  border-radius: 22px;
-  padding: 24px;
   height: 100%;
-  border: 1px solid rgba(255, 255, 255, 0.05);
+  margin: 1px;
+  border-radius: 15px;
+  background: #0d0d0d;
+  padding: 24px;
 }
 
-.icon-container {
-  width: 50px;
-  height: 50px;
-  border-radius: 14px;
-  border: 1px solid rgba(255, 255, 255, 0.2);
+.icon-box {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
   background: rgba(255, 255, 255, 0.05);
-  transition: all 0.3s ease;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  transition: all 0.3s;
 }
 
-.opacity-60 {
-  opacity: 0.6;
+.tracking-wide {
+  letter-spacing: 1.5px;
 }
 .leading-tight {
-  line-height: 1.1;
+  line-height: 1.2;
 }
-.arrow-icon {
-  transition: transform 0.3s ease;
+.arrow-anim {
+  transition: transform 0.3s;
+}
+
+/* FIX ESLINT: line-clamp standard property included */
+.description {
+  display: -webkit-box;
+  -webkit-line-clamp: 4;
+  -webkit-box-orient: vertical;
+  line-clamp: 4; /* Standard property */
+  overflow: hidden;
 }
 </style>
-}

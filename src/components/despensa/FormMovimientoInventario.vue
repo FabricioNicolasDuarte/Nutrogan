@@ -88,7 +88,6 @@
 </template>
 
 <script setup>
-// --- El script queda igual ---
 import { ref, reactive, computed } from 'vue'
 import { useDataStore } from 'stores/data-store'
 import { useQuasar } from 'quasar'
@@ -124,7 +123,11 @@ const form = reactive({
 async function registrarMovimiento() {
   loading.value = true
 
-  const cantidadMovimiento = esCompra.value ? form.cantidad : -form.cantidad
+  // Asegurar que es un número float
+  const cantidadInput = parseFloat(form.cantidad)
+
+  // Si es "uso", enviamos negativo. Si es "compra", positivo.
+  const cantidadMovimiento = esCompra.value ? cantidadInput : -cantidadInput
 
   const rpcParams = {
     p_item_id: props.item.id,
@@ -140,7 +143,7 @@ async function registrarMovimiento() {
 
     $q.notify({
       type: 'positive',
-      message: `Movimiento registrado. Nuevo stock: ${nuevoStock} ${props.item.unidad}`,
+      message: `Movimiento registrado. Nuevo stock: ${Number(nuevoStock).toLocaleString('es-AR')} ${props.item.unidad}`,
     })
 
     emit('close')

@@ -1,5 +1,5 @@
 <template>
-  <q-card class="pro-detail-card glass-effect">
+  <q-card class="pro-detail-card">
     <div class="status-bar" :style="{ backgroundColor: loteData ? '#00e5ff' : '#39ff14' }"></div>
 
     <q-card-section class="q-pb-sm relative-position">
@@ -132,40 +132,33 @@ function onDragStart(event) {
   width: 300px;
   border-radius: 12px;
   overflow: hidden;
-  box-shadow: 0 15px 50px rgba(0, 0, 0, 0.9);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  background: rgba(18, 18, 20, 0.98);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.95);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  /* AUMENTO DE OPACIDAD: Ahora es casi sólido (#18181b) */
+  background: #18181b;
 }
 
 .status-bar {
   height: 3px;
   width: 100%;
-  /* El color se controla inline en el template */
 }
 
 .border-cyan {
   border: 1px solid #00e5ff;
 }
 
-/* --- ÍCONO DE LOTE (Estilo Cyan) --- */
 .lote-icon-wrapper {
   width: 36px;
   height: 36px;
   display: flex;
   align-items: center;
   justify-content: center;
-  /* Opcional: Si quieres recuadro como en corral, descomenta esto: */
-  /*
-  background: #000;
-  border: 1px solid #00e5ff;
-  border-radius: 8px;
-  */
 }
 
 .lote-icon-shape {
   width: 28px;
   height: 28px;
-  background-color: #00e5ff; /* Cyan Neón para lotes ocupados */
+  background-color: #00e5ff;
   -webkit-mask-size: contain;
   mask-size: contain;
   -webkit-mask-repeat: no-repeat;
@@ -175,7 +168,7 @@ function onDragStart(event) {
 }
 
 .metric-mini {
-  background: rgba(255, 255, 255, 0.03);
+  background: rgba(0, 0, 0, 0.3); /* Un poco más oscuro */
   border-radius: 6px;
   padding: 6px;
   text-align: center;

@@ -1,35 +1,33 @@
 <template>
-  <q-layout view="hHh lpR fFf" class="bg-field-dark text-white font-arial fullscreen">
-    <q-header class="bg-primary text-black q-py-md" elevated>
-      <q-toolbar class="row items-center">
+  <q-layout view="hHh lpR fFf" class="field-mode-layout bg-white text-black">
+    <q-header class="field-header-bar q-py-sm" elevated>
+      <q-toolbar class="row items-center justify-between">
         <div
-          class="col-auto row items-center q-mr-md q-px-md q-py-sm rounded-borders cursor-pointer status-badge"
-          :class="badgeClass"
+          class="status-indicator row items-center cursor-pointer bg-white text-black q-px-md q-py-xs rounded-borders"
+          style="border: 3px solid black"
           @click="forzarSincronizacion"
         >
-          <q-icon :name="statusIcon" size="md" :class="{ 'animate-spin': isSyncing }" />
+          <q-icon
+            :name="statusIcon"
+            size="1.8em"
+            class="q-mr-sm"
+            :class="{ 'text-green-6': isOnline, 'text-red-6': !isOnline, 'spin-fast': isSyncing }"
+          />
 
-          <div class="column q-ml-sm">
-            <span class="text-weight-bolder text-uppercase leading-none" style="font-size: 0.8rem">
-              {{ statusText }}
-            </span>
-            <span v-if="pendientes > 0" class="text-caption text-weight-bold">
-              {{ pendientes }} COLA {{ isSyncing ? '>>>' : '' }}
+          <div class="column">
+            <span class="text-subtitle1 text-weight-bolder leading-none">{{ statusText }}</span>
+            <span v-if="pendientes > 0" class="text-caption text-weight-bold text-orange-9">
+              {{ pendientes }} PENDIENTES
             </span>
           </div>
         </div>
 
-        <q-space />
-
         <q-btn
-          push
-          color="red-14"
-          text-color="white"
+          flat
+          dense
           icon="logout"
           label="SALIR"
-          class="text-weight-bolder q-px-lg shadow-5"
-          size="lg"
-          style="border: 3px solid white"
+          class="text-white text-weight-bold"
           @click="confirmarSalida"
         />
       </q-toolbar>
@@ -45,6 +43,7 @@
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useQuasar } from 'quasar'
+import { syncService } from 'src/services/SyncService'
 
 const router = useRouter()
 const $q = useQuasar()
@@ -54,73 +53,29 @@ const pendientes = ref(0)
 const isSyncing = ref(false)
 
 const checkPendientes = () => {
-  const queue = JSON.parse(localStorage.getItem('nutrogan_offline_queue') || '[]')
-  pendientes.value = queue.length
+  pendientes.value = syncService.getPendingCount()
 }
 
 const updateOnlineStatus = () => {
   isOnline.value = navigator.onLine
-  if (isOnline.value && pendientes.value > 0) {
-    triggerSync()
-  }
+  if (isOnline.value && pendientes.value > 0) triggerSync()
 }
 
 function actualizarEstadoSync(status) {
-  isSyncing.value = status.syncing
-  if (status.count !== undefined) pendientes.value = status.count
-  else checkPendientes()
+  if (status.syncing !== undefined) isSyncing.value = status.syncing
 }
 
 function forzarSincronizacion() {
-  if (!isOnline.value) return
-  if (pendientes.value === 0) return
+  if (!isOnline.value)
+    return $q.notify({ message: 'SIN CONEXIÓN', color: 'negative', icon: 'wifi_off' })
   triggerSync()
 }
 
 function triggerSync() {
-  window.dispatchEvent(new CustomEvent('try-sync'))
-}
-
-// Colores ajustados para fondo verde
-const badgeClass = computed(() => {
-  const base = 'shadow-3 border-black'
-  if (!isOnline.value) return `${base} bg-red-14 text-white`
-  if (isSyncing.value) return `${base} bg-white text-black`
-  if (pendientes.value > 0) return `${base} bg-orange-9 text-white`
-  return `${base} bg-black text-primary`
-})
-
-const statusIcon = computed(() => {
-  if (!isOnline.value) return 'wifi_off'
-  if (isSyncing.value) return 'sync'
-  if (pendientes.value > 0) return 'cloud_upload'
-  return 'wifi'
-})
-
-const statusText = computed(() => {
-  if (!isOnline.value) return 'OFFLINE'
-  if (isSyncing.value) return 'SUBIENDO...'
-  if (pendientes.value > 0) return 'DATOS LOCALES'
-  return 'CONECTADO'
-})
-
-function confirmarSalida() {
-  if (pendientes.value > 0) {
-    $q.dialog({
-      title: 'DATOS PENDIENTES',
-      message: `Hay ${pendientes.value} registros sin subir.`,
-      dark: true,
-      ok: { label: 'SALIR IGUAL', color: 'red', size: 'lg' },
-      cancel: { label: 'VOLVER', color: 'white', size: 'lg' },
-      class: 'field-dialog', // Clase opcional para estilo
-    }).onOk(() => router.push('/'))
-  } else {
-    router.push('/')
-  }
+  syncService.processQueue()
 }
 
 onMounted(() => {
-  $q.dark.set(true)
   checkPendientes()
   window.addEventListener('online', updateOnlineStatus)
   window.addEventListener('offline', updateOnlineStatus)
@@ -132,27 +87,36 @@ onUnmounted(() => {
   window.removeEventListener('offline', updateOnlineStatus)
   window.removeEventListener('queue-updated', checkPendientes)
 })
+
+const statusIcon = computed(() => {
+  if (!isOnline.value) return 'wifi_off'
+  if (isSyncing.value) return 'sync'
+  return 'wifi'
+})
+
+const statusText = computed(() => {
+  if (!isOnline.value) return 'OFFLINE'
+  if (isSyncing.value) return 'SUBIENDO...'
+  return 'ONLINE'
+})
+
+function confirmarSalida() {
+  if (pendientes.value > 0) {
+    $q.dialog({
+      title: '⚠️ DATOS PENDIENTES',
+      message: `Tienes ${pendientes.value} registros sin subir.`,
+      ok: { label: 'SALIR IGUAL', color: 'negative' },
+      cancel: true,
+    }).onOk(() => router.push('/'))
+  } else {
+    router.push('/')
+  }
+}
 </script>
 
 <style scoped>
-.font-arial {
-  font-family: Arial, Helvetica, sans-serif !important;
-}
-.leading-none {
-  line-height: 1;
-}
-.animate-spin {
+.spin-fast {
   animation: spin 1s infinite linear;
-}
-.status-badge {
-  transition: all 0.3s ease;
-  border: 2px solid black;
-}
-.status-badge:active {
-  transform: scale(0.95);
-}
-.border-black {
-  border-color: black !important;
 }
 @keyframes spin {
   from {
@@ -161,5 +125,8 @@ onUnmounted(() => {
   to {
     transform: rotate(360deg);
   }
+}
+.leading-none {
+  line-height: 1;
 }
 </style>

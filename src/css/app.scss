@@ -4,6 +4,8 @@ body {
   background: url('/images/nutrogan-bg.png') no-repeat center center fixed;
   background-size: cover;
   color: #ffffff;
+  /* IMPORTANTE: Evita scroll en el body para que solo scrollee la tarjeta */
+  overflow: hidden;
 }
 
 .text-h1,
@@ -39,16 +41,21 @@ h6 {
     0 0 20px $primary;
 }
 
-/* --- 3. Contenido de Página (Recuadro Flotante) --- */
+/* --- 3. Contenido de Página (Recuadro Flotante - MODO OFICINA) --- */
 .page-container-style {
   /* --- DIMENSIONES Y POSICIÓN --- */
   width: calc(100vw - 80px);
-  height: calc(100vh - 190px);
-  margin: 95px auto 0 auto;
+
+  /* --- CORRECCIÓN DE ESPACIOS --- */
+  /* Altura: Restamos 350px para dejar ~200px libres abajo para el footer */
+  height: calc(100vh - 350px);
+
+  /* Margen: 145px arriba para no tapar el logo */
+  margin: 145px auto 0 auto;
 
   /* --- ESTÉTICA --- */
   background: rgba(15, 15, 20, 0.65);
-  /* CORRECCIÓN 1: Soporte Safari */
+  /* Soporte Safari */
   -webkit-backdrop-filter: blur(15px);
   backdrop-filter: blur(15px);
 
@@ -59,7 +66,12 @@ h6 {
   /* --- SCROLL --- */
   overflow-y: auto;
   overflow-x: hidden;
-  padding: 30px; /* Padding por defecto para páginas normales */
+  padding: 30px;
+
+  /* --- CAMBIO AQUÍ: AUMENTADO A 150px --- */
+  /* Esto asegura que el último elemento de cualquier lista (Lotes, Despensa, etc.) */
+  /* se vea completo y tenga aire respecto al borde inferior */
+  padding-bottom: 150px;
 
   /* --- INTERACCIÓN --- */
   pointer-events: auto !important;
@@ -81,23 +93,18 @@ h6 {
 }
 
 /* Aplicar estilo base a todas las páginas NO mapa */
-.q-page:not(.map-page) {
+.q-page:not(.map-page):not(.field-page) {
   @extend .page-container-style;
 }
 
 /* CORRECCIÓN PARA EL DASHBOARD (Map Pages) */
 .q-page.map-page {
   @extend .page-container-style;
-
-  /* QUITA el relleno para que el mapa toque los bordes */
   padding: 0 !important;
-
-  /* Activa Flexbox para que los hijos (mapa/corral) se estiren y ocupen todo el alto */
   display: flex !important;
   flex-direction: column !important;
-
-  /* Asegura que la altura sea la del contenedor flotante */
-  height: calc(100vh - 190px);
+  /* Misma altura restringida */
+  height: calc(100vh - 350px);
 }
 
 /* --- 4. Título de Página --- */
@@ -147,7 +154,7 @@ h6 {
   filter: drop-shadow(0 0 4px $primary) drop-shadow(0 0 8px $primary);
 }
 
-/* --- 7. Arreglo de Contraste --- */
+/* --- 7. Arreglo de Contraste (Modo Oscuro General) --- */
 .q-card {
   background: rgba(0, 0, 0, 0.4) !important;
   color: #ffffff;
@@ -209,11 +216,8 @@ h6 {
 .q-menu {
   background: rgba(20, 20, 20, 0.9) !important;
   border: 1px solid $primary;
-
-  /* CORRECCIÓN 2: Soporte Safari */
   -webkit-backdrop-filter: blur(5px);
   backdrop-filter: blur(5px);
-
   color: #ffffff !important;
   border-radius: 8px;
 }
@@ -304,13 +308,11 @@ h6 {
   background: rgba(29, 29, 29, 0.85) !important;
   border: 1px solid $primary;
   color: #ffffff;
-
-  /* CORRECCIÓN 3: Soporte Safari */
   -webkit-backdrop-filter: blur(5px);
   backdrop-filter: blur(5px);
 }
 
-/* --- 9. Estilos para Listas --- */
+/* --- 9. Estilos para Listas Genéricas --- */
 .q-card {
   .q-list {
     background: rgba(0, 0, 0, 0.3) !important;
@@ -337,11 +339,8 @@ h6 {
 .q-notifications__list .q-notification {
   border-radius: 12px;
   background: rgba(0, 0, 0, 0.8) !important;
-
-  /* CORRECCIÓN 4: Soporte Safari */
   -webkit-backdrop-filter: blur(5px);
   backdrop-filter: blur(5px);
-
   padding: 12px 16px;
   border-width: 2px !important;
   border-style: solid !important;
@@ -443,11 +442,8 @@ h6 {
 /* --- 11. Estilos Menús --- */
 .q-menu.glass-dialog-form {
   background: rgba(40, 40, 40, 0.9) !important;
-
-  /* CORRECCIÓN 5: Soporte Safari */
   -webkit-backdrop-filter: blur(10px);
   backdrop-filter: blur(10px);
-
   border: 1px solid rgba(255, 255, 255, 0.2);
   color: white;
   border-radius: 8px;
@@ -471,87 +467,99 @@ h6 {
 }
 
 /* --- 13. Transiciones de Página (Globales) --- */
-/* Esto habilita el efecto de desvanecimiento suave entre rutas */
 .fade-enter-active,
 .fade-leave-active {
   transition: opacity 0.3s ease;
 }
-
 .fade-enter-from,
 .fade-leave-to {
   opacity: 0;
 }
 
-/* --- MODO CAMPO: ESTILOS GLOBALES --- */
+/* --- MODO CAMPO: PALETA NUTROGAN INDUSTRIAL --- */
 
-/* Fondo Azul Profundo (Deep Navy) - Más elegante que el negro */
-.bg-field-dark {
-  background-color: #050b14 !important;
+/* 1. Reset de Scroll y Fondo Blanco */
+.field-mode-layout .q-page-container {
+  overflow-y: auto !important;
+  height: auto !important;
+  min-height: 100vh !important;
+  padding-bottom: 50px !important;
+  background-color: #ffffff !important;
 }
 
-/* Notificaciones Gigantes (Alto Contraste) */
-.field-notify {
-  min-width: 320px !important;
-  padding: 25px !important;
-  border: 4px solid white !important;
-  border-radius: 20px !important;
-  box-shadow: 0 15px 50px rgba(0, 0, 0, 0.9) !important;
+/* 2. Barra Superior (Nutrogan Style: Negro + Neón) */
+.field-header-bar {
+  background-color: #000000 !important; /* Negro Puro */
+  color: #ffffff !important;
+  border-bottom: 4px solid #39ff14 !important; /* Verde Neón */
 }
 
-/* Notificación de Éxito (Verde) */
-.field-notify-success {
-  background-color: #39ff14 !important;
-  color: black !important;
+/* Sub-header (Listas) */
+.field-sub-header {
+  background-color: #f5f5f5 !important;
+  color: #000000 !important;
+  border-bottom: 2px solid #000000;
+}
 
-  .q-notification__message {
-    font-size: 1.8rem !important;
-    font-weight: 900 !important;
-    text-transform: uppercase;
-    text-align: center;
-    line-height: 1.1;
-  }
-  .q-notification__caption {
-    font-size: 1.1rem !important;
-    font-weight: 700 !important;
-    color: #000 !important;
-    text-align: center;
-    margin-top: 5px;
-  }
-  .q-icon {
-    font-size: 3.5rem !important;
-    color: black !important;
-    margin-bottom: 10px;
-    display: block;
-    text-align: center;
-    width: 100%;
+/* 3. Botones del Menú */
+.industrial-btn {
+  border: 3px solid #000000 !important;
+  border-radius: 12px !important;
+  background-color: #ffffff !important;
+  color: #000000 !important;
+  box-shadow: 5px 5px 0px #000000 !important; /* Sombra dura */
+  transition: transform 0.1s !important;
+  text-transform: uppercase;
+  font-weight: 900 !important;
+}
+
+.industrial-btn:active {
+  transform: translate(3px, 3px) !important;
+  box-shadow: 2px 2px 0px #000000 !important;
+  background-color: #39ff14 !important; /* Feedback Verde */
+}
+
+/* 4. Botón de Cámara (Alto Contraste) */
+.shutter-btn-contrast {
+  width: 90px;
+  height: 90px;
+  border-radius: 50%;
+  background-color: #ffffff;
+  border: 6px solid #000000; /* Borde Negro Grueso */
+  box-shadow:
+    0 0 0 4px #ffffff,
+    0 0 20px rgba(0, 0, 0, 0.5); /* Doble borde para visibilidad */
+  cursor: pointer;
+  transition: transform 0.1s;
+}
+.shutter-btn-contrast:active {
+  background-color: #39ff14; /* Feedback Verde */
+  transform: scale(0.95);
+}
+
+/* 5. Inputs y Listas Gigantes */
+.lote-item-giant {
+  border-bottom: 2px solid #e0e0e0;
+  padding: 20px;
+
+  &.item-active {
+    background-color: #39ff14 !important;
+    border: 3px solid #000000 !important;
+    font-weight: bold;
   }
 }
 
-/* Notificación de Error (Rojo) */
-.field-notify-error {
-  background-color: #ff0000 !important;
-  color: white !important;
+/* Numpad */
+.numpad-btn {
+  font-weight: 900 !important;
+  font-size: 2.5rem !important;
+  border: 2px solid #000 !important;
+  box-shadow: 3px 3px 0px rgba(0, 0, 0, 0.2);
+  color: #000 !important;
+}
 
-  .q-notification__message {
-    font-size: 1.8rem !important;
-    font-weight: 900 !important;
-    text-transform: uppercase;
-    text-align: center;
-    line-height: 1.1;
-  }
-  .q-notification__caption {
-    font-size: 1.1rem !important;
-    font-weight: 700 !important;
-    color: white !important;
-    text-align: center;
-    margin-top: 5px;
-  }
-  .q-icon {
-    font-size: 3.5rem !important;
-    color: white !important;
-    margin-bottom: 10px;
-    display: block;
-    text-align: center;
-    width: 100%;
-  }
+/* Dialogo de Resultado CC */
+.cc-result-card {
+  border: 4px solid #000000 !important;
+  box-shadow: 10px 10px 0px rgba(0, 0, 0, 0.5) !important;
 }

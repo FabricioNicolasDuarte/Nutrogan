@@ -1,758 +1,569 @@
 <template>
   <q-page padding class="dashboard-pro-bg text-white">
-    <div class="row items-center justify-between q-mb-md">
-      <div class="page-title-box" style="margin-bottom: 0">Central de Clima</div>
-      <q-btn flat round dense icon="arrow_back" @click="$router.push('/recursos')" />
+    <div class="row items-center justify-between q-mb-lg">
+      <div class="col-auto">
+        <q-btn
+          flat
+          round
+          dense
+          icon="arrow_back"
+          color="white"
+          @click="$router.push('/recursos')"
+        />
+      </div>
+
+      <div class="col text-center q-px-sm">
+        <div class="page-title-box">Central de Clima</div>
+      </div>
+
+      <div class="col-auto">
+        <q-btn
+          color="primary"
+          icon="add"
+          :label="$q.screen.gt.xs ? 'Registrar Lluvia' : ''"
+          class="text-black text-weight-bold shadow-glow"
+          :round="$q.screen.xs"
+          :dense="$q.screen.xs"
+          @click="abrirCargaManual"
+        />
+      </div>
     </div>
 
-    <q-card flat class="kpi-card">
-      <q-tabs
-        v-model="tab"
-        dense
-        class="text-grey-4"
-        active-color="primary"
-        indicator-color="primary"
-        align="justify"
-        narrow-indicator
+    <div class="row q-col-gutter-md q-mb-lg">
+      <div class="col-12 col-sm-6 col-md-3">
+        <q-card flat class="kpi-card relative-position overflow-hidden">
+          <div class="absolute-right q-ma-md opacity-20">
+            <q-icon name="calendar_month" size="4em" color="blue" />
+          </div>
+          <q-card-section>
+            <div class="text-caption text-grey-4 text-uppercase">Acumulado Mes Actual</div>
+            <div class="text-h3 text-weight-bold text-blue-4">
+              {{ kpis.mesActual }} <span class="text-h6 text-grey-5">mm</span>
+            </div>
+            <div class="text-caption text-grey-5 q-mt-xs">
+              {{ kpis.diasLluvia }} días con precipitaciones
+            </div>
+          </q-card-section>
+          <q-linear-progress
+            :value="kpis.progresoMes"
+            color="blue-5"
+            track-color="grey-9"
+            class="absolute-bottom"
+          />
+        </q-card>
+      </div>
+
+      <div class="col-12 col-sm-6 col-md-3">
+        <q-card flat class="kpi-card">
+          <q-card-section>
+            <div class="text-caption text-grey-4 text-uppercase">
+              Acumulado Anual ({{ new Date().getFullYear() }})
+            </div>
+            <div class="text-h3 text-weight-bold text-white">
+              {{ kpis.anioActual }} <span class="text-h6 text-grey-5">mm</span>
+            </div>
+            <div class="text-caption text-grey-5 q-mt-xs">
+              Total registrado en el establecimiento
+            </div>
+          </q-card-section>
+        </q-card>
+      </div>
+
+      <div class="col-12 col-sm-6 col-md-3">
+        <q-card flat class="kpi-card bg-dark-soft">
+          <q-card-section>
+            <div class="text-caption text-grey-4 text-uppercase">Último Evento</div>
+            <div class="text-h4 text-weight-bold text-white q-mt-sm">
+              {{ kpis.ultimoRegistro.mm }} <span class="text-body1 text-grey-5">mm</span>
+            </div>
+            <div class="text-caption text-primary q-mt-xs font-mono">
+              {{ kpis.ultimoRegistro.fecha }}
+            </div>
+          </q-card-section>
+        </q-card>
+      </div>
+
+      <div class="col-12 col-sm-6 col-md-3">
+        <q-card
+          flat
+          class="kpi-card cursor-pointer hover-border-glow"
+          v-ripple
+          @click="cargarDatosClima"
+        >
+          <q-card-section class="row items-center justify-between">
+            <div>
+              <div class="text-caption text-grey-4 text-weight-bold text-uppercase">Ahora</div>
+              <div v-if="climaActual" class="text-h4 text-white text-weight-bold">
+                {{ climaActual.temperature_2m }}°
+              </div>
+              <div v-else class="text-caption text-grey-5">--</div>
+            </div>
+            <q-icon
+              v-if="climaActual"
+              :name="getWeatherIcon(climaActual.weathercode)"
+              size="3.5em"
+              class="text-cyan-4 opacity-80"
+            />
+            <q-spinner-dots v-else color="cyan-4" size="2em" />
+          </q-card-section>
+          <div
+            class="q-px-md q-pb-sm text-caption text-cyan-4 text-weight-medium"
+            v-if="climaActual"
+          >
+            Viento: {{ climaActual.windspeed_10m }} km/h
+          </div>
+        </q-card>
+      </div>
+    </div>
+
+    <div class="row q-col-gutter-lg q-mb-lg">
+      <div class="col-12 col-md-8">
+        <RainfallChart :registros="dataStore.registrosLluvia" />
+      </div>
+
+      <div class="col-12 col-md-4 column q-gutter-y-md">
+        <q-card flat class="kpi-card col-grow">
+          <q-card-section>
+            <div class="text-h6 row items-center">
+              <q-icon name="calendar_month" class="q-mr-sm text-grey-5" />
+              Pronóstico 5 Días
+            </div>
+          </q-card-section>
+          <q-list separator dark>
+            <q-item v-if="loading && climaForecast.length === 0">
+              <q-item-section class="text-center"><q-spinner color="primary" /></q-item-section>
+            </q-item>
+            <q-item v-for="dia in climaForecast" :key="dia.fecha" class="q-py-md">
+              <q-item-section avatar>
+                <div class="column items-center">
+                  <span class="text-caption text-weight-bold text-uppercase">{{
+                    getDiaSemana(dia.fecha)
+                  }}</span>
+                  <q-icon
+                    :name="getWeatherIcon(dia.weathercode)"
+                    :color="getWeatherColor(dia.weathercode)"
+                    size="1.5em"
+                  />
+                </div>
+              </q-item-section>
+              <q-item-section>
+                <div class="text-body2 text-grey-3">
+                  {{ getWeatherDescription(dia.weathercode) }}
+                </div>
+                <div class="text-caption text-grey-5">
+                  Min: {{ dia.temp_min }}° | Max: {{ dia.temp_max }}°
+                </div>
+              </q-item-section>
+              <q-item-section side>
+                <q-badge v-if="dia.milimetros > 0" :label="`${dia.milimetros} mm`" color="blue-9" />
+                <span v-else class="text-grey-7">-</span>
+              </q-item-section>
+            </q-item>
+          </q-list>
+        </q-card>
+      </div>
+    </div>
+
+    <q-card flat class="glass-panel q-mt-md">
+      <q-card-section class="row items-center justify-between">
+        <div class="text-h6">Bitácora de Lluvias</div>
+        <q-input
+          dense
+          outlined
+          dark
+          v-model="filter"
+          placeholder="Buscar fecha..."
+          color="white"
+          class="q-ml-md"
+          style="width: 200px"
+        >
+          <template v-slot:append><q-icon name="search" /></template>
+        </q-input>
+      </q-card-section>
+
+      <q-table
+        :rows="dataStore.registrosLluvia"
+        :columns="columns"
+        row-key="id"
+        dark
+        flat
+        class="bg-transparent"
+        :filter="filter"
+        v-model:pagination="pagination"
+        hide-bottom
       >
-        <q-tab name="dashboard" label="Dashboard" icon="dashboard" />
-        <q-tab name="historial" label="Historial API" icon="history" />
-        <q-tab name="mapa" label="Mapa Climático" icon="map" />
-        <q-tab name="manual" label="Carga Manual" icon="edit" />
-      </q-tabs>
-      <q-separator dark />
-
-      <q-tab-panels v-model="tab" animated keep-alive class="bg-transparent">
-        <q-tab-panel name="dashboard">
-          <div class="row items-center q-mb-md">
-            <div class="col-10 text-h6">Dashboard Climático</div>
-            <div class="col-2 text-right">
-              <q-btn
-                @click="cargarDatosClima(true)"
-                icon="refresh"
-                color="primary"
-                flat
-                round
-                dense
-                :loading="loading"
-              />
-            </div>
-          </div>
-
-          <div class="row q-col-gutter-lg">
-            <div class="col-12 col-md-5">
-              <q-card flat class="filter-card q-mb-lg">
-                <q-card-section>
-                  <div class="text-h6">Condiciones Actuales</div>
-                </q-card-section>
-                <q-card-section class="row items-center justify-around" v-if="climaActual">
-                  <div class="text-center">
-                    <q-icon
-                      :name="getWeatherIcon(climaActual.weathercode)"
-                      :color="getWeatherColor(climaActual.weathercode)"
-                      size="3em"
-                    />
-                    <div class="text-caption text-grey-4">
-                      {{ getWeatherDescription(climaActual.weathercode) }}
-                    </div>
-                  </div>
-                  <div class="text-center">
-                    <div class="text-h4 text-weight-light">{{ climaActual.temperature_2m }}°C</div>
-                    <div class="text-caption text-grey-4">Temperatura</div>
-                  </div>
-                  <div class="text-center">
-                    <div class="text-h5 text-weight-light">
-                      {{ climaActual.windspeed_10m }}
-                      <span class="text-caption">km/h</span>
-                    </div>
-                    <div class="text-caption text-grey-4">Viento</div>
-                  </div>
-                </q-card-section>
-                <q-card-section v-else class="text-center text-grey-5 q-pa-lg">
-                  <q-spinner-dots v-if="loading" color="primary" size="2em" />
-                  <div v-else>Presiona "Actualizar"</div>
-                </q-card-section>
-              </q-card>
-
-              <q-card flat class="filter-card">
-                <q-card-section>
-                  <div class="text-h6">Pronóstico 5 Días</div>
-                </q-card-section>
-                <q-scroll-area horizontal style="height: 210px; width: 100%">
-                  <div class="row no-wrap q-pa-md q-gutter-md">
-                    <div v-if="loading && climaForecast.length === 0" class="text-center">
-                      <q-spinner-dots color="primary" size="2em" />
-                    </div>
-                    <div v-for="dia in climaForecast" :key="dia.fecha" class="forecast-card">
-                      <div class="text-caption text-weight-bold">
-                        {{ getDiaSemana(dia.fecha) }}
-                      </div>
-                      <q-icon
-                        :name="getWeatherIcon(dia.weathercode)"
-                        :color="getWeatherColor(dia.weathercode)"
-                        size="2.5em"
-                        class="q-my-sm"
-                      />
-                      <div class="text-weight-medium">
-                        {{ dia.temp_max }}° / {{ dia.temp_min }}°
-                      </div>
-                      <q-badge :label="`${dia.milimetros} mm`" color="blue" class="q-mt-sm" />
-                    </div>
-                  </div>
-                </q-scroll-area>
-              </q-card>
-            </div>
-
-            <div class="col-12 col-md-7">
-              <AiAnalysisCard
-                :analysis-result="iaAnalysisResult"
-                :loading="iaLoading"
-                :error="iaError"
-                @request-analysis="runAnalysis"
-                style="height: 100%"
-              />
-            </div>
-          </div>
-        </q-tab-panel>
-
-        <q-tab-panel name="historial">
-          <q-card flat class="filter-card">
-            <q-card-section>
-              <div class="text-h6">Historial 30 días (API)</div>
-              <div class="text-caption text-grey-4">Datos automáticos de Open-Meteo.</div>
-              <q-btn
-                @click="handleGuardarResumen"
-                label="Guardar Resumen 7 Días"
-                icon="save"
-                color="secondary"
-                outline
-                class="q-mt-sm"
-                :loading="loading"
-                :disable="climaHistorial.length === 0"
-              >
-                <q-tooltip class="bg-indigo"
-                  >Guarda un resumen de la lluvia acumulada de los últimos 7 días.</q-tooltip
-                >
-              </q-btn>
-              <q-btn
-                @click="cargarDatosClima"
-                label="Actualizar"
-                icon="refresh"
-                color="primary"
-                outline
-                class="q-mt-sm q-ml-sm"
-                :loading="loading"
-              />
-            </q-card-section>
-
-            <q-list dark bordered separator>
-              <q-item v-if="loading && climaHistorial.length === 0" class="text-center q-pa-md">
-                <q-item-section><q-spinner-dots color="primary" size="2em" /></q-item-section>
-              </q-item>
-              <q-item v-if="!loading && climaHistorial.length === 0" class="text-grey-5">
-                <q-item-section class="text-center q-pa-md">Presiona "Actualizar".</q-item-section>
-              </q-item>
-              <div v-for="(dia, index) in climaHistorial" :key="index">
-                <q-item>
-                  <q-item-section avatar>
-                    <q-avatar
-                      :icon="getWeatherIcon(dia.weathercode)"
-                      :color="getWeatherColor(dia.weathercode)"
-                      text-color="white"
-                    />
-                  </q-item-section>
-                  <q-item-section>
-                    <q-item-label>{{ formatearFecha(dia.fecha) }}</q-item-label>
-                    <q-item-label caption class="text-grey-4">
-                      Máx: {{ dia.temp_max }}°C / Mín: {{ dia.temp_min }}°C
-                    </q-item-label>
-                  </q-item-section>
-                  <q-item-section side top>
-                    <q-badge
-                      :label="`${dia.milimetros} mm`"
-                      :color="dia.milimetros > 0 ? 'blue' : 'grey-8'"
-                      class="text-body2"
-                    />
-                  </q-item-section>
-                </q-item>
-                <q-separator dark inset="item" />
-              </div>
-            </q-list>
-          </q-card>
-        </q-tab-panel>
-
-        <q-tab-panel name="mapa">
-          <q-card flat class="filter-card" style="height: 100%">
-            <q-card-section>
-              <div class="text-h6">Mapa Climático (OpenWeatherMap)</div>
-              <div class="text-caption text-grey-4">
-                Capas visuales de clima sobre tus potreros.
-              </div>
-            </q-card-section>
-            <q-card-section class="q-pa-none">
-              <div id="map-lluvias" style="height: 70vh; border-radius: 8px"></div>
-            </q-card-section>
-          </q-card>
-        </q-tab-panel>
-
-        <q-tab-panel name="manual">
-          <div class="row q-col-gutter-lg">
-            <div class="col-12 col-md-5">
-              <q-card flat class="filter-card">
-                <q-card-section>
-                  <div class="text-h6">Nuevo Registro Manual</div>
-                </q-card-section>
-                <q-form @submit.prevent="handleRegistroManual">
-                  <q-card-section class="q-gutter-md">
-                    <q-input
-                      filled
-                      dark
-                      color="white"
-                      v-model="newRegistro.fecha"
-                      type="date"
-                      label="Fecha"
-                      stack-label
-                    />
-                    <q-input
-                      filled
-                      dark
-                      color="white"
-                      v-model.number="newRegistro.milimetros"
-                      type="number"
-                      step="0.1"
-                      label="Milímetros (mm)"
-                      :rules="[(val) => val >= 0 || 'Debe ser >= 0']"
-                    >
-                      <template v-slot:prepend>
-                        <q-icon name="water_drop" />
-                      </template>
-                    </q-input>
-                    <q-input
-                      filled
-                      dark
-                      color="white"
-                      v-model="newRegistro.observaciones"
-                      type="textarea"
-                      label="Observaciones"
-                    />
-                  </q-card-section>
-                  <q-card-actions align="right" class="q-pa-md">
-                    <q-btn
-                      label="Guardar Lluvia"
-                      type="submit"
-                      color="primary"
-                      :loading="loading"
-                    />
-                  </q-card-actions>
-                </q-form>
-              </q-card>
-            </div>
-            <div class="col-12 col-md-7">
-              <q-card flat class="kpi-card" style="height: 100%">
-                <q-card-section>
-                  <div class="text-h6">Historial de Lluvias (Guardadas)</div>
-                  <div class="text-caption text-grey-4">Registros manuales y resúmenes de API.</div>
-                </q-card-section>
-                <q-list dark separator bordered class="rounded-borders">
-                  <q-item
-                    v-if="dataStore.registrosLluvia.length === 0 && !loading"
-                    class="text-grey-5"
-                  >
-                    <q-item-section class="text-center q-pa-md"
-                      >No hay registros guardados.</q-item-section
-                    >
-                  </q-item>
-                  <q-item v-for="lluvia in dataStore.registrosLluvia" :key="lluvia.id">
-                    <q-item-section avatar>
-                      <q-avatar
-                        :icon="
-                          lluvia.observaciones?.includes('API') ? 'summarize' : 'edit_calendar'
-                        "
-                        :color="lluvia.observaciones?.includes('API') ? 'secondary' : 'blue-7'"
-                        text-color="white"
-                      />
-                    </q-item-section>
-                    <q-item-section>
-                      <q-item-label>{{ formatearFecha(lluvia.fecha) }}</q-item-label>
-                      <q-item-label caption class="text-grey-4">{{
-                        lluvia.observaciones || 'Carga manual'
-                      }}</q-item-label>
-                    </q-item-section>
-                    <q-item-section side top>
-                      <q-badge :label="`${lluvia.milimetros} mm`" color="blue" class="text-body2" />
-                    </q-item-section>
-                  </q-item>
-                </q-list>
-              </q-card>
-            </div>
-          </div>
-        </q-tab-panel>
-      </q-tab-panels>
+        <template v-slot:body-cell-milimetros="props">
+          <q-td :props="props">
+            <q-badge color="blue-5" text-color="black" class="text-weight-bold text-body2">
+              {{ props.value }} mm
+            </q-badge>
+          </q-td>
+        </template>
+        <template v-slot:body-cell-acciones="props">
+          <q-td :props="props" align="right">
+            <q-btn
+              flat
+              round
+              dense
+              icon="delete"
+              color="red-5"
+              @click="eliminarRegistro(props.row)"
+            />
+          </q-td>
+        </template>
+      </q-table>
     </q-card>
+
+    <div class="row justify-center q-mt-lg" v-if="pagesNumber > 1">
+      <q-pagination
+        v-model="pagination.page"
+        :max="pagesNumber"
+        :max-pages="6"
+        direction-links
+        boundary-links
+        color="primary"
+        active-color="cyan-4"
+        text-color="white"
+        active-text-color="black"
+        class="glass-pagination"
+      />
+    </div>
+
+    <q-dialog v-model="dialogoCarga" persistent backdrop-filter="blur(4px)">
+      <q-card class="bg-dark text-white border-neon" style="min-width: 350px">
+        <q-card-section class="row items-center justify-between">
+          <div class="text-h6">Registrar Precipitación</div>
+          <q-btn icon="close" flat round dense v-close-popup />
+        </q-card-section>
+
+        <q-form @submit.prevent="guardarLluvia">
+          <q-card-section class="q-gutter-md">
+            <q-date
+              v-model="form.fecha"
+              dark
+              class="full-width"
+              minimal
+              color="primary"
+              mask="YYYY-MM-DD"
+            />
+
+            <div class="row items-center no-wrap">
+              <q-icon name="water_drop" size="2em" color="blue-5" class="q-mr-md" />
+              <q-input
+                v-model.number="form.milimetros"
+                type="number"
+                step="0.1"
+                label="Milímetros caídos (mm)"
+                outlined
+                dark
+                color="white"
+                class="full-width"
+                autofocus
+                :rules="[(val) => val > 0 || 'Debe ser mayor a 0']"
+              />
+            </div>
+
+            <q-input
+              v-model="form.observaciones"
+              label="Observaciones (Opcional)"
+              outlined
+              dark
+              color="white"
+              type="textarea"
+              rows="2"
+            />
+          </q-card-section>
+
+          <q-card-actions align="right" class="q-pa-md bg-dark-soft">
+            <q-btn label="Cancelar" flat color="grey" v-close-popup />
+            <q-btn
+              label="Guardar Registro"
+              type="submit"
+              color="primary"
+              text-color="black"
+              class="text-weight-bold"
+              :loading="guardando"
+            />
+          </q-card-actions>
+        </q-form>
+      </q-card>
+    </q-dialog>
   </q-page>
 </template>
 
 <script setup>
-import { ref, reactive, onMounted, watch, computed, nextTick } from 'vue'
+import { ref, reactive, computed, onMounted } from 'vue'
 import { useDataStore } from 'stores/data-store'
 import { useAuthStore } from 'stores/auth-store'
 import { useQuasar } from 'quasar'
-import { supabase } from 'boot/supabase'
-import L from 'leaflet'
-import 'leaflet/dist/leaflet.css'
-import AiAnalysisCard from 'components/clima/AiAnalysisCard.vue'
+import RainfallChart from 'components/charts/RainfallChart.vue'
 
 const dataStore = useDataStore()
 const authStore = useAuthStore()
 const $q = useQuasar()
-const loading = ref(false)
-const tab = ref('dashboard')
 
-const newRegistro = reactive({
+// Estados
+const loading = ref(false)
+const guardando = ref(false)
+const dialogoCarga = ref(false)
+const filter = ref('')
+
+// Configuración de Paginación para q-table
+const pagination = ref({
+  sortBy: 'fecha',
+  descending: true,
+  page: 1,
+  rowsPerPage: 5, // Mostrar 5 registros por página
+})
+
+const form = reactive({
   fecha: new Date().toISOString().split('T')[0],
   milimetros: null,
   observaciones: '',
 })
 
-const iaAnalysisResult = ref(
-  '<p class="text-grey-5 text-center q-pa-md">Presiona el ícono de recargar 🔄 para obtener datos del clima y generar un análisis.</p>',
-)
-const iaLoading = ref(false)
-const iaError = ref(null)
-
-async function runAnalysis() {
-  if (!aiContext.value || aiContext.value.includes('esperando datos')) {
-    iaAnalysisResult.value =
-      '<p class="text-grey-5 text-center q-pa-md">Datos del clima no disponibles. Presiona recargar 🔄.</p>'
-    return
-  }
-
-  iaLoading.value = true
-  iaError.value = null
-
-  try {
-    const { data, error: funcError } = await supabase.functions.invoke('asistente-ia', {
-      body: {
-        prompt: aiContext.value,
-        dataContext: {},
-      },
-    })
-    if (funcError) throw funcError
-    iaAnalysisResult.value = data.response || 'No se recibió respuesta de la IA.'
-  } catch (err) {
-    console.error('Error al llamar a la Edge Function:', err)
-    iaError.value = err.message || 'Error desconocido'
-    $q.notify({
-      type: 'negative',
-      message: 'Error al contactar al Asistente IA',
-      caption: err.message,
-    })
-  } finally {
-    iaLoading.value = false
-  }
+// Helpers
+function formatearFecha(iso) {
+  if (!iso) return '-'
+  const [y, m, d] = iso.split('-')
+  return `${d}/${m}/${y}`
 }
 
-onMounted(async () => {
-  if (dataStore.registrosLluvia.length === 0) {
-    await dataStore.fetchRegistrosLluvia()
-  }
-  if (!dataStore.clima.current) {
-    iaAnalysisResult.value =
-      '<p class="text-grey-5 text-center q-pa-md">Presiona el ícono de recargar 🔄 para obtener datos del clima y generar un análisis.</p>'
-  }
-})
+// Columnas Tabla
+const columns = [
+  {
+    name: 'fecha',
+    label: 'Fecha',
+    field: 'fecha',
+    sortable: true,
+    format: (val) => formatearFecha(val),
+    align: 'left',
+  },
+  { name: 'milimetros', label: 'Lluvia', field: 'milimetros', sortable: true, align: 'center' },
+  { name: 'observaciones', label: 'Notas', field: 'observaciones', align: 'left' },
+  { name: 'acciones', label: '', align: 'right' },
+]
 
-async function handleRegistroManual() {
-  if (!authStore.profile)
-    return $q.notify({ color: 'negative', message: 'Error de autenticación.' })
-  loading.value = true
-  try {
-    const data = {
-      ...newRegistro,
-      milimetros: newRegistro.milimetros || 0,
-      establecimiento_id: authStore.profile.establecimiento_id,
-    }
-    await dataStore.createRegistro('registros_lluvia', data)
-    newRegistro.milimetros = null
-    newRegistro.observaciones = ''
-    $q.notify({ color: 'positive', message: 'Lluvia registrada' })
-  } catch (error) {
-    $q.notify({ color: 'negative', message: 'Error: ' + error.message })
-  } finally {
-    loading.value = false
-  }
-}
+// --- COMPUTADAS DE NEGOCIO (KPIS) ---
+const kpis = computed(() => {
+  const registros = dataStore.registrosLluvia || []
+  const hoy = new Date()
+  const mesActual = hoy.getMonth()
+  const anioActual = hoy.getFullYear()
 
-async function handleGuardarResumen() {
-  if (!authStore.profile || !recomendacionAgua.value.raw) {
-    return $q.notify({
-      color: 'negative',
-      message: 'No hay datos de clima para resumir.',
-    })
-  }
-  loading.value = true
-  try {
-    const lluviaAcumulada = recomendacionAgua.value.raw
-    const fechaHoy = new Date().toISOString().split('T')[0]
-
-    const data = {
-      fecha: fechaHoy,
-      milimetros: lluviaAcumulada.toFixed(1),
-      observaciones: `Resumen API (últimos 7 días)`,
-      establecimiento_id: authStore.profile.establecimiento_id,
-    }
-    await dataStore.createRegistro('registros_lluvia', data)
-    $q.notify({
-      color: 'positive',
-      message: `Resumen de ${data.milimetros} mm guardado.`,
-    })
-  } catch (error) {
-    console.error('Error al guardar resumen de API:', error)
-    $q.notify({
-      color: 'negative',
-      message: 'Error guardando en Supabase: ' + error.message,
-    })
-  } finally {
-    loading.value = false
-  }
-}
-
-async function cargarDatosClima(forceAiRun = false) {
-  loading.value = true
-  try {
-    if (dataStore.potreros.length === 0) {
-      await dataStore.fetchPotreros()
-    }
-    await dataStore.fetchClima()
-
-    if (forceAiRun || iaAnalysisResult.value.includes('Presiona el ícono')) {
-      await new Promise((resolve) => setTimeout(resolve, 500))
-      runAnalysis()
-    }
-  } catch {
-    $q.notify({ color: 'negative', message: 'Error al cargar datos de clima.' })
-  } finally {
-    loading.value = false
-  }
-}
-
-// --- LÓGICA DE MAPA ---
-const OWM_API_KEY = '7c37004f4cd6287bd1788020ef3b8dd4'
-let map = null
-let mapInitialized = false
-let potrerosLayer = L.featureGroup()
-
-// Al usar keep-alive, el mapa no se destruye, pero Leaflet se "marea"
-// si el contenedor se oculta y reaparece. invalidateSize() lo arregla.
-watch(tab, (newTab) => {
-  if (newTab === 'mapa') {
-    if (!mapInitialized) {
-      setTimeout(tryInitMap, 100)
-    } else if (map) {
-      setTimeout(() => {
-        map.invalidateSize()
-        try {
-          const bounds = potrerosLayer.getBounds()
-          if (bounds.isValid()) {
-            map.fitBounds(bounds)
-          }
-        } catch {
-          /* no-op */
-        }
-      }, 100)
-    }
-  }
-})
-
-function tryInitMap() {
-  if (dataStore.potreros.length > 0) {
-    initMap()
-  } else {
-    console.warn('Esperando potreros para iniciar el mapa...')
-    cargarDatosClima().then(() => {
-      nextTick(() => {
-        initMap()
-      })
-    })
-  }
-}
-
-function initMap() {
-  if (!document.getElementById('map-lluvias') || map) return
-  mapInitialized = true
-  console.log('Iniciando mapa con dibujo GeoJSON nativo...')
-
-  map = L.map('map-lluvias').setView([-38.4, -63.6], 4)
-
-  const baseMap = L.tileLayer(
-    'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
-    {
-      attribution: 'Tiles &copy; Esri',
-      maxZoom: 18,
-    },
-  ).addTo(map)
-
-  const nubesLayer = L.tileLayer(
-    `https://tile.openweathermap.org/map/clouds_new/{z}/{x}/{y}.png?appid=${OWM_API_KEY}`,
-    { attribution: 'OpenWeatherMap', opacity: 0.7 },
-  )
-  const lluviaLayer = L.tileLayer(
-    `https://tile.openweathermap.org/map/precipitation_new/{z}/{x}/{y}.png?appid=${OWM_API_KEY}`,
-    { attribution: 'OpenWeatherMap', opacity: 0.8 },
-  )
-  const tempLayer = L.tileLayer(
-    `https://tile.openweathermap.org/map/temp_new/{z}/{x}/{y}.png?appid=${OWM_API_KEY}`,
-    { attribution: 'OpenWeatherMap', opacity: 0.5 },
-  )
-
-  potrerosLayer.clearLayers()
-
-  const potreroStyle = {
-    color: '#55ff00',
-    weight: 2,
-    opacity: 1,
-    fillColor: '#55ff00',
-    fillOpacity: 0.2,
-  }
-
-  dataStore.potreros.forEach((potrero) => {
-    if (potrero.geometria) {
-      try {
-        const geometria =
-          typeof potrero.geometria === 'string' ? JSON.parse(potrero.geometria) : potrero.geometria
-
-        const layer = L.geoJSON(geometria, {
-          style: potreroStyle,
-        })
-        layer.bindPopup(`<strong>${potrero.nombre || 'Potrero'}</strong>`)
-        potrerosLayer.addLayer(layer)
-      } catch (e) {
-        console.error(`Error al parsear geometría del potrero ${potrero.nombre}:`, e)
-      }
-    }
+  // 1. Acumulado Mes
+  const lluviasMes = registros.filter((r) => {
+    const d = new Date(r.fecha + 'T00:00:00')
+    return d.getMonth() === mesActual && d.getFullYear() === anioActual
   })
+  const totalMes = lluviasMes.reduce((acc, r) => acc + parseFloat(r.milimetros), 0)
 
-  potrerosLayer.addTo(map)
+  // 2. Acumulado Año
+  const lluviasAnio = registros.filter((r) => {
+    const d = new Date(r.fecha + 'T00:00:00')
+    return d.getFullYear() === anioActual
+  })
+  const totalAnio = lluviasAnio.reduce((acc, r) => acc + parseFloat(r.milimetros), 0)
 
-  try {
-    const bounds = potrerosLayer.getBounds()
-    if (bounds.isValid()) {
-      map.fitBounds(bounds)
-    }
-  } catch (e) {
-    console.warn('No se pudo hacer zoom a los potreros', e)
+  // 3. Último registro
+  let ultimo = { mm: '--', fecha: 'Sin datos' }
+  if (registros.length > 0) {
+    const rec = registros[0] // Asume orden DESC
+    ultimo = { mm: rec.milimetros, fecha: formatearFecha(rec.fecha) }
   }
 
-  L.control
-    .layers(
-      { 'Satélite (Esri)': baseMap },
-      {
-        'Mis Potreros': potrerosLayer,
-        Nubes: nubesLayer,
-        Precipitación: lluviaLayer.addTo(map),
-        Temperatura: tempLayer,
-      },
-      { position: 'topright' },
-    )
-    .addTo(map)
+  // Progreso visual
+  const progresoMes = Math.min(totalMes / 100, 1)
+
+  return {
+    mesActual: totalMes.toFixed(1),
+    diasLluvia: lluviasMes.length,
+    anioActual: totalAnio.toFixed(1),
+    ultimoRegistro: ultimo,
+    progresoMes,
+  }
+})
+
+// Computada para el total de páginas
+const pagesNumber = computed(() => {
+  return Math.ceil((dataStore.registrosLluvia?.length || 0) / pagination.value.rowsPerPage)
+})
+
+const climaActual = computed(() => dataStore.clima?.current)
+const climaForecast = computed(() => dataStore.clima?.forecast || [])
+
+// --- ACCIONES ---
+
+function abrirCargaManual() {
+  form.fecha = new Date().toISOString().split('T')[0]
+  form.milimetros = null
+  form.observaciones = ''
+  dialogoCarga.value = true
 }
 
-const climaActual = computed(() => {
-  return dataStore.clima?.current || null
-})
-const climaHistorial = computed(() => {
-  return dataStore.clima?.historial || []
-})
-const climaForecast = computed(() => {
-  return dataStore.clima?.forecast || []
-})
-const recomendacionAgua = computed(() => {
-  if (!climaHistorial.value || climaHistorial.value.length === 0) {
-    return {
-      titulo: 'Sin datos',
-      raw: 0,
+async function guardarLluvia() {
+  if (!authStore.profile?.establecimiento_id) {
+    return $q.notify({ type: 'negative', message: 'Error de establecimiento' })
+  }
+
+  guardando.value = true
+  try {
+    const payload = {
+      fecha: form.fecha,
+      milimetros: parseFloat(form.milimetros),
+      observaciones: form.observaciones,
+      establecimiento_id: authStore.profile.establecimiento_id,
     }
+
+    await dataStore.createRegistro('registros_lluvia', payload)
+    $q.notify({
+      type: 'positive',
+      message: 'Lluvia registrada correctamente',
+      icon: 'cloud_done',
+    })
+    dialogoCarga.value = false
+  } catch (e) {
+    $q.notify({ type: 'negative', message: 'Error al guardar: ' + e.message })
+  } finally {
+    guardando.value = false
   }
-  const ultimos7dias = climaHistorial.value.slice(0, 7)
-  const lluviaAcumulada = ultimos7dias.reduce((acc, dia) => acc + dia.milimetros, 0)
-  return {
-    raw: lluviaAcumulada,
-    titulo: 'Resumen 7 días',
+}
+
+// CORRECCIÓN ESLINT: Ahora usamos 'row' dentro de la función
+function eliminarRegistro(row) {
+  $q.dialog({
+    title: 'Eliminar Registro',
+    // Usamos row.fecha para mostrar qué estamos borrando
+    message: `¿Estás seguro de eliminar el registro del ${formatearFecha(
+      row.fecha,
+    )}? Esta acción afectará los acumulados.`,
+    dark: true,
+    cancel: true,
+  }).onOk(async () => {
+    // await dataStore.deleteRegistro('registros_lluvia', row.id)
+    $q.notify({
+      type: 'info',
+      message: 'Función de eliminar pendiente de implementación en Store',
+    })
+  })
+}
+
+async function cargarDatosClima() {
+  loading.value = true
+  try {
+    await dataStore.fetchClima()
+    if (dataStore.registrosLluvia.length === 0) {
+      await dataStore.fetchRegistrosLluvia()
+    }
+  } finally {
+    loading.value = false
   }
-})
+}
 
-const aiContext = computed(() => {
-  if (!climaActual.value) return 'El usuario está en la página de clima, esperando datos.'
-
-  const datosClima = {
-    condicionesActuales: {
-      temperatura: climaActual.value.temperature_2m,
-      viento: climaActual.value.windspeed_10m,
-      codigoClima: climaActual.value.weathercode,
-      descripcion: getWeatherDescription(climaActual.value.weathercode),
-    },
-    pronosticoProximos5dias: climaForecast.value.map((dia) => ({
-      fecha: dia.fecha,
-      temp_max: dia.temp_max,
-      temp_min: dia.temp_min,
-      precipitacion: dia.milimetros,
-      descripcion: getWeatherDescription(dia.weathercode),
-    })),
-    resumenLluviaUltimos7dias: {
-      total_mm: recomendacionAgua.value.raw?.toFixed(1),
-    },
-  }
-
-  return `
-    El usuario está en la "Central de Clima" de Nutrogan, una app de gestión ganadera.
-    Rol: Eres un Asistente experto en Agronomía y Ganadería.
-    Tarea: Analiza los siguientes datos climáticos y genera alertas y recomendaciones
-    accionables para un productor ganadero. Enfócate en el impacto sobre el
-    forraje, las aguadas, el estrés calórico de los animales y la planificación de tareas.
-
-    DATOS:
-    ${JSON.stringify(datosClima, null, 2)}
-
-    ---
-    INSTRUCCIÓN DE FORMATO:
-    Devuelve tu respuesta formateada en HTML simple.
-    - Usa <h4> para los títulos (ej: "<h4>Alertas</h4>").
-    - Usa <ul> y <li> para las listas de recomendaciones.
-    - Usa <strong> para destacar palabras clave (ej: "Estrés Calórico").
-    No incluyas <html> o <body> tags, solo el contenido.
-  `
-})
+function getDiaSemana(fecha) {
+  const dias = ['DOM', 'LUN', 'MAR', 'MIÉ', 'JUE', 'VIE', 'SÁB']
+  const d = new Date(fecha + 'T00:00:00')
+  return dias[d.getDay()]
+}
 
 function getWeatherIcon(code) {
-  if ([0, 1].includes(code)) return 'sunny'
-  if ([2].includes(code)) return 'partly_cloudy_day'
-  if ([3].includes(code)) return 'cloud'
-  if ([45, 48].includes(code)) return 'foggy'
-  if ([51, 53, 55, 61, 63, 65, 80, 81, 82].includes(code)) return 'water_drop'
-  if ([56, 57, 66, 67].includes(code)) return 'ac_unit'
-  if ([71, 73, 75, 77, 85, 86].includes(code)) return 'ac_unit'
-  if ([95, 96, 99].includes(code)) return 'thunderstorm'
-  return 'cloud'
+  if (code <= 3) return 'wb_sunny'
+  if (code <= 48) return 'cloud'
+  if (code <= 67) return 'water_drop'
+  if (code <= 82) return 'umbrella'
+  if (code > 90) return 'thunderstorm'
+  return 'question_mark'
 }
+
 function getWeatherColor(code) {
-  if ([0, 1, 2].includes(code)) return 'yellow-7'
-  if ([45, 48, 3].includes(code)) return 'grey-6'
-  if ([51, 53, 55, 61, 63, 65, 80, 81, 82].includes(code)) return 'blue-5'
-  if ([71, 73, 75, 77, 85, 86].includes(code)) return 'cyan'
-  if ([95, 96, 99].includes(code)) return 'deep-purple-5'
-  return 'grey-6'
+  if (code <= 3) return 'orange'
+  if (code <= 48) return 'grey'
+  return 'blue'
 }
+
 function getWeatherDescription(code) {
-  const descriptions = {
-    0: 'Cielo Despejado',
-    1: 'Mayormente Despejado',
-    2: 'Parcialmente Nublado',
-    3: 'Nublado',
-    45: 'Niebla',
-    48: 'Niebla densa',
-    61: 'Lluvia Ligera',
-    63: 'Lluvia Moderada',
-    65: 'Lluvia Fuerte',
-    80: 'Chaparrones Ligeros',
-    95: 'Tormenta',
-  }
-  return descriptions[code] || 'Condiciones'
+  if (code <= 3) return 'Despejado/Nublado'
+  if (code <= 67) return 'Lluvia'
+  if (code > 80) return 'Tormenta'
+  return 'Variable'
 }
 
-function getDiaSemana(fechaISO) {
-  const date = new Date(fechaISO + 'T00:00:00-03:00')
-  const hoy = new Date()
-  const d1 = date.getDate()
-  const m1 = date.getMonth()
-  const y1 = date.getFullYear()
-  const d2 = hoy.getDate()
-  const m2 = hoy.getMonth()
-  const y2 = hoy.getFullYear()
-
-  if (d1 === d2 && m1 === m2 && y1 === y2) {
-    return 'Hoy'
-  }
-  return date.toLocaleDateString('es-AR', { weekday: 'short' }).replace('.', '').toUpperCase()
-}
-function formatearFecha(fechaISO) {
-  if (!fechaISO) return 'N/A'
-  const date = new Date(fechaISO + 'T00:00:00-03:00')
-  return date.toLocaleDateString('es-AR', {
-    day: '2-digit',
-    month: '2-digit',
-    year: 'numeric',
-  })
-}
+onMounted(() => {
+  cargarDatosClima()
+})
 </script>
 
 <style lang="scss" scoped>
-/* ESTILOS "PRO" */
 .dashboard-pro-bg {
   background-image: url('src/assets/nutrogan-bg.jpg');
   background-size: cover;
-  background-position: center;
   background-attachment: fixed;
   min-height: 100vh;
 }
+
 .page-title-box {
   font-size: 2rem;
   font-weight: 700;
-  color: #ffffff;
-  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
+  color: white;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+  /* Ajuste de línea para que no se corte en móviles */
+  line-height: 1.2;
 }
+
 .kpi-card {
-  background: rgba(0, 0, 0, 0.25);
+  background: rgba(0, 0, 0, 0.4);
   backdrop-filter: blur(10px);
   border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 8px;
-  color: white;
+  border-radius: 16px;
   height: 100%;
-}
-.filter-card {
-  background: rgba(0, 0, 0, 0.2);
-  backdrop-filter: blur(5px);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  height: 100%;
-}
-
-.forecast-card {
-  min-width: 120px; /* Ancho mínimo para no aplastar */
-  width: 120px;
-  text-align: center;
-  padding: 12px;
-  background: rgba(0, 0, 0, 0.2);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 8px;
-  display: flex; /* Flexbox para centrar contenido */
+  display: flex;
   flex-direction: column;
-  align-items: center;
   justify-content: center;
+  transition: all 0.3s ease;
 }
 
-:deep(.leaflet-popup-content-wrapper) {
-  background: #333 !important;
-  color: white !important;
-  border-radius: 8px;
+.hover-border-glow:hover {
+  border-color: #39ff14;
+  box-shadow: 0 0 15px rgba(57, 255, 20, 0.2);
 }
-:deep(.leaflet-popup-tip) {
-  background: #333 !important;
+
+.bg-dark-soft {
+  background: rgba(0, 0, 0, 0.6);
 }
-:deep(.leaflet-control-layers) {
-  background: rgba(40, 40, 40, 0.9) !important;
-  backdrop-filter: blur(5px);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  color: white;
+
+.border-neon {
+  border: 1px solid #39ff14;
 }
-:deep(.leaflet-control-layers-base label) {
-  color: white;
+
+.glass-panel {
+  background: rgba(20, 20, 25, 0.7);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 16px;
 }
-:deep(.leaflet-control-layers-overlays label) {
-  color: white;
+
+.shadow-glow {
+  box-shadow: 0 0 15px rgba(57, 255, 20, 0.4);
 }
-:deep(.leaflet-control-zoom-in),
-:deep(.leaflet-control-zoom-out) {
-  background-color: rgba(40, 40, 40, 0.9) !important;
-  color: white !important;
-  border: 1px solid rgba(255, 255, 255, 0.2);
+
+.opacity-20 {
+  opacity: 0.2;
+}
+.opacity-80 {
+  opacity: 0.8;
+}
+.font-mono {
+  font-family: 'Courier New', monospace;
+}
+
+/* Estilo de Paginación Glass (Consistente con otras páginas) */
+:deep(.glass-pagination .q-btn) {
+  background: rgba(0, 0, 0, 0.3) !important;
+  backdrop-filter: blur(4px);
+}
+:deep(.glass-pagination .q-btn.text-black) {
+  background: #26c6da !important;
+  color: black !important;
+  font-weight: bold;
 }
 </style>

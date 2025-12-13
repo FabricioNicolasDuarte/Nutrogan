@@ -27,8 +27,13 @@
         <q-tab name="register" label="Crear Cuenta" class="tab-btn" />
       </q-tabs>
 
-      <q-tab-panels v-model="tab" animated class="bg-transparent text-white">
-        <q-tab-panel name="login" class="q-pa-none">
+      <q-tab-panels
+        v-model="tab"
+        transition-prev="fade"
+        transition-next="fade"
+        class="bg-transparent text-white panels-container"
+      >
+        <q-tab-panel name="login" class="q-pa-none panel-no-scroll">
           <q-form @submit.prevent="handleLogin" class="q-gutter-y-md">
             <q-input
               v-model="form.email"
@@ -86,7 +91,7 @@
           </q-form>
         </q-tab-panel>
 
-        <q-tab-panel name="register" class="q-pa-none">
+        <q-tab-panel name="register" class="q-pa-none panel-no-scroll">
           <q-form @submit.prevent="handleRegister" class="q-gutter-y-md">
             <q-input
               v-model="form.email"
@@ -138,7 +143,7 @@
       </q-slide-transition>
     </q-card>
 
-    <div class="absolute-bottom text-center q-pb-lg text-grey-7 text-caption">
+    <div class="absolute-bottom text-center footer-gradient text-grey-5 text-caption">
       &copy; 2025 Nutrogan Technologies | Duarte Fabricio | Ascona Enzo | Amarilla Sebastián
     </div>
   </div>
@@ -148,7 +153,6 @@
 import { ref, reactive } from 'vue'
 import { useAuthStore } from 'stores/auth-store'
 import { useRouter } from 'vue-router'
-// Importamos los componentes visuales nuevos
 import InteractiveBackground from 'components/login/InteractiveBackground.vue'
 import InteractiveLogo from 'components/login/InteractiveLogo.vue'
 
@@ -170,7 +174,6 @@ async function handleLogin() {
   errorMsg.value = null
   try {
     await authStore.login(form)
-    // CORRECCIÓN AQUÍ: Redirigir a /welcome
     router.push('/welcome')
   } catch (error) {
     errorMsg.value = 'Credenciales incorrectas o error de conexión.'
@@ -185,7 +188,6 @@ async function handleRegister() {
   errorMsg.value = null
   try {
     await authStore.signUp(form)
-    // CORRECCIÓN AQUÍ: Redirigir a /welcome
     router.push('/welcome')
   } catch (error) {
     errorMsg.value = error.message
@@ -200,15 +202,17 @@ async function handleRegister() {
 .login-container {
   min-height: 100vh;
   background-color: #050505;
-  /* Fondo base texturizado */
   background-image: url('src/assets/nutrogan-bg.jpg');
   background-size: cover;
   background-position: center;
   position: relative;
-  overflow: hidden;
+  /* Permitimos scroll en la página si la pantalla es muy pequeña (móvil landscape) */
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding-bottom: 80px; /* Espacio para el footer */
 }
 
-/* --- 3. GLOW AMBIENTAL (Respiración) --- */
+/* --- 3. GLOW AMBIENTAL --- */
 .ambient-glow {
   width: 600px;
   height: 600px;
@@ -233,25 +237,35 @@ async function handleRegister() {
 
 /* --- 4. TARJETA GLASS --- */
 .login-card {
-  width: 100%;
-  max-width: 400px;
-  padding: 32px;
+  width: 90%;
+  max-width: 460px;
+  padding: 40px;
   border-radius: 24px;
   z-index: 1;
 
-  /* Efecto Cristal Avanzado */
-  background: rgba(20, 20, 25, 0.7);
+  /* IMPORTANTE: Quitamos overflow hidden restrictivo si queremos que crezca,
+     pero lo mantenemos para el borde redondeado. */
+  overflow: hidden;
+
+  background: rgba(20, 20, 25, 0.75);
   backdrop-filter: blur(20px) saturate(180%);
   -webkit-backdrop-filter: blur(20px) saturate(180%);
   border: 1px solid rgba(255, 255, 255, 0.1);
   box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
-
   transition:
     transform 0.3s ease,
     box-shadow 0.3s ease;
 }
 
-/* Efecto Hover sutil en la tarjeta */
+/* Ajuste Responsivo para Móviles */
+@media (max-width: 600px) {
+  .login-card {
+    width: 95%;
+    padding: 24px; /* Menos padding para dar espacio al contenido */
+    margin-top: 20px; /* Un poco de aire arriba */
+  }
+}
+
 .login-card:hover {
   border-color: rgba(57, 255, 20, 0.3);
   box-shadow:
@@ -259,10 +273,18 @@ async function handleRegister() {
     0 0 20px rgba(57, 255, 20, 0.1);
 }
 
+/* FIX SCROLLBARS INTERNOS */
+:deep(.panels-container),
+:deep(.panel-no-scroll) {
+  overflow: visible !important; /* Fuerza a no tener barras de scroll internas */
+}
+:deep(.q-panel) {
+  overflow: visible !important;
+}
+
 /* --- 5. LOGO Y TABS --- */
-.logo-container {
-  display: inline-block;
-  transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+.logo-wrapper {
+  margin-bottom: 2rem;
 }
 
 .nav-tabs {
@@ -277,9 +299,8 @@ async function handleRegister() {
   text-transform: none;
   transition: all 0.3s;
 }
-
 :deep(.q-tab--active) {
-  background: $primary; /* Verde Neón */
+  background: $primary;
   color: #000;
   box-shadow: 0 4px 15px rgba(57, 255, 20, 0.4);
 }
@@ -288,11 +309,11 @@ async function handleRegister() {
 .input-pro {
   font-weight: 500;
 }
-/* Override de Quasar para inputs */
 :deep(.q-field__control) {
   border-radius: 12px;
   background: rgba(0, 0, 0, 0.4) !important;
   transition: all 0.3s;
+  height: 56px;
 }
 :deep(.q-field--outlined .q-field__control:before) {
   border-color: rgba(255, 255, 255, 0.1);
@@ -308,34 +329,42 @@ async function handleRegister() {
   background: linear-gradient(135deg, $primary 0%, #32cd32 100%);
   color: #000;
   font-weight: 800;
-  font-size: 1rem;
+  font-size: 1.1rem;
   border-radius: 12px;
   padding: 12px;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-
+  min-height: 50px;
   &:hover {
     box-shadow: 0 0 25px rgba(57, 255, 20, 0.5);
     transform: translateY(-2px) scale(1.01);
   }
 }
-
 .btn-neon-outline {
   background: transparent;
   border: 2px solid $primary;
   color: $primary;
   font-weight: 700;
-  font-size: 1rem;
+  font-size: 1.1rem;
   border-radius: 12px;
   padding: 12px;
   transition: all 0.3s;
-
+  min-height: 50px;
   &:hover {
     background: rgba(57, 255, 20, 0.1);
     box-shadow: 0 0 20px rgba(57, 255, 20, 0.2);
   }
 }
 
-/* --- 8. UTILIDADES --- */
+/* --- 8. FOOTER GRADIENTE --- */
+.footer-gradient {
+  width: 100%;
+  background: linear-gradient(to top, rgba(0, 0, 0, 1) 30%, rgba(0, 0, 0, 0) 100%);
+  padding-bottom: 24px;
+  padding-top: 60px;
+  z-index: 2;
+}
+
+/* --- 9. UTILIDADES --- */
 .tracking-wide {
   letter-spacing: 1px;
 }
@@ -345,7 +374,6 @@ async function handleRegister() {
 .transition-color {
   transition: color 0.3s;
 }
-
 .error-box {
   border: 1px solid rgba(255, 0, 0, 0.3);
   padding: 12px;

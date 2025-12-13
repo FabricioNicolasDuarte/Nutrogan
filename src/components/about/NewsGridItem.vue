@@ -1,23 +1,30 @@
 <template>
-  <div class="news-item cursor-pointer bg-dark">
-    <div class="image-wrapper relative-position full-height">
-      <q-img :src="image" class="full-height full-width image-zoom" :ratio="1">
-        <template v-slot:error>
-          <div class="absolute-full flex flex-center bg-grey-9">
-            <q-icon name="image" color="grey-7" size="3em" />
-          </div>
-        </template>
-
-        <div class="absolute-bottom gradient-overlay q-pa-md">
-          <div class="row items-center q-mb-xs">
-            <q-badge :color="tagColor" :label="tag" class="text-weight-bold q-mr-sm shadow-2" />
-            <span class="text-caption text-white text-shadow">{{ date }}</span>
-          </div>
-          <div class="text-h6 text-weight-bold text-white leading-tight title-hover text-shadow">
-            {{ title }}
-          </div>
+  <div class="news-item cursor-pointer full-height relative-position overflow-hidden bg-dark">
+    <q-img
+      :src="image"
+      class="full-height full-width image-zoom"
+      :ratio="1"
+      style="background-color: #1a1a1a"
+    >
+      <template v-slot:error>
+        <div class="absolute-full flex flex-center bg-grey-9 column">
+          <q-icon name="image_not_supported" size="3em" color="grey-7" />
         </div>
-      </q-img>
+      </template>
+    </q-img>
+
+    <div class="absolute-full gradient-overlay"></div>
+
+    <div class="absolute-bottom q-pa-md z-10 content-box">
+      <div class="row items-center q-mb-sm">
+        <q-badge :color="tagColor" :label="tag" class="q-mr-sm text-weight-bold shadow-2" />
+        <span class="text-caption text-grey-4 text-shadow">{{ date }}</span>
+      </div>
+      <div
+        class="text-subtitle1 text-white text-weight-bold leading-tight ellipsis-3-lines text-shadow"
+      >
+        {{ title }}
+      </div>
     </div>
   </div>
 </template>
@@ -35,54 +42,51 @@ defineProps({
 <style lang="scss" scoped>
 .news-item {
   border-radius: 20px;
-  overflow: hidden;
-  height: 100%;
   border: 1px solid rgba(255, 255, 255, 0.15);
-  transition: all 0.4s ease;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+  transition: all 0.3s ease;
+  height: 100%; /* Fundamental para que herede la altura del padre */
 
   &:hover {
     border-color: var(--q-primary);
-    transform: translateY(-8px);
-    box-shadow: 0 15px 40px rgba(0, 0, 0, 0.6);
+    transform: translateY(-5px);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
 
     .image-zoom {
-      transform: scale(1.1);
+      transform: scale(1.05);
     }
   }
 }
 
-.image-wrapper {
-  height: 100%;
-  overflow: hidden;
-}
-
 .image-zoom {
-  transition: transform 0.7s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  transition: transform 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94);
 }
 
-/* Gradiente más fuerte para garantizar lectura */
 .gradient-overlay {
   background: linear-gradient(
     to top,
-    #000000 0%,
-    rgba(0, 0, 0, 0.8) 60%,
+    rgba(0, 0, 0, 1) 0%,
+    rgba(0, 0, 0, 0.6) 50%,
     transparent 100%
-  ) !important;
-  width: 100%;
-  padding-top: 40px; /* Espacio para el fade */
+  );
+  pointer-events: none;
 }
 
 .leading-tight {
-  line-height: 1.2;
+  line-height: 1.3;
 }
-
+.z-10 {
+  z-index: 10;
+}
 .text-shadow {
   text-shadow: 0 2px 4px rgba(0, 0, 0, 0.8);
 }
 
-/* Asegurar que el texto sea blanco siempre */
-.text-white {
-  color: #ffffff !important;
+/* ESLint fix */
+.ellipsis-3-lines {
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  line-clamp: 3;
+  overflow: hidden;
 }
 </style>

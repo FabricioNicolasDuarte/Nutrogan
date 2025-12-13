@@ -1,18 +1,43 @@
 <template>
-  <div class="chart-container">
+  <div class="chart-container" :class="{ 'print-mode': isPrintMode }">
     <div class="chart-header row items-center q-pb-sm">
-      <!-- Usamos un color verde más genérico de Quasar si 'green-accent-3' no está definido -->
-      <q-icon name="trending_up" color="green-4" size="sm" class="q-mr-sm" />
-      <div class="text-h6 text-white">Evolución de Peso</div>
+      <q-icon
+        name="trending_up"
+        :color="isPrintMode ? 'black' : 'green-13'"
+        size="sm"
+        class="q-mr-sm"
+      />
+      <div class="text-h6" :class="isPrintMode ? 'text-black' : 'text-white'">
+        Evolución de Peso
+      </div>
     </div>
-    <v-chart ref="vchartRef" class="chart" :option="option" autoresize />
+
+    <div class="chart-wrapper">
+      <v-chart v-if="hasData" ref="vchartRef" class="chart" :option="option" autoresize />
+      <div
+        v-else
+        class="flex flex-center full-height text-grey-6 text-center column"
+        style="min-height: 250px"
+      >
+        <q-icon name="scale" size="3em" class="opacity-50" />
+        <div class="q-mt-sm">Sin evaluaciones de peso</div>
+      </div>
+    </div>
+
+    <div v-if="!isPrintMode" class="explanation-box q-mt-sm">
+      <div class="row items-center q-mb-xs">
+        <q-icon name="show_chart" color="green-13" size="xs" class="q-mr-sm" />
+        <span class="text-weight-bold text-white text-caption">Curva de Crecimiento</span>
+      </div>
+      <p class="text-caption text-grey-4 q-mb-none">Peso promedio histórico.</p>
+    </div>
   </div>
 </template>
 
 <script setup>
 import { computed, ref } from 'vue'
 import { useDataStore } from 'stores/data-store'
-import { use, graphic } from 'echarts/core' // Importamos 'graphic' para degradados
+import { use, graphic } from 'echarts/core'
 import { CanvasRenderer } from 'echarts/renderers'
 import { LineChart } from 'echarts/charts'
 import {
@@ -27,68 +52,87 @@ use([CanvasRenderer, LineChart, GridComponent, TooltipComponent, TitleComponent,
 
 const dataStore = useDataStore()
 const vchartRef = ref(null)
-defineExpose({ vchartRef })
+const isPrintMode = ref(false)
+defineExpose({ vchartRef, isPrintMode })
+
+const chartData = computed(() => {
+  const monthlyStats = {}
+  dataStore.evaluaciones.forEach((ev) => {
+    if (!ev.fecha_evaluacion || !ev.peso_promedio_kg) return
+    const peso = parseFloat(ev.peso_promedio_kg)
+    if (peso <= 0 || peso > 1500) return
+    const [y, m] = ev.fecha_evaluacion.split('T')[0].split('-')
+    const key = `${y}-${m}`
+    if (!monthlyStats[key]) monthlyStats[key] = { totalPeso: 0, count: 0 }
+    monthlyStats[key].totalPeso += peso
+    monthlyStats[key].count += 1
+  })
+  return Object.keys(monthlyStats)
+    .sort()
+    .map((key) => {
+      const item = monthlyStats[key]
+      return [key, (item.totalPeso / item.count).toFixed(2)]
+    })
+})
+
+const hasData = computed(() => chartData.value.length > 0)
 
 const option = computed(() => {
-  const data = [...dataStore.evaluaciones]
-    .sort((a, b) => new Date(a.fecha_evaluacion) - new Date(b.fecha_evaluacion))
-    .map((e) => [e.fecha_evaluacion, parseFloat(e.peso_promedio_kg).toFixed(2)])
-
-  // Definiciones de color de Nutrogan
-  const NEON_GREEN = '#00E396'
-
+  const isPrint = isPrintMode.value
+  const lineColor = isPrint ? '#000000' : '#39ff14' // Verde Neón
+  const textColor = isPrint ? '#000000' : '#888'
+  const areaGradient = isPrint
+    ? null
+    : new graphic.LinearGradient(0, 0, 0, 1, [
+        { offset: 0, color: 'rgba(57, 255, 20, 0.4)' },
+        { offset: 1, color: 'rgba(57, 255, 20, 0)' },
+      ])
+  const areaColor = isPrint ? '#cccccc' : undefined
 
   return {
-    backgroundColor: 'transparent',
+    backgroundColor: isPrint ? '#ffffff' : 'transparent',
+    animation: !isPrint,
     tooltip: {
       trigger: 'axis',
-      backgroundColor: 'rgba(20, 20, 30, 0.9)',
-      borderColor: NEON_GREEN, // Borde Neón
-      textStyle: { color: '#fff' },
-      axisPointer: { type: 'line', lineStyle: { color: NEON_GREEN, type: 'dashed' } },
+      formatter: (params) => {
+        const p = params[0]
+        const [y, m] = p.axisValue.split('-')
+        const dateStr = `${m}/${y}`
+        return `<b>${dateStr}</b><br/>Promedio: <b>${p.value[1]} kg</b>`
+      },
     },
-    grid: { top: 20, bottom: 20, left: 10, right: 10, containLabel: true },
+    grid: { top: 30, bottom: 20, left: 10, right: 10, containLabel: true },
     xAxis: {
-      type: 'time',
-      axisLabel: { color: '#888', fontSize: 11 },
-      axisLine: { show: false },
-      axisTick: { show: false },
-      splitLine: { show: false },
+      type: 'category',
+      axisLabel: {
+        color: textColor,
+        formatter: (val) => {
+          const [y, m] = val.split('-')
+          return `${m}/${y.slice(2)}`
+        },
+      },
+      axisLine: { show: true, lineStyle: { color: isPrint ? '#000' : '#333' } },
     },
     yAxis: {
       type: 'value',
-      name: 'Kg',
-      nameTextStyle: { color: '#888', padding: [0, 0, 0, -30] },
-      axisLabel: { color: '#888', fontSize: 11 },
-      splitLine: { lineStyle: { color: 'rgba(255, 255, 255, 0.05)', type: 'dashed' } },
+      name: 'kg',
       scale: true,
+      axisLabel: { color: textColor },
+      splitLine: {
+        lineStyle: { color: isPrint ? '#ccc' : 'rgba(255,255,255,0.1)', type: 'dashed' },
+      },
     },
     series: [
       {
         name: 'Peso Promedio',
         type: 'line',
         smooth: true,
+        data: chartData.value,
+        lineStyle: { width: 3, color: lineColor },
+        itemStyle: { color: lineColor, borderColor: '#fff', borderWidth: 1 },
         symbol: 'circle',
         symbolSize: 8,
-        itemStyle: {
-          color: '#000',
-          borderColor: NEON_GREEN,
-          borderWidth: 2,
-        },
-        lineStyle: {
-          width: 3,
-          color: NEON_GREEN, // Verde Neón
-          shadowColor: 'rgba(0, 227, 150, 0.5)', // Sombra brillante (Glow Effect)
-          shadowBlur: 15,
-          shadowOffsetY: 5,
-        },
-        areaStyle: {
-          color: new graphic.LinearGradient(0, 0, 0, 1, [
-            { offset: 0, color: 'rgba(0, 227, 150, 0.4)' }, // Gradiente verde
-            { offset: 1, color: 'rgba(0, 227, 150, 0.0)' },
-          ]),
-        },
-        data: data,
+        areaStyle: { color: isPrint ? areaColor : areaGradient, opacity: isPrint ? 0.3 : 1 },
       },
     ],
   }
@@ -97,15 +141,34 @@ const option = computed(() => {
 
 <style scoped>
 .chart-container {
-  /* Fondo Glassmorphism más oscuro y pro */
   background: rgba(15, 15, 20, 0.6);
   border-radius: 16px;
   padding: 20px;
   border: 1px solid rgba(255, 255, 255, 0.08);
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
   height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+.chart-wrapper {
+  flex-grow: 1;
+  min-height: 250px;
 }
 .chart {
-  height: 320px;
+  width: 100%;
+  height: 100%;
+}
+.print-mode {
+  background: #ffffff !important;
+  border: 1px solid #000000 !important;
+  color: #000 !important;
+}
+.explanation-box {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  padding: 10px;
+}
+.opacity-50 {
+  opacity: 0.5;
 }
 </style>

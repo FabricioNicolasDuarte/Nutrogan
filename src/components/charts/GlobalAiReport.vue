@@ -2,7 +2,7 @@
   <q-card flat class="ai-card">
     <q-card-section class="row items-center justify-between">
       <div class="row items-center">
-        <q-icon name="psychology" color="cyan-4" size="2em" class="q-mr-sm" />
+        <q-icon name="psychology" color="cyan-accent-3" size="2em" class="q-mr-sm" />
         <div class="text-h6 text-white">Informe Estratégico & Predicciones</div>
       </div>
       <q-btn
@@ -22,10 +22,10 @@
 
     <q-card-section>
       <div v-if="loading" class="text-center q-pa-lg">
-        <div class="text-h6 text-grey-4 q-mb-md">Analizando métricas del establecimiento...</div>
-        <q-spinner-orbit color="primary-neon" size="4em" />
+        <div class="text-h6 text-grey-4 q-mb-md">Procesando datos del establecimiento...</div>
+        <q-spinner-orbit color="cyan-accent-3" size="4em" />
         <div class="text-caption text-grey-5 q-mt-sm">
-          Correlacionando lluvias, stock y evolución de peso.
+          Analizando variables biométricas, climáticas y financieras...
         </div>
       </div>
 
@@ -55,67 +55,69 @@ const dataStore = useDataStore()
 const loading = ref(false)
 const error = ref(null)
 const reportResult = ref('')
-const rawReportText = ref(null) // CLAVE: Para enviar el texto limpio al PDF
+const structuredReport = ref([])
 
-// Definiciones de color de Nutrogan
-const NEON_GREEN = '#00E396'
-const ELECTRIC_CYAN = '#00FFFF'
+// --- COLORES DE SECCIÓN (PALETA NUTROGAN) ---
+const C_SEC1 = '#39ff14' // Verde Neón (Diagnóstico)
+const C_SEC2 = '#00e5ff' // Cyan Fluor (Zootécnico)
+const C_SEC3 = '#ff1744' // Rojo Neón (Riesgos Críticos)
+const C_SEC4 = '#2979ff' // Azul Eléctrico (Plan de Acción - Reemplaza Lima)
 
-// Utilidad para convertir el HTML con secciones a un array de texto para jsPDF
-function parseHtmlToTextSections(htmlString) {
-  if (!htmlString) return null
-
-  const tempDiv = document.createElement('div')
-  tempDiv.innerHTML = htmlString
+// --- PARSER HTML A ESTRUCTURA PDF ---
+function parseHtmlToStructuredData(htmlString) {
+  if (!htmlString) return []
+  const cleanHtml = htmlString.replace(/^```html/, '').replace(/```$/, '')
+  const div = document.createElement('div')
+  div.innerHTML = cleanHtml
 
   const sections = []
-  let currentSection = { title: '', content: '' }
+  let currentSection = { title: 'Introducción', paragraphs: [] }
 
-  Array.from(tempDiv.children).forEach((child) => {
-    if (child.tagName === 'H4') {
-      if (currentSection.title || currentSection.content) {
-        sections.push(currentSection)
-      }
-      const titleText = child.textContent.trim()
-      currentSection = {
-        title: titleText,
-        content: '',
-      }
+  Array.from(div.children).forEach((el) => {
+    const tag = el.tagName.toUpperCase()
+    const text = el.innerText.trim()
+    if (!text) return
+
+    if (['H1', 'H2', 'H3', 'H4'].includes(tag)) {
+      if (currentSection.paragraphs.length > 0) sections.push(currentSection)
+      currentSection = { title: text, paragraphs: [] }
+    } else if (tag === 'UL' || tag === 'OL') {
+      Array.from(el.children).forEach((li) =>
+        currentSection.paragraphs.push(`• ${li.innerText.trim()}`),
+      )
     } else {
-      currentSection.content += child.textContent.trim() + '\n\n'
+      currentSection.paragraphs.push(text)
     }
   })
-
-  if (currentSection.title || currentSection.content) {
-    sections.push(currentSection)
-  }
-
+  if (currentSection.paragraphs.length > 0) sections.push(currentSection)
   return sections
 }
 
-// Preparamos los datos masivos para la IA
+// --- CONTEXTO DE DATOS ---
 const globalContext = computed(() => {
-  const inventarioCritico = dataStore.inventarioItems
-    .filter((i) => i.stock_actual <= i.stock_minimo)
-    .map((i) => `${i.nombre} (${i.stock_actual} ${i.unidad})`)
-
-  const lluviasRecientes = dataStore.registrosLluvia
-    .slice(0, 5)
-    .map((r) => `${r.fecha}: ${r.milimetros}mm`)
-
-  const lotesResumen = dataStore.lotes.map((l) => ({
-    id: l.identificacion,
-    animales: l.cantidad_animales,
-    categoria: l.categoria_animales,
-  }))
+  const lotesMetrics = dataStore.lotes.map((l) => {
+    const evs = dataStore.evaluaciones
+      .filter((e) => e.lote_id === l.id)
+      .sort((a, b) => new Date(b.fecha_evaluacion) - new Date(a.fecha_evaluacion))
+    const gdpv =
+      evs.length >= 2
+        ? (
+            (evs[0].peso_promedio_kg - evs[1].peso_promedio_kg) /
+            ((new Date(evs[0].fecha_evaluacion) - new Date(evs[1].fecha_evaluacion)) /
+              (1000 * 60 * 60 * 24))
+          ).toFixed(3)
+        : 'N/A'
+    return { id: l.identificacion, obj: l.objetivo, peso: evs[0]?.peso_promedio_kg || 'N/A', gdpv }
+  })
 
   return JSON.stringify({
-    total_animales: dataStore.lotes.reduce((acc, l) => acc + (l.cantidad_animales || 0), 0),
-    lotes_detalle: lotesResumen,
-    lluvias_recientes: lluviasRecientes,
-    alertas_inventario: inventarioCritico,
-    clima_actual: dataStore.clima?.current || 'No disponible',
-    pronostico: dataStore.clima?.forecast?.slice(0, 3) || 'No disponible',
+    total_cabezas: dataStore.lotes.reduce((a, b) => a + (Number(b.cantidad_animales) || 0), 0),
+    lotes: lotesMetrics,
+    clima: dataStore.clima?.current || 'N/A',
+    pronostico: dataStore.clima?.forecast?.slice(0, 3) || [],
+    insumos_criticos: dataStore.inventarioItems
+      .filter((i) => Number(i.stock_actual) <= Number(i.stock_minimo_alerta))
+      .map((i) => i.nombre),
   })
 })
 
@@ -125,100 +127,87 @@ async function generarReporte() {
 
   try {
     const prompt = `
-      Actúa como un Consultor Ganadero Senior y Analista de Datos para "Nutrogan".
-      Analiza los siguientes datos del establecimiento en tiempo real:
-      ${globalContext.value}
+      Actúa como Consultor Senior en Agronegocios para "Nutrogan".
+      Analiza: ${globalContext.value}
 
-      Genera un INFORME EJECUTIVO en formato HTML (sin tags html/body, usa h4, ul, li, strong, p).
-      Divide tu respuesta en estas dos secciones exactas:
+      Escribe un INFORME TÉCNICO DETALLADO y PROFESIONAL (mínimo 400 palabras).
+      Usa lenguaje técnico agronómico y financiero. Sé crítico con los desvíos.
 
-      1. <h4 style="color:${ELECTRIC_CYAN}">Diagnóstico Situacional</h4>
-      Analiza el estado actual. Menciona el stock crítico, la carga animal y si las lluvias recientes favorecen o perjudican. Sé directo.
+      ESTRUCTURA HTML OBLIGATORIA (Sin Markdown):
+      <h4 style="color:${C_SEC1}">1. DIAGNÓSTICO SITUACIONAL</h4>
+      <p>Evalúa la carga animal, el clima actual y su impacto en el bienestar animal. Menciona cifras.</p>
 
-      2. <h4 style="color:${NEON_GREEN}">Predicciones y Estrategia</h4>
-      Basado en el clima (pronóstico) y el inventario:
-      - Predice riesgos (ej: falta de comida por sequía, barro por exceso de lluvia).
-      - Recomienda acciones concretas para la semana (ej: "Comprar maíz", "Mover lote X").
+      <h4 style="color:${C_SEC2}">2. ANÁLISIS ZOOTÉCNICO</h4>
+      <p>Analiza el G.D.P.V. de los lotes. Identifica ineficiencias de conversión. Compara categorías.</p>
+
+      <h4 style="color:${C_SEC3}">3. MATRIZ DE RIESGOS</h4>
+      <p>Cruza pronóstico climático con insumos críticos. ¿Riesgo de barro? ¿Estrés térmico? ¿Falta de stock?</p>
+
+      <h4 style="color:${C_SEC4}">4. PLAN DE ACCIÓN RECOMENDADO</h4>
+      <ul>
+        <li>Acción correctiva inmediata 1...</li>
+        <li>Estrategia nutricional sugerida...</li>
+        <li>Proyección económica si se aplica...</li>
+      </ul>
     `
 
-    const { data, error: funcError } = await supabase.functions.invoke('asistente-ia', {
-      body: { prompt: prompt, dataContext: {} },
+    const { data, error: err } = await supabase.functions.invoke('asistente-ia', {
+      body: { prompt, dataContext: {} },
     })
 
-    if (funcError) throw funcError
+    if (err) throw err
 
-    reportResult.value = data.response
-    rawReportText.value = parseHtmlToTextSections(data.response)
+    let cleanHtml = data.response
+      .replace(/^```html/, '')
+      .replace(/```$/, '')
+      .trim()
+    reportResult.value = cleanHtml
+    structuredReport.value = parseHtmlToStructuredData(cleanHtml)
   } catch (e) {
-    console.error('Error al contactar a la Edge Function:', e)
-    error.value = 'No se pudo generar el informe inteligente.'
-
-    // SOLUCIÓN DE FALLBACK: Usar un reporte de error simulado para que el PDF no falle
-    const fallbackReport = `
-      <h4>Diagnóstico Situacional</h4>
-      <p>⚠️ **ERROR CRÍTICO (500):** La función de IA de Nutrogan ha fallado en el servidor. El análisis en tiempo real no está disponible.</p>
-      <p>**Recomendación:** Verifique la configuración de Supabase o intente más tarde. A continuación se muestran los gráficos y la tabla de métricas para un análisis manual.</p>
-      <h4>Predicciones y Estrategia</h4>
-      <p>La planificación estratégica está pausada hasta que la IA se restablezca.</p>
-    `
-    reportResult.value = fallbackReport
-    rawReportText.value = parseHtmlToTextSections(fallbackReport)
+    console.error(e)
+    error.value = 'Error al generar informe.'
+    const fallback = `<h4 style="color:${C_SEC1}">Informe Offline</h4><p>No se pudo conectar con la IA.</p>`
+    reportResult.value = fallback
+    structuredReport.value = parseHtmlToStructuredData(fallback)
   } finally {
     loading.value = false
   }
 }
 
 onMounted(() => {
-  if (dataStore.lotes.length > 0) {
-    if (!error.value) {
-      generarReporte()
-    }
-  } else {
-    reportResult.value = '<p class="text-grey-5">Cargando datos del sistema...</p>'
-  }
+  if (dataStore.lotes.length > 0) generarReporte()
 })
 
-// EXPORTAMOS EL TEXTO PARSEADO
-defineExpose({ rawReportText })
+defineExpose({ structuredReport })
 </script>
 
 <style lang="scss" scoped>
-$primary-neon: #00e396; // Verde Neón
-$neon-cyan: #00ffff;
-
-.text-primary-neon {
-  color: $primary-neon !important;
-}
-
 .ai-card {
   background: rgba(20, 20, 30, 0.6);
   backdrop-filter: blur(10px);
-  border: 1px solid rgba(0, 227, 150, 0.3);
+  border: 1px solid rgba(57, 255, 20, 0.3);
   border-radius: 12px;
   min-height: 300px;
-  box-shadow: 0 0 15px rgba(0, 227, 150, 0.15);
 }
-
 .ai-content {
-  line-height: 1.6;
+  line-height: 1.8;
   color: #e0e0e0;
+  font-family: 'Roboto', sans-serif;
+  font-size: 0.95rem;
 
   :deep(h4) {
-    margin-top: 0;
+    margin-top: 1.5rem;
     margin-bottom: 1rem;
-    font-size: 1.2rem;
-    font-weight: 600;
+    font-size: 1.1rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 1px;
     border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-    padding-bottom: 0.5rem;
+    padding-bottom: 6px;
   }
-
-  :deep(strong) {
-    color: $primary-neon;
-  }
-
-  :deep(ul) {
-    padding-left: 1.2rem;
-    margin-bottom: 1rem;
+  :deep(p) {
+    margin-bottom: 1.2rem;
+    text-align: justify;
   }
   :deep(li) {
     margin-bottom: 0.5rem;
