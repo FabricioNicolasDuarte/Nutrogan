@@ -7,6 +7,7 @@ import {
 } from 'vue-router'
 import routes from './routes'
 import { useAuthStore } from 'stores/auth-store'
+import { Notify } from 'quasar'
 
 export default route(function (/* { store, ssrContext } */) {
   const createHistory = process.env.SERVER
@@ -25,48 +26,64 @@ export default route(function (/* { store, ssrContext } */) {
     const authStore = useAuthStore()
 
     // 1. Verificar sesión activa
-    // Si no hay usuario en memoria, intentamos recuperarlo (ej. al recargar página)
     if (!authStore.user) {
       await authStore.checkAuth()
     }
 
     const requiresAuth = to.matched.some((record) => record.meta.requiresAuth)
-    const requiresRole = to.meta.requiresRole // Array de roles permitidos para esta ruta
+    const requiresRole = to.meta.requiresRole
 
-    // --- LÓGICA DE AUTENTICACIÓN ---
+    // --- LÓGICA DE SEGURIDAD ---
 
-    if (requiresAuth && !authStore.user) {
-      // Si la ruta requiere auth y no hay usuario -> Login
-      next('/login')
-      return
+    if (requiresAuth) {
+      // A. Si no hay usuario -> Login
+      if (!authStore.user) {
+        next('/login')
+        return
+      }
+
+      // B. SEGURIDAD EXTRA: Verificar que tenga perfil válido
+      // Si está logueado pero no tiene perfil (ej: intruso), lo sacamos.
+      if (!authStore.profile) {
+        await authStore.fetchProfile() // Último intento de carga
+
+        if (!authStore.profile) {
+          console.warn('ALERTA: Usuario sin perfil detectado. Cerrando sesión...')
+          await authStore.logout()
+
+          Notify.create({
+            type: 'negative',
+            message: 'Acceso Denegado: Usuario no autorizado por el administrador.',
+            icon: 'security',
+            position: 'top',
+          })
+
+          next('/login')
+          return
+        }
+      }
+
+      // C. Verificación de Roles (Si la ruta lo requiere)
+      if (requiresRole) {
+        const userRole = authStore.currentRole
+        if (!userRole || !requiresRole.includes(userRole)) {
+          Notify.create({
+            type: 'warning',
+            message: 'No tiene permisos suficientes para esta sección.',
+            position: 'top',
+          })
+          next('/') // Volver al Home si no tiene permiso
+          return
+        }
+      }
     }
 
+    // Si ya está logueado y quiere ir al login, lo mandamos al dashboard
     if (!requiresAuth && authStore.user && to.path === '/login') {
-      // Si ya está logueado y quiere ir al login -> Home
       next('/')
       return
     }
 
-    // --- LÓGICA DE ROLES (NUEVO) ---
-
-    if (requiresRole) {
-      // Si la ruta tiene restricción de roles, nos aseguramos de tener el perfil cargado
-      if (authStore.user && !authStore.currentRole) {
-        await authStore.fetchProfile()
-      }
-
-      const userRole = authStore.currentRole
-
-      // Si el usuario no tiene rol o su rol NO está en la lista permitida
-      if (!userRole || !requiresRole.includes(userRole)) {
-        // Acceso Denegado: Redirigir a una ruta segura
-        // (Por ahora al Home, el Dashboard adaptará su contenido o mostrará lo que corresponda)
-        next('/')
-        return
-      }
-    }
-
-    // Si pasa todas las verificaciones
     next()
   })
 

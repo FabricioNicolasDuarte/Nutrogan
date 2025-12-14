@@ -39,7 +39,7 @@ import { useAuthStore } from 'stores/auth-store'
 const authStore = useAuthStore()
 
 onMounted(async () => {
-  // Intentamos refrescar la sesión para asegurar que el usuario esté logueado y tenga sus datos
+  // Refrescamos la sesión para confirmar que Supabase ya tiene el usuario activo
   await authStore.checkAuth()
 })
 </script>
