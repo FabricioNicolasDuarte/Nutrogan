@@ -38,22 +38,38 @@
         </div>
       </div>
 
-      <div class="bento-grid-wrapper">
+      <div v-if="$q.screen.gt.sm" class="bento-grid-wrapper">
         <div class="grid-area-profile">
           <ProfileHero />
         </div>
-
         <div class="grid-area-team">
           <TeamInteractiveBoard />
         </div>
-
         <div class="grid-area-actions column q-gutter-y-md">
-          <div class="col-12 col-md map-wrapper-mobile">
+          <div class="col-12 col-md">
             <EstablishmentMapCard />
           </div>
           <div class="col-12 col-md-auto">
             <EmergencyUnit />
           </div>
+        </div>
+      </div>
+
+      <div v-else class="mobile-stack-layout column q-gutter-y-lg">
+        <div class="w-full">
+          <ProfileHero />
+        </div>
+
+        <div class="w-full">
+          <TeamInteractiveBoard />
+        </div>
+
+        <div class="w-full">
+          <EstablishmentMapCard />
+        </div>
+
+        <div class="w-full">
+          <EmergencyUnit />
         </div>
       </div>
     </div>
@@ -228,13 +244,14 @@ onUnmounted(() => {
   flex-direction: column;
 }
 
-/* LAYOUT DE GRILLA */
+/* --- DISEÑO ESCRITORIO (GRILLA) --- */
 .bento-grid-wrapper {
   display: grid;
   grid-template-columns: 340px 1fr 380px;
   gap: 24px;
   width: 100%;
-  min-height: calc(100vh - 130px);
+  height: calc(100vh - 130px); /* Altura fija solo en PC */
+  min-height: 600px;
 }
 
 .grid-area-profile {
@@ -254,7 +271,7 @@ onUnmounted(() => {
   .bento-grid-wrapper {
     grid-template-columns: 320px 1fr;
     grid-template-rows: auto auto;
-    min-height: auto;
+    height: auto; /* Dejar crecer en tablet */
 
     .grid-area-profile {
       grid-column: 1;
@@ -272,33 +289,13 @@ onUnmounted(() => {
   }
 }
 
-/* --- MÓVIL (CORRECCIÓN DEFINITIVA) --- */
-@media (max-width: 900px) {
-  .bento-grid-wrapper {
-    display: flex;
-    flex-direction: column;
-    gap: 24px;
-    height: auto !important;
-    min-height: auto !important;
-  }
-
-  /* IMPORTANTE: Altura automática para que crezca según su contenido (las tarjetas apiladas).
-    Antes tenía height: 600px !important, eso lo rompía.
-  */
-  .grid-area-team {
-    height: auto !important;
-    min-height: auto !important;
-  }
-
-  .map-wrapper-mobile {
-    height: 550px !important;
-  }
-
-  .grid-area-profile,
-  .grid-area-team,
-  .grid-area-actions {
-    width: 100%;
-  }
+/* --- MÓVIL --- */
+.mobile-stack-layout {
+  width: 100%;
+  height: auto;
+}
+.w-full {
+  width: 100%;
 }
 
 /* Estilos Generales */

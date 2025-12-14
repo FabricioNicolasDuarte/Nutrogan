@@ -1,5 +1,5 @@
 <template>
-  <q-card class="pro-detail-card">
+  <q-card class="pro-detail-card" :class="{ 'mobile-mode': mobileMode }">
     <div class="status-bar" :style="{ backgroundColor: loteData ? '#00e5ff' : '#39ff14' }"></div>
 
     <q-card-section class="q-pb-sm relative-position">
@@ -56,13 +56,14 @@
     <q-card-section v-if="loteData" class="bg-dark-soft q-pt-sm">
       <div class="text-caption text-grey-5 q-mb-xs flex justify-between items-center">
         <span>LOTE ASIGNADO</span>
-        <q-icon name="drag_indicator" size="xs" />
+        <q-icon v-if="!mobileMode" name="drag_indicator" size="xs" />
       </div>
 
       <div
-        class="lote-draggable-card cursor-grab relative-position"
-        draggable="true"
-        @dragstart="onDragStart"
+        class="lote-draggable-card relative-position"
+        :class="{ 'cursor-grab': !mobileMode }"
+        :draggable="!mobileMode"
+        @dragstart="!mobileMode && onDragStart($event)"
       >
         <div class="row items-center">
           <div class="lote-icon-wrapper q-mr-md">
@@ -82,12 +83,34 @@
             <div class="text-caption" style="color: #00e5ff">{{ loteData.cantidad }} Cabezas</div>
           </div>
         </div>
-        <q-tooltip class="bg-black text-cyan-13 border-cyan">
+
+        <q-tooltip v-if="!mobileMode" class="bg-black text-cyan-13 border-cyan">
           Arrastra al corral para mover
         </q-tooltip>
       </div>
 
-      <div class="row justify-end q-mt-sm">
+      <div v-if="mobileMode" class="row q-gutter-sm q-mt-md">
+        <q-btn
+          color="primary"
+          outline
+          label="Mover a Potrero"
+          class="col"
+          size="sm"
+          icon="swap_horiz"
+          @click="$emit('action-mover')"
+        />
+        <q-btn
+          color="white"
+          flat
+          label="A Corral"
+          class="col-auto"
+          size="sm"
+          icon="input"
+          @click="$emit('action-corral')"
+        />
+      </div>
+
+      <div class="row justify-end q-mt-sm" v-else>
         <q-btn
           flat
           dense
@@ -101,8 +124,19 @@
     </q-card-section>
 
     <q-card-section v-else class="bg-dark-soft text-center q-py-lg">
-      <q-icon name="add_circle_outline" size="2em" color="grey-8" />
-      <div class="text-caption text-grey-6 q-mt-xs">Arrastra un lote aquí para asignar</div>
+      <div v-if="mobileMode">
+        <q-btn
+          color="primary"
+          label="Asignar Lote Aquí"
+          icon="add_circle"
+          class="full-width shadow-glow"
+          @click="$emit('action-asignar')"
+        />
+      </div>
+      <div v-else>
+        <q-icon name="add_circle_outline" size="2em" color="grey-8" />
+        <div class="text-caption text-grey-6 q-mt-xs">Arrastra un lote aquí para asignar</div>
+      </div>
     </q-card-section>
   </q-card>
 </template>
@@ -111,9 +145,17 @@
 const props = defineProps({
   potreroData: { type: Object, required: true },
   loteData: { type: Object, default: null },
+  mobileMode: { type: Boolean, default: false }, // Nueva prop para detectar modo
 })
 
-const emit = defineEmits(['close', 'view-history', 'drag-lote'])
+const emit = defineEmits([
+  'close',
+  'view-history',
+  'drag-lote',
+  'action-mover',
+  'action-corral',
+  'action-asignar',
+])
 
 function onDragStart(event) {
   event.dataTransfer.effectAllowed = 'move'
@@ -129,13 +171,20 @@ function onDragStart(event) {
 
 <style lang="scss" scoped>
 .pro-detail-card {
-  width: 300px;
+  /* Ancho dinámico: 100% en móvil, 300px fijo en escritorio */
+  width: 100%;
+  max-width: 100%;
+
   border-radius: 12px;
   overflow: hidden;
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.95);
   border: 1px solid rgba(255, 255, 255, 0.2);
-  /* AUMENTO DE OPACIDAD: Ahora es casi sólido (#18181b) */
   background: #18181b;
+
+  /* En escritorio mantenemos el ancho fijo */
+  &:not(.mobile-mode) {
+    width: 300px;
+  }
 }
 
 .status-bar {
@@ -168,7 +217,7 @@ function onDragStart(event) {
 }
 
 .metric-mini {
-  background: rgba(0, 0, 0, 0.3); /* Un poco más oscuro */
+  background: rgba(0, 0, 0, 0.3);
   border-radius: 6px;
   padding: 6px;
   text-align: center;
@@ -193,12 +242,13 @@ function onDragStart(event) {
   border-radius: 8px;
   padding: 10px;
   transition: all 0.2s;
-  &:hover {
+
+  &.cursor-grab:hover {
     background: rgba(0, 229, 255, 0.15);
     transform: translateY(-2px);
     cursor: grab;
   }
-  &:active {
+  &.cursor-grab:active {
     cursor: grabbing;
   }
 }

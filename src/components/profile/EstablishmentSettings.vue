@@ -1,158 +1,130 @@
 <template>
-  <q-card class="establishment-dashboard full-height column no-shadow relative-position">
-    <div class="map-header relative-position">
-      <l-map
-        ref="mapRef"
-        :zoom="zoom"
-        :center="markerPosition"
-        :options="{ zoomControl: false, attributionControl: false }"
-        style="height: 100%; width: 100%"
-        @ready="onMapReady"
-      >
-        <l-tile-layer
-          url="https://tiles.stadiamaps.com/tiles/alidade_smooth_dark/{z}/{x}/{y}{r}.png"
-          layer-type="base"
-          name="Stadia Dark"
-        />
-        <l-marker
-          :lat-lng="markerPosition"
-          draggable
-          @update:latLng="updatePinPosition"
-          :icon="pinIcon"
-        >
-          <l-popup class="custom-popup">
-            <div class="text-caption text-weight-bold">Ubicación del Casco</div>
-            <div class="text-caption text-grey">Arrastra para corregir</div>
-          </l-popup>
-        </l-marker>
-      </l-map>
-
-      <div class="map-gradient-overlay"></div>
-
-      <div class="absolute-top-right q-ma-md">
-        <q-btn
-          round
-          dense
-          flat
-          icon="save"
-          color="primary"
-          class="glass-btn"
-          :loading="loading"
-          @click="guardarCambios"
-        >
-          <q-tooltip>Guardar Cambios</q-tooltip>
-        </q-btn>
+  <q-card
+    class="establishment-settings-card column full-height no-shadow relative-position overflow-hidden"
+  >
+    <div class="settings-header relative-position column flex-center q-pa-lg">
+      <div class="z-10 text-center">
+        <div class="icon-ring q-mb-sm">
+          <q-icon name="domain" size="2em" color="white" />
+        </div>
+        <div class="text-h5 text-white font-display tracking-wide">Configuración</div>
+        <div class="text-caption text-primary font-mono tracking-widest q-mt-xs">
+          DATOS DEL ESTABLECIMIENTO
+        </div>
       </div>
+      <div class="header-bg-gradient"></div>
+      <div class="grid-pattern"></div>
     </div>
 
-    <div class="info-body col column bg-dark-surface q-px-md q-pb-md">
-      <div class="row items-end justify-between q-mt-n-lg relative-position z-10 q-mb-md">
-        <div class="col">
-          <div class="text-caption text-primary text-weight-bold q-mb-xs tracking-wide">
-            ESTABLECIMIENTO
+    <div class="col column bg-dark-surface q-pa-md scroll">
+      <q-form @submit.prevent="guardarCambios" class="q-gutter-y-md q-mb-xl">
+        <div class="text-subtitle2 text-grey-5 font-mono text-uppercase border-b-gray q-pb-xs">
+          Información General
+        </div>
+
+        <div class="row q-col-gutter-md">
+          <div class="col-12">
+            <q-input
+              v-model="form.nombre"
+              label="Nombre del Establecimiento"
+              outlined
+              dark
+              color="primary"
+              class="input-pro"
+              :rules="[(val) => !!val || 'Requerido']"
+            >
+              <template v-slot:prepend>
+                <q-icon name="business" color="grey-5" />
+              </template>
+            </q-input>
           </div>
-          <q-input
-            v-model="form.nombre"
-            borderless
-            dense
-            class="text-h5 text-white font-display input-transparent"
-            placeholder="Nombre del Campo"
-          />
-          <div class="row q-gutter-x-sm q-mt-xs">
+          <div class="col-12 col-md-6">
             <q-input
               v-model="form.ciudad"
-              borderless
-              dense
-              class="text-caption text-grey-5 input-compact"
-              placeholder="Ciudad"
-              style="width: 100px"
-            />
-            <span class="text-grey-7">|</span>
+              label="Ciudad / Localidad"
+              outlined
+              dark
+              color="cyan"
+              class="input-pro"
+            >
+              <template v-slot:prepend>
+                <q-icon name="place" color="grey-5" />
+              </template>
+            </q-input>
+          </div>
+          <div class="col-12 col-md-6">
             <q-input
               v-model="form.provincia"
-              borderless
-              dense
-              class="text-caption text-grey-5 input-compact"
-              placeholder="Provincia"
-              style="width: 100px"
-            />
+              label="Provincia"
+              outlined
+              dark
+              color="cyan"
+              class="input-pro"
+            >
+              <template v-slot:prepend>
+                <q-icon name="map" color="grey-5" />
+              </template>
+            </q-input>
+          </div>
+        </div>
+
+        <div class="row justify-end q-mt-md">
+          <q-btn
+            label="Guardar Cambios"
+            type="submit"
+            color="primary"
+            text-color="black"
+            class="text-weight-bold shadow-glow full-width-mobile"
+            :loading="loading"
+            icon="save"
+            unelevated
+            rounded
+          />
+        </div>
+      </q-form>
+
+      <div class="column q-gutter-y-sm">
+        <div class="row items-center justify-between border-b-gray q-pb-xs q-mb-sm">
+          <div class="text-subtitle2 text-grey-5 font-mono text-uppercase">Últimos Eventos</div>
+          <q-badge color="grey-9" text-color="white" :label="recentEvents.length" />
+        </div>
+
+        <div v-if="recentEvents.length === 0" class="text-center text-grey-7 q-py-lg">
+          <q-icon name="history" size="2em" class="q-mb-sm opacity-50" />
+          <div class="text-caption">No hay eventos registrados</div>
+        </div>
+
+        <div v-else class="events-list q-gutter-y-sm">
+          <div
+            v-for="event in recentEvents"
+            :key="event.id"
+            class="event-item row items-center justify-between q-pa-sm rounded-borders relative-position overflow-hidden"
+          >
+            <div class="status-line" :class="getEventColorClass(event.tipo)"></div>
+
+            <div class="row items-center q-pl-sm">
+              <div class="event-icon q-mr-md flex flex-center" :class="getEventBgClass(event.tipo)">
+                <q-icon :name="getEventIcon(event.tipo)" size="16px" color="white" />
+              </div>
+              <div class="column">
+                <div class="text-body2 text-white text-weight-medium">
+                  {{ event.titulo }}
+                </div>
+                <div class="text-caption text-grey-5 font-mono" style="font-size: 0.7rem">
+                  {{ formatDate(event.fecha) }}
+                </div>
+              </div>
+            </div>
+
+            <div class="text-right q-pr-sm">
+              <div class="text-caption text-white font-numeric">
+                {{ event.valor }}
+              </div>
+              <div class="text-nano text-grey-6 text-uppercase">{{ event.unidad }}</div>
+            </div>
           </div>
         </div>
       </div>
-
-      <q-separator dark class="q-mb-md opacity-20" />
-
-      <q-scroll-area class="col">
-        <div class="q-gutter-y-md">
-          <div class="metric-card border-l-primary">
-            <div class="row items-center justify-between q-mb-sm">
-              <div class="text-subtitle2 text-grey-4">
-                <q-icon name="pets" class="q-mr-xs" /> Rodeo Activo
-              </div>
-              <div class="text-h6 text-white font-numeric">
-                {{ stats.totalCabezas }} <span class="text-caption text-grey-6">cbz</span>
-              </div>
-            </div>
-            <div class="row q-col-gutter-xs">
-              <div v-for="(qty, cat) in stats.lotesPorCategoria" :key="cat" class="col-4">
-                <div class="bg-dark-soft q-pa-xs rounded-borders text-center">
-                  <div class="text-xs text-grey-5 text-uppercase">{{ cat }}</div>
-                  <div class="text-subtitle2 text-primary font-numeric">{{ qty }}</div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div class="metric-card border-l-cyan">
-            <div class="row items-center justify-between q-mb-sm">
-              <div class="text-subtitle2 text-grey-4">
-                <q-icon name="fence" class="q-mr-xs" /> Uso de Suelo
-              </div>
-              <div class="text-h6 text-white font-numeric">
-                {{ stats.totalPotreros }} <span class="text-caption text-grey-6">lotes</span>
-              </div>
-            </div>
-            <div class="row items-center q-gutter-x-md">
-              <div class="column items-center">
-                <q-circular-progress
-                  :value="(stats.potrerosOcupados / (stats.totalPotreros || 1)) * 100"
-                  size="50px"
-                  :thickness="0.2"
-                  color="cyan-4"
-                  track-color="grey-9"
-                  class="q-ma-xs"
-                />
-              </div>
-              <div class="col">
-                <div class="row justify-between q-mb-xs">
-                  <span class="text-caption text-cyan-4">● Ocupados</span>
-                  <span class="text-caption text-white">{{ stats.potrerosOcupados }}</span>
-                </div>
-                <div class="row justify-between">
-                  <span class="text-caption text-grey-6">● Descanso</span>
-                  <span class="text-caption text-white">{{ stats.potrerosDescanso }}</span>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div class="metric-card border-l-orange">
-            <div class="row items-center justify-between">
-              <div class="text-subtitle2 text-grey-4">
-                <q-icon name="water_drop" class="q-mr-xs" /> Hidratación
-              </div>
-              <q-badge
-                color="orange-9"
-                text-color="white"
-                :label="`${stats.totalFuentes} Fuentes`"
-              />
-            </div>
-            <div class="q-mt-sm text-caption text-grey-5">
-              Infraestructura hídrica disponible para el rodeo.
-            </div>
-          </div>
-        </div>
-      </q-scroll-area>
     </div>
   </q-card>
 </template>
@@ -162,230 +134,251 @@ import { ref, reactive, computed, onMounted } from 'vue'
 import { useDataStore } from 'stores/data-store'
 import { useQuasar } from 'quasar'
 import { supabase } from 'boot/supabase'
-import { LMap, LTileLayer, LMarker, LPopup } from '@vue-leaflet/vue-leaflet'
-import L from 'leaflet'
-import 'leaflet/dist/leaflet.css'
 
 const store = useDataStore()
 const $q = useQuasar()
 const loading = ref(false)
 
-// Mapa
-const zoom = ref(13)
-const markerPosition = ref([-26.1775, -58.1756]) // Default Formosa
-const mapRef = ref(null)
-
-// Formulario
+// Formulario reactivo
 const form = reactive({
   nombre: '',
   ciudad: '',
   provincia: '',
-  pin_location: null,
 })
 
-// --- ESTADÍSTICAS COMPUTADAS (Inteligencia de Negocio) ---
-const stats = computed(() => {
-  const lotes = store.lotes || []
-  const potreros = store.potreros || []
-  const fuentes = store.fuentesAgua || []
+// --- PROPIEDAD COMPUTADA: COMBINAR EVENTOS ---
+// Une lluvias, evaluaciones y otros datos para mostrar un resumen vivo
+const recentEvents = computed(() => {
+  const events = []
 
-  // 1. Rodeo
-  const totalCabezas = lotes.reduce((sum, l) => sum + (l.cantidad_animales || 0), 0)
-  const lotesPorCategoria = {}
-
-  lotes.forEach((l) => {
-    const cat = l.objetivo || 'Otros'
-    lotesPorCategoria[cat] = (lotesPorCategoria[cat] || 0) + 1
-  })
-
-  // 2. Ocupación de Suelo
-  // Un potrero está ocupado si algún lote lo referencia en 'potrero_actual_id'
-  const potrerosOcupadosIds = new Set(lotes.map((l) => l.potrero_actual_id).filter((id) => id))
-  const potrerosOcupados = potrerosOcupadosIds.size
-  const totalPotreros = potreros.length
-  const potrerosDescanso = totalPotreros - potrerosOcupados
-
-  // 3. Agua
-  const totalFuentes = fuentes.length
-
-  return {
-    totalCabezas,
-    lotesPorCategoria, // { 'Cría': 5, 'Recría': 2 }
-    totalPotreros,
-    potrerosOcupados,
-    potrerosDescanso,
-    totalFuentes,
+  // 1. Agregar Lluvias
+  if (store.registrosLluvia) {
+    store.registrosLluvia.forEach((r) => {
+      events.push({
+        id: `rain-${r.id}`,
+        fecha: r.fecha,
+        tipo: 'lluvia',
+        titulo: 'Registro Pluviométrico',
+        valor: r.milimetros,
+        unidad: 'mm',
+      })
+    })
   }
+
+  // 2. Agregar Evaluaciones (Pesajes)
+  if (store.evaluaciones) {
+    store.evaluaciones.forEach((e) => {
+      // Intentar buscar nombre del lote si está disponible
+      const lote = store.lotes.find((l) => l.id === e.lote_id)
+      const nombreLote = lote ? lote.identificacion : 'Lote'
+      events.push({
+        id: `eval-${e.id}`,
+        fecha: e.fecha_evaluacion,
+        tipo: 'evaluacion',
+        titulo: `Pesaje ${nombreLote}`,
+        valor: e.peso_promedio_kg,
+        unidad: 'kg Avg',
+      })
+    })
+  }
+
+  // Ordenar por fecha descendente y tomar los últimos 6
+  return events.sort((a, b) => new Date(b.fecha) - new Date(a.fecha)).slice(0, 6)
 })
 
-// Icono Personalizado para el Pin
-const pinIcon = L.divIcon({
-  className: 'custom-pin-icon',
-  html: `<div style="background-color: #39ff14; width: 16px; height: 16px; border-radius: 50%; border: 2px solid white; box-shadow: 0 0 15px #39ff14;"></div>`,
-  iconSize: [16, 16],
-  iconAnchor: [8, 8],
-})
-
-function onMapReady(map) {
-  setTimeout(() => map.invalidateSize(), 500)
-}
-
-function updatePinPosition(latLng) {
-  markerPosition.value = [latLng.lat, latLng.lng]
-  form.pin_location = { lat: latLng.lat, lng: latLng.lng }
-}
+// --- ACTIONS ---
 
 async function guardarCambios() {
   loading.value = true
   try {
-    if (!store.establecimientoActual?.id) return
-
-    const updateData = {
-      nombre: form.nombre,
-      ciudad: form.ciudad,
-      provincia: form.provincia,
-      pin_location: form.pin_location, // Guardamos el JSON del pin
-    }
-
+    // 1. Actualizar DB
     const { error } = await supabase
       .from('establecimientos')
-      .update(updateData)
+      .update({
+        nombre: form.nombre,
+        ciudad: form.ciudad,
+        provincia: form.provincia,
+      })
       .eq('id', store.establecimientoActual.id)
 
     if (error) throw error
 
-    // Actualizar store localmente para reflejo inmediato
-    Object.assign(store.establecimientoActual, updateData)
+    // 2. Actualizar Store Local (Impacto Inmediato en Dashboard y PDF)
+    store.establecimientoActual.nombre = form.nombre
+    store.establecimientoActual.ciudad = form.ciudad
+    store.establecimientoActual.provincia = form.provincia
 
-    $q.notify({ type: 'positive', message: 'Datos actualizados' })
-  } catch {
-    $q.notify({ type: 'negative', message: 'Error al guardar' })
+    $q.notify({
+      type: 'positive',
+      message: 'Establecimiento actualizado',
+      caption: 'Los cambios se reflejarán en los reportes.',
+      icon: 'domain_verification',
+    })
+  } catch (e) {
+    console.error(e)
+    $q.notify({
+      type: 'negative',
+      message: 'Error al guardar cambios',
+    })
   } finally {
     loading.value = false
   }
 }
 
+// --- HELPERS VISUALES ---
+
+function formatDate(dateStr) {
+  if (!dateStr) return '-'
+  return new Date(dateStr).toLocaleDateString('es-AR', {
+    day: '2-digit',
+    month: 'short',
+  })
+}
+
+function getEventIcon(tipo) {
+  if (tipo === 'lluvia') return 'water_drop'
+  if (tipo === 'evaluacion') return 'scale'
+  return 'event'
+}
+
+function getEventColorClass(tipo) {
+  if (tipo === 'lluvia') return 'bg-cyan-accent-3'
+  if (tipo === 'evaluacion') return 'bg-light-green-13'
+  return 'bg-grey'
+}
+
+function getEventBgClass(tipo) {
+  if (tipo === 'lluvia') return 'bg-cyan-9'
+  if (tipo === 'evaluacion') return 'bg-green-9'
+  return 'bg-grey-8'
+}
+
 onMounted(() => {
+  // Cargar datos iniciales del store al formulario
   if (store.establecimientoActual) {
-    Object.assign(form, store.establecimientoActual)
-
-    // Recuperar pin guardado o usar default
-    if (store.establecimientoActual.pin_location) {
-      const pin = store.establecimientoActual.pin_location
-      if (pin.lat && pin.lng) markerPosition.value = [pin.lat, pin.lng]
-    }
+    form.nombre = store.establecimientoActual.nombre || ''
+    form.ciudad = store.establecimientoActual.ciudad || ''
+    form.provincia = store.establecimientoActual.provincia || ''
   }
-
-  // Asegurar carga de datos para las stats
-  if (store.potreros.length === 0) store.fetchAll()
+  // Asegurar que tengamos datos para la lista
+  if (store.registrosLluvia.length === 0) store.fetchLluvias()
+  if (store.evaluaciones.length === 0) store.fetchAllEvaluaciones()
 })
 </script>
 
 <style scoped lang="scss">
-.establishment-dashboard {
+.establishment-settings-card {
   background: #121214;
   border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 24px;
   overflow: hidden;
 }
 
-/* Mapa Header (45% altura) */
-.map-header {
-  height: 45%;
-  min-height: 200px;
-  width: 100%;
-  background: #000;
-}
-.map-gradient-overlay {
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  width: 100%;
-  height: 60px;
-  background: linear-gradient(to bottom, transparent, #121214);
-  pointer-events: none;
-  z-index: 1000;
+/* HEADER CON GRADIENTE */
+.settings-header {
+  background: linear-gradient(135deg, #000000 0%, #1a1a1a 100%);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  position: relative;
+  overflow: hidden;
+  min-height: 160px;
 }
 
-/* Cuerpo Info (55% altura) */
+.header-bg-gradient {
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: radial-gradient(circle, rgba(57, 255, 20, 0.1) 0%, transparent 60%);
+  z-index: 1;
+}
+
+.grid-pattern {
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+  background-size: 20px 20px;
+  z-index: 0;
+  opacity: 0.5;
+}
+
+.icon-ring {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  border: 2px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.05);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto;
+  box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+}
+
 .bg-dark-surface {
   background: #121214;
 }
 
-.input-transparent :deep(.q-field__control) {
-  padding: 0;
-  background: transparent !important;
-}
-.input-transparent :deep(.q-field__native) {
-  font-weight: 700;
-  letter-spacing: -0.5px;
-  &::placeholder {
-    color: rgba(255, 255, 255, 0.2);
-  }
-}
-.input-compact :deep(.q-field__control) {
-  height: 24px;
-  min-height: 24px;
-  padding: 0;
-  background: transparent !important;
-}
-.input-compact :deep(.q-field__native) {
-  padding: 0;
-}
-
-/* Tarjetas Métricas */
-.metric-card {
+.input-pro :deep(.q-field__control) {
   background: rgba(255, 255, 255, 0.03);
-  border-radius: 12px;
-  padding: 16px;
-  border-left: 4px solid #555;
-  transition: background 0.2s;
-  &:hover {
-    background: rgba(255, 255, 255, 0.05);
-  }
+  border-radius: 8px;
 }
-.border-l-primary {
-  border-left-color: #39ff14;
-}
-.border-l-cyan {
-  border-left-color: #00e5ff;
-}
-.border-l-orange {
-  border-left-color: #ff9800;
+.input-pro :deep(.q-field__label) {
+  color: #888;
 }
 
-.bg-dark-soft {
-  background: rgba(0, 0, 0, 0.3);
+/* LISTA DE EVENTOS */
+.event-item {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  transition: all 0.2s;
 }
-.text-xs {
-  font-size: 0.65rem;
-  font-weight: 700;
+.event-item:hover {
+  background: rgba(255, 255, 255, 0.06);
+  transform: translateX(4px);
 }
+
+.status-line {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 3px;
+}
+
+.event-icon {
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+}
+
+/* UTILS */
 .font-display {
   font-family: 'Outfit', sans-serif;
+  font-weight: 700;
+}
+.font-mono {
+  font-family: 'Fira Code', monospace;
 }
 .font-numeric {
   font-family: 'Fira Code', monospace;
+  font-weight: bold;
 }
-.tracking-wide {
-  letter-spacing: 1px;
+.text-nano {
+  font-size: 0.6rem;
 }
-.opacity-20 {
-  opacity: 0.2;
+.border-b-gray {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 }
-
-.glass-btn {
-  background: rgba(0, 0, 0, 0.6);
-  backdrop-filter: blur(4px);
-  border: 1px solid rgba(255, 255, 255, 0.2);
+.shadow-glow {
+  box-shadow: 0 0 15px rgba(57, 255, 20, 0.2);
 }
-
-:deep(.leaflet-popup-content-wrapper) {
-  background: rgba(20, 20, 20, 0.9);
-  color: white;
-  border-radius: 8px;
-}
-:deep(.leaflet-popup-tip) {
-  background: rgba(20, 20, 20, 0.9);
+.full-width-mobile {
+  width: 100%;
+  @media (min-width: 600px) {
+    width: auto;
+  }
 }
 </style>

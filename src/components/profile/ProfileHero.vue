@@ -1,5 +1,8 @@
 <template>
-  <q-card class="profile-card column no-shadow full-height relative-position overflow-hidden">
+  <q-card
+    class="profile-card column no-shadow relative-position overflow-hidden"
+    :class="{ 'full-height': !$q.screen.lt.md }"
+  >
     <div class="card-header relative-position">
       <div class="brand-accent"></div>
       <q-btn
@@ -16,7 +19,8 @@
     </div>
 
     <q-card-section
-      class="column items-center relative-position col-grow"
+      class="column items-center relative-position"
+      :class="$q.screen.lt.md ? 'q-pb-lg' : 'col-grow'"
       style="margin-top: -50px"
     >
       <div class="avatar-wrapper q-mb-md relative-position">
@@ -103,7 +107,6 @@
 </template>
 
 <script setup>
-// Agregamos 'watch' a los imports
 import { ref, reactive, computed, watch } from 'vue'
 import { useAuthStore } from 'stores/auth-store'
 import { useQuasar } from 'quasar'
@@ -147,10 +150,7 @@ async function saveChanges() {
   try {
     await supabase
       .from('perfiles_usuarios')
-      .update({
-        nombre_completo: profile.nombre_completo,
-        telefono: profile.telefono,
-      })
+      .update({ nombre_completo: profile.nombre_completo, telefono: profile.telefono })
       .eq('id', authStore.user.id)
     $q.notify({ type: 'positive', message: 'Datos actualizados', icon: 'check', timeout: 1000 })
   } catch (e) {
@@ -160,62 +160,38 @@ async function saveChanges() {
 
 async function uploadAvatar(file) {
   if (!file) return
-
-  // 1. Crear notificación de CARGA (timeout: 0 para que no se vaya sola)
-  // Guardamos la referencia en 'notif'
   const notif = $q.notify({
     type: 'ongoing',
     message: 'Subiendo foto...',
     spinner: true,
-    timeout: 0, // Se queda fija hasta que la actualicemos
+    timeout: 0,
   })
-
   try {
-    // 1. Extraer la extensión
     const fileExt = file.name.split('.').pop()
-
-    // 2. Crear nombre único
     const fileName = `avatar-${authStore.user.id}-${Date.now()}.${fileExt}`
-
-    // 3. Subir
-    const { error } = await supabase.storage.from('avatars').upload(fileName, file, {
-      cacheControl: '3600',
-      upsert: false,
-    })
-
+    const { error } = await supabase.storage
+      .from('avatars')
+      .upload(fileName, file, { cacheControl: '3600', upsert: false })
     if (error) throw error
-
-    // 4. Obtener URL pública
     const { data } = supabase.storage.from('avatars').getPublicUrl(fileName)
-
-    // 5. Guardar URL en base de datos
     await supabase
       .from('perfiles_usuarios')
       .update({ avatar_url: data.publicUrl })
       .eq('id', authStore.user.id)
-
     profile.avatar_url = data.publicUrl
     imgError.value = false
-
-    // 2. ACTUALIZAR la notificación existente a ÉXITO
     notif({
       type: 'positive',
       message: 'Foto actualizada correctamente',
       spinner: false,
       icon: 'check',
-      timeout: 2500, // Ahora sí le damos tiempo para irse sola
+      timeout: 2500,
     })
   } catch (e) {
     console.error(e)
-    const msg =
-      e.statusCode === '400'
-        ? 'Error de formato o permisos (400). Verifica el bucket "avatars".'
-        : 'Error al subir la imagen: ' + e.message
-
-    // 3. ACTUALIZAR la notificación existente a ERROR
     notif({
       type: 'negative',
-      message: msg,
+      message: 'Error al subir imagen',
       spinner: false,
       icon: 'error',
       timeout: 4000,
@@ -239,13 +215,10 @@ function confirmarSalida() {
   })
 }
 
-// Observador para cargar datos cuando estén listos (Persistencia al recargar)
 watch(
   () => authStore.profile,
   (newProfile) => {
-    if (newProfile) {
-      Object.assign(profile, newProfile)
-    }
+    if (newProfile) Object.assign(profile, newProfile)
   },
   { immediate: true, deep: true },
 )
@@ -253,19 +226,16 @@ watch(
 
 <style scoped lang="scss">
 .profile-card {
-  background: #121214; /* Gris muy oscuro, no negro total */
+  background: #121214;
   border-radius: 24px;
   border: 1px solid rgba(255, 255, 255, 0.08);
   overflow: hidden;
 }
-
 .card-header {
   height: 100px;
   background: linear-gradient(180deg, rgba(255, 255, 255, 0.05) 0%, transparent 100%);
   border-bottom: 1px solid rgba(255, 255, 255, 0.05);
 }
-
-/* Acento de Marca sutil */
 .brand-accent {
   position: absolute;
   top: 0;
@@ -275,20 +245,16 @@ watch(
   background: linear-gradient(90deg, transparent, #39ff14, transparent);
   opacity: 0.8;
 }
-
 .profile-avatar {
-  border: 4px solid #121214; /* Se funde con el fondo */
+  border: 4px solid #121214;
   background: #222;
 }
-
 .edit-badge {
   position: absolute;
   bottom: 0;
   right: 0;
   border: 2px solid #121214;
 }
-
-/* Estilo Inputs Limpios */
 .input-clean :deep(.q-field__control) {
   background: rgba(255, 255, 255, 0.03);
   border-radius: 8px;
@@ -300,7 +266,6 @@ watch(
 .input-clean :deep(.q-field__native) {
   color: white;
 }
-
 .editable-input-wrapper {
   position: relative;
   display: inline-block;
@@ -324,7 +289,6 @@ watch(
     opacity: 1;
   }
 }
-
 .bg-dark-lighter {
   background: rgba(255, 255, 255, 0.03);
 }
@@ -338,7 +302,6 @@ watch(
     opacity: 1;
   }
 }
-
 .font-modern {
   font-family: 'Outfit', sans-serif;
 }
