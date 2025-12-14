@@ -9,7 +9,9 @@ const routes = [
         component: () => import('pages/DashboardPage.vue'),
         meta: { mapPage: true },
       },
-      // ZONA OPERATIVA (Acceso para todos, pero con permisos UI limitados)
+
+      // --- ZONA OPERATIVA (Todos tienen acceso) ---
+      // IMPORTANTE: El Operario necesita entrar aquí para ver listados básicos
       { path: 'lotes', component: () => import('pages/LotesPage.vue') },
       { path: 'lote/:id', component: () => import('pages/LoteDetailPage.vue') },
       {
@@ -18,14 +20,14 @@ const routes = [
         meta: { requiresAuth: true, mapPage: true },
       },
 
-      // RECURSOS (Operarios pueden ver para reportar, pero no editar estructura)
+      // --- RECURSOS (Lectura para todos) ---
       { path: 'recursos', component: () => import('pages/RecursosPage.vue') },
       { path: 'recursos/potreros', component: () => import('pages/PotrerosPage.vue') },
       { path: 'recursos/despensa', component: () => import('pages/DespensaPage.vue') },
       { path: 'recursos/agua', component: () => import('pages/AguaPage.vue') },
       { path: 'recursos/lluvias', component: () => import('pages/LluviasPage.vue') },
 
-      // ZONA TÉCNICA (Solo Admin y Técnicos)
+      // --- ZONA TÉCNICA (Restringida) ---
       {
         path: 'recursos/potreros/draw/:id?',
         component: () => import('pages/PotreroDrawPage.vue'),
@@ -42,26 +44,29 @@ const routes = [
         meta: { requiresRole: ['admin', 'tecnico'] },
       },
 
-      // ZONA ADMINISTRATIVA (Solo Dueño/Admin)
+      // --- ZONA ADMINISTRATIVA (Restringida) ---
       {
         path: 'team',
         component: () => import('pages/DeveloperTeamPage.vue'),
         meta: { requiresRole: ['admin'] },
       },
 
-      // Comunes
+      // --- COMUNES ---
       { path: 'profile', component: () => import('pages/ProfilePage.vue') },
       { path: 'about', component: () => import('pages/AboutNutroganPage.vue') },
       { path: 'technology', component: () => import('pages/TechDeepDivePage.vue') },
       { path: 'support', component: () => import('pages/SupportPage.vue') },
     ],
   },
+
+  // --- MODO CAMPO (Vital para el Operario) ---
   {
     path: '/field',
     component: () => import('layouts/FieldLayout.vue'),
-    meta: { requiresAuth: true },
+    meta: { requiresAuth: true }, // Todos pueden entrar
     children: [{ path: '', component: () => import('pages/field/FieldDashboardPage.vue') }],
   },
+
   {
     path: '/welcome',
     component: () => import('pages/WelcomePage.vue'),

@@ -9,84 +9,33 @@ export const useAuthStore = defineStore('auth', () => {
   const currentRole = ref(null)
   const userEstablishments = ref([])
 
+  // --- IDENTIFICADORES DE ROL ---
   const isAuthenticated = computed(() => !!user.value)
 
-  // --- NIVELES DE ROL ---
-  const isAdmin = computed(() => currentRole.value === 'admin')
-  const isTecnico = computed(() => ['admin', 'tecnico'].includes(currentRole.value))
+  // Roles exactos para la lógica interna
   const isOperario = computed(() => currentRole.value === 'operario')
+  const isTecnico = computed(() => currentRole.value === 'tecnico')
+  const isAdmin = computed(() => currentRole.value === 'admin')
 
-  // --- PERMISOS SEMÁNTICOS (Lógica de Negocio) ---
+  // --- CAPABILITIES (Permisos Semánticos) ---
 
-  // 1. Finanzas: ¿Quién ve dinero? (Solo Dueños y Técnicos de confianza)
-  const canViewFinancials = computed(() => ['admin', 'tecnico'].includes(currentRole.value))
+  // 1. GESTIÓN ESTRATÉGICA (Solo Admin)
+  const canManageTeam = computed(() => isAdmin.value)
+  const canViewEstablishmentData = computed(() => isAdmin.value)
+  const canViewFinancials = computed(() => isAdmin.value)
+  const canConfigureEstablishment = computed(() => isAdmin.value)
 
-  // 2. Edición de Recursos: ¿Quién puede crear/borrar lotes y potreros?
-  // El operario solo ve y reporta, no reestructura el campo.
-  const canEditResources = computed(() => ['admin', 'tecnico'].includes(currentRole.value))
+  // 2. GESTIÓN TÉCNICA (Admin + Técnico)
+  const canViewReports = computed(() => isAdmin.value || isTecnico.value)
+  const canEditFieldStructure = computed(() => isAdmin.value || isTecnico.value)
+  const canEditMaps = computed(() => isAdmin.value || isTecnico.value)
+  const canViewEventHistory = computed(() => isAdmin.value || isTecnico.value)
 
-  // 3. Gestión de Equipo: ¿Quién puede contratar/despedir? (Solo Dueño)
-  const canManageTeam = computed(() => currentRole.value === 'admin')
-
-  // 4. Reportes Avanzados: ¿Quién ve analítica profunda?
-  const canViewReports = computed(() => ['admin', 'tecnico'].includes(currentRole.value))
+  // 3. OPERATIVA (Todos)
+  const canAccessOperational = computed(() => true)
+  const canAccessFieldMode = computed(() => true)
 
   // --- ACTIONS ---
-
-  async function loginWithPassword(email, password) {
-    loading.value = true
-    try {
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      })
-      if (error) throw error
-      user.value = data.user
-      await fetchProfile()
-      return { success: true }
-    } catch (error) {
-      console.error('Error login:', error.message)
-      return { success: false, error: error.message }
-    } finally {
-      loading.value = false
-    }
-  }
-
-  async function updatePassword(newPassword) {
-    loading.value = true
-    try {
-      const { error } = await supabase.auth.updateUser({
-        password: newPassword,
-      })
-      if (error) throw error
-      return { success: true }
-    } catch (error) {
-      return { success: false, error: error.message }
-    } finally {
-      loading.value = false
-    }
-  }
-
-  async function logout() {
-    try {
-      await supabase.auth.signOut()
-    } catch (error) {
-      console.error('Error al cerrar sesión Supabase:', error)
-    } finally {
-      user.value = null
-      profile.value = null
-      currentRole.value = null
-      userEstablishments.value = []
-
-      // Limpieza agresiva para evitar rebotes del router
-      Object.keys(localStorage).forEach((key) => {
-        if (key.startsWith('sb-') && key.endsWith('-auth-token')) {
-          localStorage.removeItem(key)
-        }
-      })
-      window.location.replace('/login')
-    }
-  }
 
   async function checkAuth() {
     const { data } = await supabase.auth.getSession()
@@ -124,8 +73,13 @@ export const useAuthStore = defineStore('auth', () => {
 
       if (data.establecimiento_activo_id) {
         const active = userEstablishments.value.find((e) => e.id === data.establecimiento_activo_id)
-        currentRole.value = active ? active.rol : 'operario'
-        data.establecimiento_id = data.establecimiento_activo_id
+        if (active) {
+          currentRole.value = active.rol
+          data.establecimiento_id = data.establecimiento_activo_id
+        } else if (userEstablishments.value.length > 0) {
+          await switchEstablishment(userEstablishments.value[0].id)
+          return
+        }
       } else if (userEstablishments.value.length > 0) {
         await switchEstablishment(userEstablishments.value[0].id)
         return
@@ -134,6 +88,54 @@ export const useAuthStore = defineStore('auth', () => {
     } catch (e) {
       console.error(e)
       profile.value = null
+    }
+  }
+
+  async function loginWithPassword(email, password) {
+    loading.value = true
+    try {
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      })
+      if (error) throw error
+      user.value = data.user
+      await fetchProfile()
+      return { success: true }
+    } catch (error) {
+      return { success: false, error: error.message }
+    } finally {
+      loading.value = false
+    }
+  }
+
+  async function updatePassword(newPassword) {
+    loading.value = true
+    try {
+      const { error } = await supabase.auth.updateUser({
+        password: newPassword,
+      })
+      if (error) throw error
+      return { success: true }
+    } catch (error) {
+      return { success: false, error: error.message }
+    } finally {
+      loading.value = false
+    }
+  }
+
+  async function logout() {
+    try {
+      await supabase.auth.signOut()
+    } catch (error) {
+      console.error('Error logout:', error)
+    } finally {
+      user.value = null
+      profile.value = null
+      currentRole.value = null
+      userEstablishments.value = []
+      localStorage.clear()
+      window.location.replace('/login')
     }
   }
 
@@ -146,8 +148,8 @@ export const useAuthStore = defineStore('auth', () => {
     window.location.reload()
   }
 
-  // Crea usuario usando la función SQL segura que definimos
   async function adminCreateUser(payload) {
+    if (!canManageTeam.value) return { success: false, error: 'No autorizado' }
     loading.value = true
     try {
       const { error } = await supabase.rpc('crear_usuario_secreto', {
@@ -157,11 +159,9 @@ export const useAuthStore = defineStore('auth', () => {
         p_rol: payload.rol,
         p_est_id: payload.establecimiento_id,
       })
-
       if (error) throw error
       return { success: true }
     } catch (e) {
-      console.error('Error creando usuario:', e)
       return { success: false, error: e.message }
     } finally {
       loading.value = false
@@ -169,20 +169,34 @@ export const useAuthStore = defineStore('auth', () => {
   }
 
   return {
+    // State
     user,
     profile,
     currentRole,
     loading,
-    isAuthenticated,
-    isAdmin,
-    isTecnico,
-    isOperario,
-    // Permisos exportados
-    canViewFinancials,
-    canEditResources,
-    canManageTeam,
-    canViewReports,
     userEstablishments,
+
+    // Identifiers
+    isAuthenticated, // <--- AHORA SÍ ESTÁ INCLUIDO
+
+    // Getters de Rol
+    isOperario,
+    isTecnico,
+    isAdmin,
+
+    // Permisos (Capabilities)
+    canManageTeam,
+    canViewEstablishmentData,
+    canViewFinancials,
+    canConfigureEstablishment,
+    canViewReports,
+    canEditFieldStructure,
+    canEditMaps,
+    canViewEventHistory,
+    canAccessOperational,
+    canAccessFieldMode,
+
+    // Actions
     loginWithPassword,
     updatePassword,
     logout,
