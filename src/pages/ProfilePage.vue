@@ -2,9 +2,9 @@
   <q-page class="dashboard-pro-bg">
     <div class="backdrop-overlay"></div>
 
-    <div class="central-stage full-width relative-position z-10 q-pa-md">
+    <div class="central-stage full-width relative-position z-10 q-pa-md q-pb-xl">
       <div class="row items-center justify-between q-mb-md animate-slide-down">
-        <div class="row items-center">
+        <div class="row items-center col-12 col-md-auto q-mb-sm-none">
           <q-btn round flat icon="arrow_back" color="white" to="/" class="glass-btn q-mr-md" />
           <div>
             <div class="text-h4 font-display text-white leading-none">Centro de Mando</div>
@@ -45,10 +45,10 @@
         </div>
 
         <div class="grid-area-actions column q-gutter-y-md">
-          <div class="col">
+          <div class="col-12 col-md">
             <EstablishmentMapCard />
           </div>
-          <div class="col-auto">
+          <div class="col-12 col-md-auto">
             <EmergencyUnit />
           </div>
         </div>
@@ -56,7 +56,10 @@
     </div>
 
     <q-dialog v-model="dialogoPruebas" backdrop-filter="blur(8px)">
-      <q-card class="glass-dialog" style="min-width: 600px; border: 1px solid #00e5ff">
+      <q-card
+        class="glass-dialog"
+        style="min-width: 600px; max-width: 95vw; border: 1px solid #00e5ff"
+      >
         <q-card-section class="row items-center justify-between bg-dark-header">
           <div class="text-h6 text-cyan-4 font-mono">
             <q-icon name="terminal" class="q-mr-sm" /> TEST_CONSOLE_V1
@@ -70,7 +73,7 @@
           </div>
 
           <div class="row q-col-gutter-md q-mb-lg">
-            <div class="col-4">
+            <div class="col-12 col-sm-4">
               <q-btn
                 outline
                 color="blue"
@@ -81,7 +84,7 @@
                 :loading="simulando === 'lluvia'"
               />
             </div>
-            <div class="col-4">
+            <div class="col-12 col-sm-4">
               <q-btn
                 outline
                 color="yellow"
@@ -92,7 +95,7 @@
                 :loading="simulando === 'sanidad'"
               />
             </div>
-            <div class="col-4">
+            <div class="col-12 col-sm-4">
               <q-btn
                 outline
                 color="primary"
@@ -149,7 +152,6 @@ async function simularEvento(tipo) {
     mensaje: `Iniciando protocolo de prueba: ${tipo.toUpperCase()}`,
   })
 
-  // Buscar destinatarios reales en el store
   const destinatarios = dataStore.equipo.filter(
     (m) => m.config_notificaciones && m.config_notificaciones[tipo],
   )
@@ -166,7 +168,6 @@ async function simularEvento(tipo) {
   logsSimulacion.value.push({ hora, mensaje: `Destinatarios encontrados: ${destinatarios.length}` })
 
   try {
-    // Llamada a Edge Function
     const payload = {
       tipo: tipo,
       mensaje: 'Esta es una prueba de notificación desde el Panel Administrativo.',
@@ -177,10 +178,8 @@ async function simularEvento(tipo) {
       })),
     }
 
-    // Simular delay de red
     await new Promise((r) => setTimeout(r, 800))
 
-    // Llamada real (si tienes la función desplegada)
     const { error } = await supabase.functions.invoke('send-alert', { body: payload })
     if (error) throw error
 
@@ -188,7 +187,6 @@ async function simularEvento(tipo) {
     $q.notify({ type: 'positive', message: 'Prueba completada', icon: 'check_circle' })
   } catch (e) {
     logsSimulacion.value.push({ hora, mensaje: `❌ ERROR: ${e.message}` })
-    // Fallback visual si no hay edge function
     logsSimulacion.value.push({
       hora,
       mensaje: `(Nota: Asegúrate de que la Edge Function 'send-alert' esté desplegada)`,
@@ -209,39 +207,39 @@ onUnmounted(() => {
 </script>
 
 <style lang="scss" scoped>
-/* ESTILO CORREGIDO: Se adapta al contenedor global .page-container-style */
+/* FONDO QUE SE ADAPTA A TODO */
 .dashboard-pro-bg {
   background-image: url('src/assets/nutrogan-bg4.png');
   background-size: cover;
   background-position: center;
-  /* Eliminamos height: 100vh y overflow: hidden */
-  min-height: 100%;
+  /* Importante: min-height 100vh asegura cubrir pantalla, pero permite crecer */
+  min-height: 100vh;
   position: relative;
+  overflow-x: hidden; /* Evita scroll horizontal accidental */
 }
 
 .backdrop-overlay {
   position: absolute;
   inset: 0;
-  background: rgba(0, 0, 0, 0);
+  background: rgba(0, 0, 0, 0); /* Capa por si quieres oscurecer fondo */
   z-index: 0;
 }
 
 .central-stage {
   width: 100%;
-  /* Eliminamos height fijo para permitir scroll si el contenido crece */
-  min-height: 100%;
+  height: auto; /* Altura automática */
   display: flex;
   flex-direction: column;
 }
 
+/* LAYOUT DE GRILLA INTELIGENTE */
 .bento-grid-wrapper {
   display: grid;
-  /* Ajustamos el grid para que sea responsive dentro del contenedor */
+  /* Escritorio: 3 columnas fijas/flexibles */
   grid-template-columns: 340px 1fr 380px;
   gap: 24px;
-  height: auto;
-  /* CAMBIO PRINCIPAL: Calculamos la altura para que ocupe toda la pantalla (menos header ~130px) */
-  /* Antes era min-height: 600px */
+  width: 100%;
+  /* Altura mínima en PC para llenar pantalla */
   min-height: calc(100vh - 130px);
 }
 
@@ -257,19 +255,16 @@ onUnmounted(() => {
   flex-direction: column;
 }
 
-/* Media Queries Ajustados */
+/* --- TABLET (Media) --- */
 @media (max-width: 1400px) {
   .bento-grid-wrapper {
     grid-template-columns: 320px 1fr;
     grid-template-rows: auto auto;
-    /* En pantallas medianas permitimos que crezca según contenido, sin forzar el 100vh exacto */
     min-height: auto;
 
     .grid-area-profile {
       grid-column: 1;
       grid-row: 1;
-      /* Aseguramos altura mínima para la tarjeta de perfil */
-      min-height: 650px;
     }
     .grid-area-actions {
       grid-column: 2;
@@ -278,24 +273,39 @@ onUnmounted(() => {
     .grid-area-team {
       grid-column: 1 / span 2;
       grid-row: 2;
+      /* Altura mínima para que el mapa/tabla se vea bien */
       min-height: 500px;
     }
   }
 }
 
+/* --- MÓVIL (Celular Real) --- */
 @media (max-width: 900px) {
   .bento-grid-wrapper {
     display: flex;
-    flex-direction: column;
+    flex-direction: column; /* Apilar todo */
     gap: 20px;
-    min-height: auto;
+    height: auto !important; /* Forzar altura automática */
+    min-height: auto !important;
   }
-  /* En móvil, aseguramos que los componentes tengan altura */
-  .grid-area-team {
-    min-height: 500px;
+
+  /* Anular posicionamiento de grilla */
+  .grid-area-profile,
+  .grid-area-team,
+  .grid-area-actions {
+    grid-column: auto;
+    grid-row: auto;
+    width: 100%; /* Ocupar todo el ancho */
+    min-height: auto; /* Dejar que el contenido defina la altura */
+  }
+
+  /* Ajustes específicos para móviles */
+  .grid-area-actions {
+    gap: 16px;
   }
 }
 
+/* ESTILOS DE COMPONENTES */
 .glass-btn {
   background: rgba(255, 255, 255, 0.1);
   border: 1px solid rgba(255, 255, 255, 0.1);
@@ -324,6 +334,7 @@ onUnmounted(() => {
   background: #ff1744;
   color: #ff1744;
 }
+
 .font-display {
   font-family: 'Outfit', sans-serif;
   font-weight: 800;
@@ -332,6 +343,7 @@ onUnmounted(() => {
 .font-mono {
   font-family: 'Fira Code', monospace;
 }
+
 .animate-slide-down {
   animation: slideDown 0.5s ease-out;
 }
