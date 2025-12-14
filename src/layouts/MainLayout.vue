@@ -57,7 +57,7 @@
       side="right"
       overlay
       behavior="mobile"
-      :width="$q.screen.lt.md ? '100%' : 340"
+      :width="$q.screen.lt.md ? $q.screen.width : 340"
       class="drawer-glass"
       @update:model-value="resetAutoCloseTimer"
     >
@@ -117,7 +117,13 @@
               {{ currentEstCity || 'Ubicación no def.' }}
             </div>
 
-            <q-btn class="action-btn full-width" unelevated no-caps size="sm">
+            <q-btn
+              class="action-btn full-width"
+              unelevated
+              no-caps
+              size="sm"
+              v-if="!authStore.isOperario"
+            >
               <div class="row items-center justify-between full-width">
                 <span class="q-pl-xs">Cambiar Establecimiento</span>
                 <q-icon name="swap_horiz" size="xs" />
@@ -173,7 +179,7 @@
             </q-item>
 
             <q-item
-              v-if="authStore.isAdmin"
+              v-if="authStore.canManageTeam"
               clickable
               v-ripple
               to="/team"
@@ -252,8 +258,9 @@
                 to="/recursos"
                 exact
               />
+
               <q-route-tab
-                v-if="authStore.isTecnico"
+                v-if="authStore.canViewReports"
                 name="reportes"
                 :icon="'img:/icons/icon-reportes.svg'"
                 to="/reportes"
@@ -356,8 +363,8 @@ async function cambiarCampo(id) {
 }
 
 async function handleLogout() {
+  // authStore.logout ahora hace window.location.replace, así que no necesitamos router.push
   await authStore.logout()
-  router.push('/login')
 }
 
 // --- SLIDER LOGIC ---
@@ -408,7 +415,8 @@ function handlePan(details) {
   font-family: 'Outfit', sans-serif !important;
 }
 
-/* --- DRAWER REDESIGN --- */
+/* --- DRAWER REDESIGN: GLASSMORPHISM --- */
+
 :deep(.q-drawer) {
   background: transparent !important;
   box-shadow: none !important;
@@ -468,7 +476,7 @@ function handlePan(details) {
   filter: blur(0px) brightness(1);
 }
 
-/* --- NOTCH STYLES (CORREGIDO PADDING) --- */
+/* --- NOTCH STYLES --- */
 .notch-container {
   position: relative;
   background-color: #000000;
@@ -485,7 +493,6 @@ function handlePan(details) {
   transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
   z-index: 5001;
   overflow: hidden;
-  /* CAMBIO: Padding top para bajar el logo */
   padding-top: 12px;
 }
 .notch-content {
@@ -498,12 +505,11 @@ function handlePan(details) {
     height: 70px;
     border-bottom-left-radius: 24px;
     border-bottom-right-radius: 24px;
-    /* En móvil también un poco de padding pero menor porque es más chico */
     padding-top: 8px;
   }
 }
 
-/* --- RESTO DE ESTILOS --- */
+/* --- ESTILOS DE COMPONENTES --- */
 .avatar-container {
   position: relative;
   display: inline-block;

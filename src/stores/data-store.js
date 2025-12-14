@@ -254,15 +254,32 @@ export const useDataStore = defineStore(
       }))
     }
 
+    // --- INVITAR MIEMBRO (LISTA BLANCA) ---
     async function invitarMiembro(email, rol) {
       const estId = authStore.profile?.establecimiento_id
-      if (!estId) throw new Error('No hay establecimiento activo')
-      const { data, error } = await supabase.functions.invoke('invite-user', {
-        body: { email: email, rol: rol, establecimiento_id: estId },
-      })
-      if (error) throw error
-      if (!data.success) throw new Error(data.error || 'Error al invitar')
-      await fetchMiembrosEquipo()
+      if (!estId) throw new Error('No hay establecimiento activo para invitar')
+
+      // Insertamos en la "Sala de Espera" (Whitelist)
+      const { data, error } = await supabase
+        .from('invitaciones_equipo')
+        .insert({
+          email: email,
+          rol: rol,
+          establecimiento_id: estId,
+        })
+        .select()
+
+      if (error) {
+        // Si ya existe, actualizamos su rol
+        if (error.code === '23505') {
+          await supabase
+            .from('invitaciones_equipo')
+            .update({ rol: rol, establecimiento_id: estId })
+            .eq('email', email)
+          return { success: true, message: 'Invitación actualizada' }
+        }
+        throw error
+      }
       return data
     }
 
@@ -275,12 +292,18 @@ export const useDataStore = defineStore(
       await fetchMiembrosEquipo()
     }
 
-    async function removeMiembro(membresiaId) {
-      const { error } = await supabase
-        .from('miembros_establecimiento')
-        .delete()
-        .eq('id', membresiaId)
-      if (error) throw error
+    // --- ELIMINAR MIEMBRO (CORREGIDO: RPC TOTAL) ---
+    // Esta función ahora borra al usuario de TODAS partes usando el RPC de base de datos
+    async function removeMiembro(usuarioId) {
+      const { error } = await supabase.rpc('eliminar_usuario_total', {
+        p_usuario_id: usuarioId,
+      })
+
+      if (error) {
+        console.error('Error eliminando usuario:', error)
+        throw error
+      }
+
       await fetchMiembrosEquipo()
     }
 

@@ -87,6 +87,18 @@
             <div class="ellipsis" style="font-size: 0.9rem">{{ authStore.user?.email }}</div>
           </div>
         </div>
+
+        <div class="q-mt-lg">
+          <q-btn
+            outline
+            color="grey-5"
+            label="Cambiar Contraseña"
+            icon="lock_reset"
+            class="full-width border-neon-hover"
+            size="sm"
+            @click="dialogPass = true"
+          />
+        </div>
       </div>
     </q-card-section>
 
@@ -103,6 +115,33 @@
       class="hidden"
       @update:model-value="uploadAvatar"
     />
+
+    <q-dialog v-model="dialogPass">
+      <q-card class="bg-dark text-white border-neon" style="width: 300px">
+        <q-card-section class="bg-dark-header">
+          <div class="text-subtitle1 text-weight-bold">Seguridad</div>
+          <div class="text-caption text-grey-5">Establece tu nueva clave</div>
+        </q-card-section>
+        <q-form @submit.prevent="cambiarPass">
+          <q-card-section class="q-gutter-y-md">
+            <q-input
+              v-model="newPass"
+              label="Nueva Contraseña"
+              type="password"
+              outlined
+              dense
+              dark
+              color="primary"
+              :rules="[(val) => val.length >= 6 || 'Mínimo 6 caracteres']"
+            />
+          </q-card-section>
+          <q-card-actions align="right" class="bg-dark-soft">
+            <q-btn flat label="Cancelar" color="grey" v-close-popup />
+            <q-btn label="Actualizar" color="primary" type="submit" :loading="updatingPass" />
+          </q-card-actions>
+        </q-form>
+      </q-card>
+    </q-dialog>
   </q-card>
 </template>
 
@@ -111,16 +150,21 @@ import { ref, reactive, computed, watch } from 'vue'
 import { useAuthStore } from 'stores/auth-store'
 import { useQuasar } from 'quasar'
 import { supabase } from 'boot/supabase'
-import { useRouter } from 'vue-router'
+// Eliminado: import { useRouter } from 'vue-router' <-- CAUSABA EL ERROR
 
 const authStore = useAuthStore()
 const $q = useQuasar()
-const router = useRouter()
+// Eliminado: const router = useRouter() <-- CAUSABA EL ERROR
 
 const fileInput = ref(null)
 const avatarFile = ref(null)
 const profile = reactive({ nombre_completo: '', telefono: '', avatar_url: '', rol: '' })
 const imgError = ref(false)
+
+// Estados para cambio de contraseña
+const dialogPass = ref(false)
+const newPass = ref('')
+const updatingPass = ref(false)
 
 const memberSince = computed(() => {
   if (authStore.user?.created_at) {
@@ -201,6 +245,20 @@ async function uploadAvatar(file) {
   }
 }
 
+// NUEVA FUNCIÓN: Cambiar Contraseña
+async function cambiarPass() {
+  updatingPass.value = true
+  const res = await authStore.updatePassword(newPass.value)
+  if (res.success) {
+    $q.notify({ type: 'positive', message: 'Contraseña actualizada con éxito' })
+    dialogPass.value = false
+    newPass.value = ''
+  } else {
+    $q.notify({ type: 'negative', message: 'Error: ' + res.error })
+  }
+  updatingPass.value = false
+}
+
 function confirmarSalida() {
   $q.dialog({
     title: 'Cerrar Sesión',
@@ -208,10 +266,11 @@ function confirmarSalida() {
     cancel: true,
     persistent: true,
     dark: true,
-    ok: { label: 'Salir', flat: true },
+    class: 'border-neon',
+    ok: { label: 'Salir', flat: true, color: 'red' },
   }).onOk(async () => {
+    // El store maneja la redirección forzada, no necesitamos el router aquí
     await authStore.logout()
-    router.push('/login')
   })
 }
 
@@ -292,6 +351,12 @@ watch(
 .bg-dark-lighter {
   background: rgba(255, 255, 255, 0.03);
 }
+.bg-dark-soft {
+  background: rgba(0, 0, 0, 0.3);
+}
+.bg-dark-header {
+  background: #000;
+}
 .opacity-20 {
   opacity: 0.2;
 }
@@ -304,5 +369,12 @@ watch(
 }
 .font-modern {
   font-family: 'Outfit', sans-serif;
+}
+.border-neon {
+  border: 1px solid #39ff14;
+}
+.border-neon-hover:hover {
+  border: 1px solid #39ff14;
+  color: #39ff14 !important;
 }
 </style>

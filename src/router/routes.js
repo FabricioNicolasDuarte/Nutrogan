@@ -1,16 +1,15 @@
 const routes = [
-  // --- RUTA PRINCIPAL (MODO OFICINA/NORMAL - HUD) ---
   {
     path: '/',
     component: () => import('layouts/MainLayout.vue'),
-    meta: { requiresAuth: true }, // Auth básica requerida para todo el layout
+    meta: { requiresAuth: true },
     children: [
-      // --- DASHBOARD & OPERACIONES (Acceso General) ---
       {
         path: '',
         component: () => import('pages/DashboardPage.vue'),
         meta: { mapPage: true },
       },
+      // ZONA OPERATIVA (Acceso para todos, pero con permisos UI limitados)
       { path: 'lotes', component: () => import('pages/LotesPage.vue') },
       { path: 'lote/:id', component: () => import('pages/LoteDetailPage.vue') },
       {
@@ -19,14 +18,14 @@ const routes = [
         meta: { requiresAuth: true, mapPage: true },
       },
 
-      // --- RECURSOS (Carga de datos permitida a todos) ---
+      // RECURSOS (Operarios pueden ver para reportar, pero no editar estructura)
       { path: 'recursos', component: () => import('pages/RecursosPage.vue') },
       { path: 'recursos/potreros', component: () => import('pages/PotrerosPage.vue') },
       { path: 'recursos/despensa', component: () => import('pages/DespensaPage.vue') },
       { path: 'recursos/agua', component: () => import('pages/AguaPage.vue') },
       { path: 'recursos/lluvias', component: () => import('pages/LluviasPage.vue') },
 
-      // --- MÓDULOS TÉCNICOS (Restringido a Admin y Técnico) ---
+      // ZONA TÉCNICA (Solo Admin y Técnicos)
       {
         path: 'recursos/potreros/draw/:id?',
         component: () => import('pages/PotreroDrawPage.vue'),
@@ -43,59 +42,33 @@ const routes = [
         meta: { requiresRole: ['admin', 'tecnico'] },
       },
 
-      // --- ADMINISTRACIÓN & EQUIPO (Solo Superadmin) ---
+      // ZONA ADMINISTRATIVA (Solo Dueño/Admin)
       {
         path: 'team',
         component: () => import('pages/DeveloperTeamPage.vue'),
         meta: { requiresRole: ['admin'] },
       },
 
-      // --- GENERAL (Perfil, Ayuda, Info) ---
+      // Comunes
       { path: 'profile', component: () => import('pages/ProfilePage.vue') },
       { path: 'about', component: () => import('pages/AboutNutroganPage.vue') },
       { path: 'technology', component: () => import('pages/TechDeepDivePage.vue') },
       { path: 'support', component: () => import('pages/SupportPage.vue') },
     ],
   },
-
-  // --- RUTA PARALELA: MODO CAMPO (Ideal para Operarios) ---
   {
     path: '/field',
     component: () => import('layouts/FieldLayout.vue'),
     meta: { requiresAuth: true },
-    children: [
-      {
-        path: '',
-        component: () => import('pages/field/FieldDashboardPage.vue'),
-      },
-    ],
+    children: [{ path: '', component: () => import('pages/field/FieldDashboardPage.vue') }],
   },
-
-  // --- RUTAS PÚBLICAS Y DE AUTENTICACIÓN ---
-
   {
     path: '/welcome',
     component: () => import('pages/WelcomePage.vue'),
-    // Quitamos requiresAuth si quieres que sea pública, o lo dejas si es interna
     meta: { requiresAuth: true },
   },
-  {
-    path: '/login',
-    component: () => import('pages/LoginPage.vue'),
-  },
-
-  // --- NUEVA RUTA: CALLBACK DE AUTENTICACIÓN (Página de Éxito) ---
-  // Esta es la ruta a la que Supabase redirigirá al usuario
-  {
-    path: '/auth/callback',
-    component: () => import('pages/AuthCallbackPage.vue'),
-  },
-
-  // --- 404 (Siempre al final) ---
-  {
-    path: '/:catchAll(.*)*',
-    component: () => import('pages/ErrorNotFound.vue'),
-  },
+  { path: '/login', component: () => import('pages/LoginPage.vue') },
+  { path: '/:catchAll(.*)*', component: () => import('pages/ErrorNotFound.vue') },
 ]
 
 export default routes
