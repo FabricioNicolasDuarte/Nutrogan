@@ -1,5 +1,5 @@
 <template>
-  <q-page padding class="dashboard-pro-bg text-white">
+  <q-page padding class="dashboard-pro-bg text-white font-outfit">
     <div class="relative-position q-mb-lg">
       <div class="absolute-left" style="top: 10px; z-index: 10">
         <q-btn
@@ -105,12 +105,12 @@
           </template>
         </q-input>
       </div>
-      <div class="col-12 col-md-6 text-right">
+      <div class="col-12 col-md-6 text-right mobile-center-btn">
         <q-btn
           color="primary"
           icon="add"
           label="Nuevo Lote"
-          class="text-black text-weight-bold shadow-glow"
+          class="text-black text-weight-bold shadow-glow full-width-mobile"
           @click="abrirDialogoNuevo"
         />
       </div>
@@ -130,7 +130,7 @@
     </div>
 
     <div class="row q-col-gutter-lg">
-      <div v-for="lote in lotesPaginados" :key="lote.id" class="col-12 col-md-6 col-lg-4">
+      <div v-for="lote in lotesPaginados" :key="lote.id" class="col-12 col-sm-6 col-md-4">
         <q-card
           class="lote-card full-height column justify-between"
           :class="getBorderClass(lote.objetivo)"
@@ -150,10 +150,10 @@
               </div>
 
               <div class="col overflow-hidden">
-                <div class="text-h5 text-weight-bold ellipsis font-mono">
+                <div class="text-h6 text-weight-bold ellipsis font-mono">
                   {{ lote.identificacion }}
                 </div>
-                <div class="text-caption text-grey-5 text-uppercase tracking-wider">
+                <div class="text-caption text-grey-5 text-uppercase tracking-wider ellipsis">
                   {{ lote.objetivo || 'SIN CATEGORÍA' }}
                 </div>
               </div>
@@ -199,7 +199,8 @@
                 <div class="metric-box">
                   <div class="label text-grey-5">Peso Ing.</div>
                   <div class="value font-numeric text-white">
-                    {{ lote.peso_ingreso_kg || 0 }} <span class="text-caption text-grey-6">kg</span>
+                    {{ lote.peso_ingreso_kg || 0 }}
+                    <span class="text-caption text-grey-6">kg</span>
                   </div>
                 </div>
               </div>
@@ -219,6 +220,7 @@
           </q-card-section>
 
           <q-separator dark class="opacity-10" />
+
           <q-card-actions class="bg-dark-soft row q-col-gutter-sm q-pa-sm">
             <div class="col-4">
               <q-btn
@@ -278,7 +280,7 @@
     </div>
 
     <q-dialog v-model="showDialog" persistent class="glass-dialog-form">
-      <q-card style="min-width: 400px" class="bg-dark text-white border-neon">
+      <q-card style="min-width: 400px; max-width: 95vw" class="bg-dark text-white border-neon">
         <q-form @submit="guardarLote" class="q-gutter-md">
           <q-card-section class="bg-dark-header">
             <div class="text-h6">{{ modoEdicion ? 'Editar' : 'Nuevo' }} Lote</div>
@@ -608,8 +610,22 @@ function abrirDialogoMover(lote) {
   padding: 8px 24px;
   display: inline-block;
   font-family: 'Outfit', sans-serif;
-  font-size: 2rem; /* Tamaño actualizado para coincidir con Recursos */
+  font-size: 2rem;
   font-weight: 700;
+}
+
+/* RESPONSIVE MOBILE TWEAKS */
+@media (max-width: 600px) {
+  .page-title-box {
+    font-size: 1.5rem; /* Título más pequeño en móvil */
+    padding: 6px 16px;
+  }
+  .full-width-mobile {
+    width: 100%; /* Botones ancho completo en móvil */
+  }
+  .mobile-center-btn {
+    text-align: center !important; /* Centrar botón en móvil */
+  }
 }
 
 /* KPI Cards */

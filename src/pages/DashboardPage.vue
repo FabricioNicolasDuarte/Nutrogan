@@ -1,21 +1,28 @@
 <template>
   <q-page
-    class="dashboard-page text-white overflow-hidden font-outfit column q-pa-md"
+    class="dashboard-page text-white font-outfit q-pa-md"
     style="background: rgba(5, 5, 5, 0.85)"
   >
-
     <div
       class="header-row row items-center relative-position z-50 fade-in-down full-width"
       :class="$q.screen.lt.sm ? 'justify-center q-mb-md' : 'justify-between q-mb-sm'"
     >
-
       <div
-        :class="$q.screen.lt.sm ? 'order-last col-6 row justify-start q-pr-xs' : 'row items-center z-top'"
+        :class="
+          $q.screen.lt.sm
+            ? 'order-last col-6 row justify-start q-pr-xs'
+            : 'row items-center z-top'
+        "
       >
-        <div class="location-pill row items-center q-px-sm q-py-xs" :class="{ 'full-width justify-center': $q.screen.lt.sm }">
+        <div
+          class="location-pill row items-center q-px-sm q-py-xs"
+          :class="{ 'full-width justify-center': $q.screen.lt.sm }"
+        >
           <q-icon name="place" color="primary" size="xs" class="q-mr-xs" />
           <div class="column justify-center">
-            <span class="text-caption text-weight-bold text-uppercase leading-none tracking-wider">
+            <span
+              class="text-caption text-weight-bold text-uppercase leading-none tracking-wider"
+            >
               {{ dataStore.establecimientoActual?.ciudad || 'FORMOSA' }}
             </span>
             <span class="text-nano text-grey-4 tracking-widest">ARGENTINA</span>
@@ -24,13 +31,21 @@
       </div>
 
       <div
-        :class="$q.screen.lt.sm ? 'order-first col-12 row justify-center q-mb-sm' : 'absolute-center z-top q-mt-xs'"
+        :class="
+          $q.screen.lt.sm
+            ? 'order-first col-12 row justify-center q-mb-sm'
+            : 'absolute-center z-top q-mt-xs'
+        "
       >
         <div class="page-title-box">DASHBOARD</div>
       </div>
 
       <div
-        :class="$q.screen.lt.sm ? 'order-last col-6 row justify-end q-pl-xs' : 'row items-center justify-end q-gutter-x-md z-top'"
+        :class="
+          $q.screen.lt.sm
+            ? 'order-last col-6 row justify-end q-pl-xs'
+            : 'row items-center justify-end q-gutter-x-md z-top'
+        "
       >
         <div
           class="glass-capsule row items-center q-px-md shadow-3"
@@ -44,7 +59,7 @@
             dark
             borderless
             class="no-border-input q-ml-sm"
-            :class="{ 'col': $q.screen.lt.sm }"
+            :class="{ col: $q.screen.lt.sm }"
             :style="$q.screen.gt.xs ? 'width: 180px' : ''"
             placeholder="Buscar..."
             option-value="id"
@@ -77,18 +92,32 @@
 
     <div class="main-frame col column relative-position overflow-hidden shadow-10">
       <div class="col-grow relative-position overflow-hidden map-area-rounded">
-
-        <div class="full-height full-width relative-position transition-blur" :class="{ 'blur-content': !!selectedPotrero }">
+        <div
+          class="full-height full-width relative-position transition-blur"
+          :class="{ 'blur-content': !!selectedPotrero }"
+        >
           <l-map
             ref="mapRef"
             v-model:zoom="zoom"
             :center="mapCenter"
-            :options="{ zoomControl: false, attributionControl: false, fadeAnimation: true }"
+            :options="{
+              zoomControl: false,
+              attributionControl: false,
+              fadeAnimation: true,
+            }"
             style="height: 100%; width: 100%; z-index: 0"
             @ready="onMapReady"
           >
-            <l-tile-layer :url="currentTileLayer" layer-type="base" name="Base Layer" />
-            <l-geo-json v-if="potrerosGeoJson" :geojson="potrerosGeoJson" :options="geoJsonOptions" />
+            <l-tile-layer
+              :url="currentTileLayer"
+              layer-type="base"
+              name="Base Layer"
+            />
+            <l-geo-json
+              v-if="potrerosGeoJson"
+              :geojson="potrerosGeoJson"
+              :options="geoJsonOptions"
+            />
           </l-map>
 
           <div class="absolute-full no-pointer-events" style="z-index: 10">
@@ -132,7 +161,9 @@
             class="absolute-right q-ma-md column z-top all-pointer-events"
             style="top: 50%; transform: translateY(-50%)"
           >
-            <div class="column bg-glass-blur rounded-borders overflow-hidden shadow-3 border-subtle">
+            <div
+              class="column bg-glass-blur rounded-borders overflow-hidden shadow-3 border-subtle"
+            >
               <q-btn
                 flat
                 dense
@@ -153,9 +184,23 @@
                 ><q-tooltip>Satélite</q-tooltip></q-btn
               >
               <q-separator dark class="q-my-xs opacity-50" />
-              <q-btn flat dense padding="sm" icon="add" color="white" @click="zoom++" />
+              <q-btn
+                flat
+                dense
+                padding="sm"
+                icon="add"
+                color="white"
+                @click="zoom++"
+              />
               <q-separator dark />
-              <q-btn flat dense padding="sm" icon="remove" color="white" @click="zoom--" />
+              <q-btn
+                flat
+                dense
+                padding="sm"
+                icon="remove"
+                color="white"
+                @click="zoom--"
+              />
               <q-separator dark />
               <q-btn
                 flat
@@ -170,7 +215,10 @@
         </div>
 
         <transition name="scale">
-          <div v-if="selectedPotrero" class="absolute-center z-max all-pointer-events">
+          <div
+            v-if="selectedPotrero"
+            class="absolute-center z-max all-pointer-events"
+          >
             <ProDetailCard
               :potrero-data="selectedPotrero.potreroData"
               :lote-data="selectedPotrero.loteData"
@@ -200,7 +248,11 @@
             />
             MI CORRAL
           </div>
-          <q-badge color="grey-9" text-color="primary" :label="`${lotesDisponibles.length}`" />
+          <q-badge
+            color="grey-9"
+            text-color="primary"
+            :label="`${lotesDisponibles.length}`"
+          />
         </div>
 
         <div
@@ -208,12 +260,19 @@
           @dragover.prevent
           @drop="onDropCorral"
         >
-          <div v-if="lotesDisponibles.length === 0" class="col column flex-center text-grey-6">
-            <span class="text-nano text-uppercase tracking-widest opacity-50">Corral Vacío</span>
+          <div
+            v-if="lotesDisponibles.length === 0"
+            class="col column flex-center text-grey-6"
+          >
+            <span class="text-nano text-uppercase tracking-widest opacity-50"
+              >Corral Vacío</span
+            >
           </div>
 
           <div v-else class="col column justify-center">
-            <div class="row q-col-gutter-md justify-center items-center full-width q-px-sm">
+            <div
+              class="row q-col-gutter-md justify-center items-center full-width q-px-sm"
+            >
               <div
                 v-for="lote in lotesPaginados"
                 :key="lote.id"
@@ -240,25 +299,36 @@
                     </div>
 
                     <div class="column overflow-hidden col">
-                      <div class="text-subtitle2 text-weight-bold text-white ellipsis">
+                      <div
+                        class="text-subtitle2 text-weight-bold text-white ellipsis"
+                      >
                         {{ lote.identificacion }}
                       </div>
                       <div class="text-caption text-grey-4 row items-center no-wrap">
-                        <q-badge :color="getObjetivoColor(lote.objetivo)" class="q-mr-xs">
+                        <q-badge
+                          :color="getObjetivoColor(lote.objetivo)"
+                          class="q-mr-xs"
+                        >
                           {{ lote.objetivo }}
                         </q-badge>
-                        <span class="ellipsis text-nano">| {{ lote.cantidad_animales }} cb</span>
+                        <span class="ellipsis text-nano"
+                          >| {{ lote.cantidad_animales }} cb</span
+                        >
                       </div>
                     </div>
 
                     <q-icon name="drag_indicator" color="grey-7" />
                   </q-card-section>
                 </q-card>
-                </div>
+              </div>
             </div>
           </div>
 
-          <div class="row justify-center q-mb-sm" v-if="totalPages > 1" style="height: 20px">
+          <div
+            class="row justify-center q-mb-sm"
+            v-if="totalPages > 1"
+            style="height: 20px"
+          >
             <q-pagination
               v-model="page"
               :max="totalPages"
@@ -279,7 +349,9 @@
           >
             <div class="column flex-center bounce">
               <q-icon name="south" size="2em" class="text-primary" />
-              <div class="text-xxs text-white text-weight-bold q-mt-xs">GUARDAR</div>
+              <div class="text-xxs text-white text-weight-bold q-mt-xs">
+                GUARDAR
+              </div>
             </div>
           </div>
         </div>
@@ -350,7 +422,10 @@ const currentTileLayer = computed(() =>
 )
 
 const kpis = computed(() => {
-  const total = dataStore.lotes.reduce((acc, l) => acc + (l.cantidad_animales || 0), 0)
+  const total = dataStore.lotes.reduce(
+    (acc, l) => acc + (l.cantidad_animales || 0),
+    0,
+  )
   const ocupados = dataStore.potreros.filter((p) => lotesEnPotrero(p.id)).length
   const pct = dataStore.potreros.length
     ? Math.round((ocupados / dataStore.potreros.length) * 100)
@@ -361,17 +436,31 @@ const kpis = computed(() => {
 const searchOptions = computed(() => {
   const opts = []
   dataStore.potreros.forEach((p) =>
-    opts.push({ label: `Potrero: ${p.nombre}`, id: p.id, type: 'potrero', coords: p.geometria }),
+    opts.push({
+      label: `Potrero: ${p.nombre}`,
+      id: p.id,
+      type: 'potrero',
+      coords: p.geometria,
+    }),
   )
   dataStore.lotes.forEach((l) =>
-    opts.push({ label: `Lote: ${l.identificacion}`, id: l.id, type: 'lote', lote: l }),
+    opts.push({
+      label: `Lote: ${l.identificacion}`,
+      id: l.id,
+      type: 'lote',
+      lote: l,
+    }),
   )
   return opts
 })
 
 // === LOGICA CORRAL ===
-const lotesDisponibles = computed(() => dataStore.lotes.filter((l) => !l.potrero_actual_id))
-const totalPages = computed(() => Math.ceil(lotesDisponibles.value.length / pageSize.value) || 1)
+const lotesDisponibles = computed(() =>
+  dataStore.lotes.filter((l) => !l.potrero_actual_id),
+)
+const totalPages = computed(
+  () => Math.ceil(lotesDisponibles.value.length / pageSize.value) || 1,
+)
 const lotesPaginados = computed(() => {
   const start = (page.value - 1) * pageSize.value
   const end = start + pageSize.value
@@ -385,7 +474,10 @@ const potrerosGeoJson = computed(() => {
   const features = dataStore.potreros
     .filter((p) => p.geometria)
     .map((p) => {
-      let geometry = typeof p.geometria === 'string' ? JSON.parse(p.geometria) : p.geometria
+      let geometry =
+        typeof p.geometria === 'string'
+          ? JSON.parse(p.geometria)
+          : p.geometria
       if (geometry.type === 'Feature') geometry = geometry.geometry
       const ocupado = !!lotesEnPotrero(p.id)
       return { type: 'Feature', properties: { id: p.id, ocupado }, geometry }
@@ -414,13 +506,16 @@ const geoJsonOptions = computed(() => ({
 
 // Métodos
 function filterSearch(val, update) {
-  update(() => { /* show all */ })
+  update(() => {
+    /* show all */
+  })
 }
 function flyToTarget(val) {
   if (!val || !mapObject) return
   if (val.type === 'potrero') {
     try {
-      let geo = typeof val.coords === 'string' ? JSON.parse(val.coords) : val.coords
+      let geo =
+        typeof val.coords === 'string' ? JSON.parse(val.coords) : val.coords
       if (geo.type === 'Feature') geo = geo.geometry
       const coords = geo.coordinates[0][0]
       mapObject.flyTo([coords[1], coords[0]], 16)
@@ -431,7 +526,8 @@ function flyToTarget(val) {
   } else if (val.type === 'lote') {
     if (val.lote.potrero_actual_id) {
       const p = dataStore.getPotreroById(val.lote.potrero_actual_id)
-      if (p) flyToTarget({ type: 'potrero', coords: p.geometria, id: p.id })
+      if (p)
+        flyToTarget({ type: 'potrero', coords: p.geometria, id: p.id })
     } else {
       $q.notify({ message: 'Lote en corral', color: 'info' })
     }
@@ -444,9 +540,9 @@ function updateMarkerPositions() {
   const newPositions = {}
   dataStore.potreros.forEach((p) => {
     if (!p.geometria) return
-    let centerLat, centerLng
     try {
-      let geo = typeof p.geometria === 'string' ? JSON.parse(p.geometria) : p.geometria
+      let geo =
+        typeof p.geometria === 'string' ? JSON.parse(p.geometria) : p.geometria
       if (geo.type === 'Feature') geo = geo.geometry
       const coords = geo.coordinates[0]
       if (!coords) return
@@ -456,8 +552,8 @@ function updateMarkerPositions() {
         lngSum += c[0]
         latSum += c[1]
       })
-      centerLat = latSum / coords.length
-      centerLng = lngSum / coords.length
+      const centerLat = latSum / coords.length
+      const centerLng = lngSum / coords.length
       const point = mapObject.latLngToContainerPoint([centerLat, centerLng])
       newPositions[p.id] = { x: point.x, y: point.y }
     } catch {
@@ -492,7 +588,10 @@ function onDragStartCorral(event, lote) {
   isDraggingFromCorral.value = true
   draggingPayload.value = { type: 'corral_lote', loteId: lote.id }
   event.dataTransfer.effectAllowed = 'move'
-  event.dataTransfer.setData('text/plain', JSON.stringify(draggingPayload.value))
+  event.dataTransfer.setData(
+    'text/plain',
+    JSON.stringify(draggingPayload.value),
+  )
 }
 function onCardDragStart(payload) {
   isDraggingFromMap.value = true
@@ -507,7 +606,10 @@ function onDragStartMap(potrero, event) {
     potreroOrigenId: potrero.id,
   }
   event.dataTransfer.effectAllowed = 'move'
-  event.dataTransfer.setData('text/plain', JSON.stringify(draggingPayload.value))
+  event.dataTransfer.setData(
+    'text/plain',
+    JSON.stringify(draggingPayload.value),
+  )
 }
 function onDragEnd() {
   isDraggingFromCorral.value = false
@@ -515,9 +617,17 @@ function onDragEnd() {
   draggingPayload.value = null
 }
 async function onDropOnPotrero(potrero) {
-  if (isDraggingFromCorral.value && draggingPayload.value?.type === 'corral_lote') {
+  if (
+    isDraggingFromCorral.value &&
+    draggingPayload.value?.type === 'corral_lote'
+  ) {
     if (potrero.loteAsignado) {
-      $q.notify({ message: 'Ocupado', color: 'warning', icon: 'warning', position: 'top' })
+      $q.notify({
+        message: 'Ocupado',
+        color: 'warning',
+        icon: 'warning',
+        position: 'top',
+      })
       onDragEnd()
       return
     }
@@ -526,7 +636,12 @@ async function onDropOnPotrero(potrero) {
       await dataStore.moverLote(draggingPayload.value.loteId, potrero.id)
       await dataStore.fetchLotes()
       playMuu()
-      $q.notify({ message: 'Asignado', color: 'positive', icon: 'check', position: 'top' })
+      $q.notify({
+        message: 'Asignado',
+        color: 'positive',
+        icon: 'check',
+        position: 'top',
+      })
     } catch {
       $q.notify({ message: 'Error', color: 'negative', position: 'top' })
     } finally {
@@ -549,7 +664,12 @@ async function onDropCorral(e) {
       await dataStore.moverLoteACorral(data.loteId, data.potreroOrigenId)
       await dataStore.fetchLotes()
       playMuu()
-      $q.notify({ message: 'En Corral', color: 'info', icon: 'input', position: 'top' })
+      $q.notify({
+        message: 'En Corral',
+        color: 'info',
+        icon: 'input',
+        position: 'top',
+      })
       selectedPotrero.value = null
     } catch {
       $q.notify({ message: 'Error', color: 'negative', position: 'top' })
@@ -609,7 +729,12 @@ function getLoteIconPath(l) {
   return `/icons/${n}.svg`
 }
 function formatearFecha(f) {
-  return f ? new Date(f).toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit' }) : '-'
+  return f
+    ? new Date(f).toLocaleDateString('es-AR', {
+        day: '2-digit',
+        month: '2-digit',
+      })
+    : '-'
 }
 
 function getObjetivoColor(obj) {
@@ -638,9 +763,29 @@ watch(
   font-family: 'Fira Code', monospace;
 }
 .dashboard-page {
+  /* En Desktop: Fijo 100vh para efecto aplicación */
   height: 100vh;
+  min-height: 100vh;
   display: flex;
   flex-direction: column;
+}
+
+/* RESPONSIVE MOBILE FIX */
+@media (max-width: 600px) {
+  .dashboard-page {
+    /* En Móvil: Altura automática para permitir scroll */
+    height: auto;
+    overflow-y: auto;
+  }
+  .main-frame {
+    /* Altura mínima del mapa en móvil para que no se comprima */
+    min-height: 60vh;
+    flex: none; /* Evita que flexbox lo encoja */
+  }
+  .corral-panel {
+    /* Corral un poco más pequeño en móvil */
+    height: 140px !important;
+  }
 }
 
 /* HEADER ELEMENTS */
@@ -715,6 +860,8 @@ watch(
   background: rgba(20, 20, 20, 0.5) !important;
   backdrop-filter: blur(8px);
   margin-bottom: 10px; /* Footer */
+  display: flex;
+  flex-direction: column;
 }
 .map-area-rounded {
   border-radius: 20px 20px 0 0;

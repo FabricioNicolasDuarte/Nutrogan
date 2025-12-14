@@ -1,7 +1,7 @@
 <template>
   <q-page padding class="dashboard-pro-bg text-white font-outfit q-pb-xl">
-    <div class="relative-position q-mb-xl q-pt-sm" style="min-height: 60px">
-      <div class="absolute-left" style="z-index: 10">
+    <div class="row items-center justify-between q-mb-lg">
+      <div class="col-auto">
         <q-btn
           flat
           round
@@ -13,16 +13,14 @@
         />
       </div>
 
-      <div class="absolute-center full-width text-center pointer-events-none" style="z-index: 0">
-        <div class="page-title-box shadow-5" style="margin: 0; pointer-events: auto">
-          Reporte Inteligente
-        </div>
-        <div class="text-caption text-grey-5 q-mt-xs font-mono">
+      <div class="col text-center q-px-sm">
+        <div class="page-title-box shadow-5">Reporte Inteligente</div>
+        <div class="text-caption text-grey-5 q-mt-xs font-mono gt-xs">
           {{ fechaActual }}
         </div>
       </div>
 
-      <div class="absolute-right" style="z-index: 10">
+      <div class="col-auto">
         <q-btn
           flat
           round
@@ -38,7 +36,11 @@
       </div>
     </div>
 
-    <div class="q-px-md">
+    <div class="text-center text-caption text-grey-5 font-mono q-mb-md lt-sm">
+      {{ fechaActual }}
+    </div>
+
+    <div class="q-px-sm-md">
       <div class="row q-col-gutter-md q-mb-lg">
         <div class="col-12 col-sm-6 col-md-3">
           <q-card flat class="kpi-card relative-position overflow-hidden border-neon-left">
@@ -700,6 +702,14 @@ async function exportarPDFMaestro() {
   font-family: 'Outfit', sans-serif;
   font-size: 1.5rem;
   font-weight: 700;
+}
+
+/* RESPONSIVE MOBILE FIX */
+@media (max-width: 600px) {
+  .page-title-box {
+    font-size: 1.2rem;
+    padding: 4px 16px;
+  }
 }
 
 /* KPI Cards */

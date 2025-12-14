@@ -432,21 +432,34 @@ function handlePan(details) {
 }
 
 /* --- EFECTO DE DESENFOQUE (BLUR) --- */
-.sidebar-open {
-  /* Al abrirse el drawer, todo lo demás se desenfoca */
-  .video-background,
-  .unibody-frame,
-  .q-header,
-  .q-page-container,
-  .q-footer,
-  .side-notch {
-    filter: blur(8px) brightness(0.6);
-    transition: filter 0.4s ease-out;
-    pointer-events: none !important; /* Evita clicks accidentales en el fondo */
+/* Solo aplicamos el blur en pantallas grandes (Desktop) para evitar bugs en móviles */
+@media (min-width: 1024px) {
+  .sidebar-open {
+    .video-background,
+    .unibody-frame,
+    .q-header,
+    .q-page-container,
+    .q-footer,
+    .side-notch {
+      filter: blur(8px) brightness(0.6);
+      transition: filter 0.4s ease-out;
+      pointer-events: none !important;
+    }
   }
 }
 
-/* Transición suave al cerrar */
+/* En móviles, solo oscurecemos un poco el fondo sin desenfoque (más rendimiento) */
+@media (max-width: 1023px) {
+  .sidebar-open {
+    .video-background,
+    .q-page-container {
+      filter: brightness(0.4); /* Solo oscurecer */
+      transition: filter 0.3s ease;
+    }
+  }
+}
+
+/* Transición de regreso suave (para todos) */
 .video-background,
 .unibody-frame,
 .q-header,
