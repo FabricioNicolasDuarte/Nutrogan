@@ -6,8 +6,9 @@ export const useAuthStore = defineStore('auth', () => {
   // --- ESTADO ---
   const user = ref(null)
   const profile = ref(null)
+  const loading = ref(false) // Estado de carga global para acciones de auth
 
-  // NUEVO: Estado para roles y multi-establecimiento
+  // Estado para roles y multi-establecimiento
   const currentRole = ref(null) // 'admin', 'tecnico', 'operario'
   const userEstablishments = ref([]) // Lista de campos donde soy miembro
 
@@ -16,12 +17,80 @@ export const useAuthStore = defineStore('auth', () => {
 
   // Helpers de Roles
   const isAdmin = computed(() => currentRole.value === 'admin')
-  // Técnico o Admin tienen permisos elevados
   const isTecnico = computed(() => ['admin', 'tecnico'].includes(currentRole.value))
+
+  // --- ACCIONES DE AUTENTICACIÓN ---
+
+  /**
+   * INICIO DE SESIÓN SEGURO (MAGIC LINK)
+   * Envía un correo con enlace de acceso.
+   * Redirige a la página personalizada /auth/callback
+   */
+  async function signInWithOtp(email) {
+    loading.value = true
+    try {
+      const { error } = await supabase.auth.signInWithOtp({
+        email,
+        options: {
+          // SEGURIDAD: Evita que gente no registrada se cree una cuenta.
+          // Solo funcionará si el correo ya existe en Authentication > Users.
+          shouldCreateUser: false,
+
+          // UX: Redirige a nuestra página bonita de "Verificado" en lugar del 404
+          emailRedirectTo: window.location.origin + '/auth/callback',
+        },
+      })
+
+      if (error) throw error
+      return { success: true }
+    } catch (error) {
+      console.error('Error login:', error.message)
+      return { success: false, error: error.message }
+    } finally {
+      loading.value = false
+    }
+  }
+
+  async function login(credentials) {
+    const { data, error } = await supabase.auth.signInWithPassword(credentials)
+    if (error) throw error
+    user.value = data.user
+    await fetchProfile()
+    return data
+  }
+
+  async function signUp(credentials) {
+    const { data, error } = await supabase.auth.signUp(credentials)
+    if (error) throw error
+    user.value = data.user
+    // Esperar un poco para asegurar que el trigger de DB cree el perfil
+    await new Promise((resolve) => setTimeout(resolve, 1000))
+    await fetchProfile()
+    return data
+  }
+
+  async function logout() {
+    const { error } = await supabase.auth.signOut()
+    if (error) throw error
+    user.value = null
+    profile.value = null
+    currentRole.value = null
+    userEstablishments.value = []
+  }
+
+  async function checkAuth() {
+    const { data } = await supabase.auth.getSession()
+    user.value = data.session?.user || null
+    if (user.value) {
+      await fetchProfile()
+    }
+    return user.value
+  }
+
+  // --- GESTIÓN DE PERFIL Y ROLES ---
 
   /**
    * Obtiene el perfil del usuario actual y sus permisos.
-   * Se llama automáticamente al iniciar sesión o recargar.
    */
   async function fetchProfile() {
     const userId = user.value?.id
@@ -34,10 +103,9 @@ export const useAuthStore = defineStore('auth', () => {
     }
 
     try {
-      // 1. Cargar Perfil Base (Datos personales + establecimiento activo)
+      // 1. Cargar Perfil Base
       const { data: profileData, error: profileError } = await supabase
         .from('perfiles_usuarios')
-        // Seleccionamos todo para tener establecimiento_activo_id y avatar_url
         .select('*')
         .eq('id', userId)
         .single()
@@ -68,9 +136,7 @@ export const useAuthStore = defineStore('auth', () => {
         // Asignamos el rol correspondiente a este establecimiento
         currentRole.value = activeMem ? activeMem.rol : null
 
-        // --- COMPATIBILIDAD CRÍTICA ---
-        // Inyectamos 'establecimiento_id' en el objeto profile para que
-        // data-store.js y otros componentes sigan funcionando sin cambios.
+        // Inyectamos 'establecimiento_id' para compatibilidad con data-store
         profileData.establecimiento_id = profileData.establecimiento_activo_id
       } else {
         // Si no tiene campo activo seleccionado, intentamos asignar el primero
@@ -102,8 +168,7 @@ export const useAuthStore = defineStore('auth', () => {
 
       if (error) throw error
 
-      // 2. Recargar la página para limpiar los stores de datos (lotes, lluvias, etc.)
-      // Esto es lo más seguro para evitar mezclar datos de dos campos diferentes.
+      // 2. Recargar la página para limpiar los stores de datos
       window.location.reload()
     } catch (e) {
       console.error('Error cambiando establecimiento:', e)
@@ -149,7 +214,7 @@ export const useAuthStore = defineStore('auth', () => {
   }
 
   /**
-   * Actualiza los datos del perfil (Nombre, Teléfono, Avatar, etc.)
+   * Actualiza los datos del perfil
    */
   async function updateProfile(profileData) {
     const userId = user.value?.id
@@ -167,80 +232,49 @@ export const useAuthStore = defineStore('auth', () => {
     }
 
     if (data && data.length > 0) {
-      // Mantenemos la compatibilidad del ID al actualizar
       const updated = data[0]
       updated.establecimiento_id = updated.establecimiento_activo_id
       profile.value = { ...profile.value, ...updated }
     }
   }
 
-  // --- AUTH ACTIONS ---
-
-  async function login(credentials) {
-    const { data, error } = await supabase.auth.signInWithPassword(credentials)
-    if (error) throw error
-    user.value = data.user
-    await fetchProfile()
-    return data
-  }
-
-  async function signUp(credentials) {
-    const { data, error } = await supabase.auth.signUp(credentials)
-    if (error) throw error
-    user.value = data.user
-    // Esperar un poco para asegurar que el trigger de DB cree el perfil
-    await new Promise((resolve) => setTimeout(resolve, 1000))
-    await fetchProfile()
-    return data
-  }
-
-  async function logout() {
-    const { error } = await supabase.auth.signOut()
-    if (error) throw error
-    user.value = null
-    profile.value = null
-    currentRole.value = null
-    userEstablishments.value = []
-  }
-
-  async function checkAuth() {
-    const { data } = await supabase.auth.getSession()
-    user.value = data.session?.user || null
+  // Listener de cambios de sesión (Mantiene la app sincronizada si se abre otra pestaña)
+  supabase.auth.onAuthStateChange(async (event, session) => {
+    user.value = session?.user || null
     if (user.value) {
-      await fetchProfile()
+      // Solo cargamos el perfil si no lo tenemos, para evitar llamadas dobles
+      if (!profile.value) await fetchProfile()
+    } else {
+      profile.value = null
+      currentRole.value = null
+      userEstablishments.value = []
     }
-    return user.value
-  }
-
-  function handleAuthStateChange() {
-    supabase.auth.onAuthStateChange(async (event, session) => {
-      user.value = session?.user || null
-      if (user.value) {
-        await fetchProfile()
-      } else {
-        profile.value = null
-        currentRole.value = null
-        userEstablishments.value = []
-      }
-    })
-  }
+  })
 
   return {
+    // Estado
     user,
     profile,
-    currentRole, // Exportado
-    userEstablishments, // Exportado
+    currentRole,
+    userEstablishments,
+    loading,
+
+    // Getters
     isAuthenticated,
-    isAdmin, // Exportado
-    isTecnico, // Exportado
+    isAdmin,
+    isTecnico,
+
+    // Acciones Auth
+    signInWithOtp, // ¡IMPORTANTE: Usar esta en el Login!
     login,
     signUp,
     logout,
     checkAuth,
-    handleAuthStateChange,
+
+    // Acciones Perfil y Establecimiento
     fetchProfile,
     updateProfile,
-    switchEstablishment, // Exportado
-    crearEstablecimiento, // Exportado
+    switchEstablishment,
+    crearEstablecimiento,
   }
 })

@@ -9,7 +9,7 @@ const routes = [
       {
         path: '',
         component: () => import('pages/DashboardPage.vue'),
-        meta: { mapPage: true }
+        meta: { mapPage: true },
       },
       { path: 'lotes', component: () => import('pages/LotesPage.vue') },
       { path: 'lote/:id', component: () => import('pages/LoteDetailPage.vue') },
@@ -27,7 +27,6 @@ const routes = [
       { path: 'recursos/lluvias', component: () => import('pages/LluviasPage.vue') },
 
       // --- MÓDULOS TÉCNICOS (Restringido a Admin y Técnico) ---
-      // Los peones (operarios) no necesitan dibujar mapas ni ver satélites complejos
       {
         path: 'recursos/potreros/draw/:id?',
         component: () => import('pages/PotreroDrawPage.vue'),
@@ -41,14 +40,14 @@ const routes = [
       {
         path: 'reportes',
         component: () => import('pages/ReportesPage.vue'),
-        meta: { requiresRole: ['admin', 'tecnico'] }
+        meta: { requiresRole: ['admin', 'tecnico'] },
       },
 
       // --- ADMINISTRACIÓN & EQUIPO (Solo Superadmin) ---
       {
         path: 'team',
         component: () => import('pages/DeveloperTeamPage.vue'),
-        meta: { requiresRole: ['admin'] }
+        meta: { requiresRole: ['admin'] },
       },
 
       // --- GENERAL (Perfil, Ayuda, Info) ---
@@ -72,16 +71,27 @@ const routes = [
     ],
   },
 
-  // --- RUTAS PÚBLICAS (Login, Bienvenida, Error) ---
+  // --- RUTAS PÚBLICAS Y DE AUTENTICACIÓN ---
+
   {
     path: '/welcome',
     component: () => import('pages/WelcomePage.vue'),
+    // Quitamos requiresAuth si quieres que sea pública, o lo dejas si es interna
     meta: { requiresAuth: true },
   },
   {
     path: '/login',
     component: () => import('pages/LoginPage.vue'),
   },
+
+  // --- NUEVA RUTA: CALLBACK DE AUTENTICACIÓN (Página de Éxito) ---
+  // Esta es la ruta a la que Supabase redirigirá al usuario
+  {
+    path: '/auth/callback',
+    component: () => import('pages/AuthCallbackPage.vue'),
+  },
+
+  // --- 404 (Siempre al final) ---
   {
     path: '/:catchAll(.*)*',
     component: () => import('pages/ErrorNotFound.vue'),
