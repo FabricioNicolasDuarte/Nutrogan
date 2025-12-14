@@ -1,22 +1,24 @@
 <template>
-  <q-card class="interactive-board full-height column no-shadow relative-position">
-    <div class="row items-center justify-between q-pa-md border-b glass-header">
-      <div>
-        <div class="text-h6 text-white">Gestión de Equipo & Comunicación</div>
-        <div class="text-caption text-grey-5">
-          Arrastra para asignar roles o crea alertas manuales
-        </div>
+  <q-card
+    class="interactive-board column no-shadow relative-position"
+    :class="{ 'full-height': !$q.screen.lt.md }"
+  >
+    <div class="row items-center justify-between q-pa-md border-b glass-header" style="gap: 10px">
+      <div class="col-12 col-sm-auto">
+        <div class="text-h6 text-white leading-none">Gestión de Equipo</div>
+        <div class="text-caption text-grey-5 q-mt-xs">Roles y alertas</div>
       </div>
 
-      <div class="row q-gutter-sm">
+      <div class="row q-gutter-sm col-12 col-sm-auto justify-end">
         <q-btn
           unelevated
           rounded
           color="primary"
           text-color="black"
           icon="campaign"
-          label="NOTIFICACIONES"
+          label="NOTIF"
           class="text-weight-bold shadow-glow"
+          size="sm"
           @click="abrirAlertas"
         />
 
@@ -27,13 +29,17 @@
           icon="person_add"
           label="Invitar"
           class="glass-btn"
+          size="sm"
           @click="showInviteDialog = true"
         />
       </div>
     </div>
 
     <div class="board-content col column q-pa-md">
-      <div class="col-grow scroll relative-position q-mb-md">
+      <div
+        class="scroll relative-position q-mb-md team-list-container"
+        :class="$q.screen.lt.md ? '' : 'col-grow'"
+      >
         <div
           v-if="dataStore.miembrosEquipo.length === 0"
           class="absolute-center text-center text-grey-6"
@@ -149,10 +155,10 @@
       <q-separator dark class="q-mb-md opacity-20" />
 
       <div class="text-subtitle2 text-grey-5 q-mb-sm font-mono text-uppercase">
-        Canales de Suscripción (Drag & Drop)
+        Canales de Suscripción
       </div>
 
-      <div class="row q-col-gutter-md" style="min-height: 220px">
+      <div class="row q-col-gutter-md hub-container">
         <div class="col-12 col-sm-6 col-lg-3" v-for="cat in categoriasHub" :key="cat.id">
           <div
             class="notification-hub column"
@@ -347,7 +353,7 @@
           </div>
 
           <div
-            class="col-12 col-md-6 q-pa-xl bg-black flex flex-center relative-position overflow-hidden"
+            class="col-12 col-md-6 q-pa-xl bg-black flex flex-center relative-position overflow-hidden gt-sm"
           >
             <div class="text-overline absolute-top-left q-ma-md text-grey-7">VISTA PREVIA</div>
             <div class="email-mockup bg-white full-width shadow-10">
@@ -485,7 +491,6 @@ const alertTab = ref('nueva')
 const inviteLoading = ref(false)
 const editLoading = ref(false)
 const loadingAlert = ref(false)
-const isDragging = ref(false)
 
 const roleOptions = [
   { label: 'Administrador', value: 'admin' },
@@ -533,13 +538,8 @@ function getColor(rol) {
   return 'blue-grey-4'
 }
 
-// --- LOGICA DE SUSCRIPCIONES (¡Restaurada!) ---
+// --- LOGICA DE SUSCRIPCIONES ---
 function getSubscribers(tipo) {
-  // Filtramos los miembros que tengan la configuración activa para este tipo
-  // Asumimos que dataStore.miembrosEquipo viene con un campo "config_notificaciones" (JSON)
-  // Como la DB actual no guarda esto en una columna específica, lo simulamos para la UI
-  // O podemos usar un campo de perfil si decidimos guardarlo.
-  // Por ahora, para que la UI funcione, mostraremos solo si tienen la propiedad en memoria local.
   return dataStore.miembrosEquipo.filter(
     (m) => m.config_notificaciones && m.config_notificaciones[tipo],
   )
@@ -611,29 +611,24 @@ async function eliminarMiembro(miembro) {
   })
 }
 
-// 2. Drag & Drop (¡Restaurado!)
+// 2. Drag & Drop
 function onDragStart(event, miembro) {
-  isDragging.value = true
   event.dataTransfer.setData('text/plain', JSON.stringify(miembro))
 }
 
 async function onDrop(event, tipo) {
-  isDragging.value = false
   try {
     const rawData = event.dataTransfer.getData('text/plain')
     if (!rawData) return
     const miembroData = JSON.parse(rawData)
 
-    // Encontramos el objeto real en el array
     const miembroReal = dataStore.miembrosEquipo.find((m) => m.id === miembroData.id)
 
     if (miembroReal) {
-      // Simulamos la suscripción localmente (para persistencia real se necesita columna JSONB)
       if (!miembroReal.config_notificaciones) miembroReal.config_notificaciones = {}
 
       if (!miembroReal.config_notificaciones[tipo]) {
         miembroReal.config_notificaciones[tipo] = true
-        // Aquí podrías llamar a una función para guardar en BD si tuvieras la columna
         $q.notify({
           type: 'positive',
           message: `Asignado a ${tipo.toUpperCase()}`,
@@ -699,6 +694,7 @@ onMounted(() => {
   backdrop-filter: blur(20px);
   border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 24px;
+  overflow: hidden;
 }
 .team-grid {
   display: grid;
@@ -731,6 +727,21 @@ onMounted(() => {
   white-space: nowrap;
 }
 
+/* --- ESTILOS MÓVIL ESPECÍFICOS PARA LISTA --- */
+@media (max-width: 1023px) {
+  .team-list-container {
+    height: 300px;
+    overflow-y: auto;
+    margin-bottom: 20px;
+    padding-right: 5px; /* Espacio para scrollbar si aparece */
+  }
+
+  /* Asegurar que las tarjetas de suscripción se vean bien apiladas */
+  .hub-container {
+    padding-bottom: 20px;
+  }
+}
+
 /* Hubs Estilo "Pro" */
 .notification-hub {
   border-radius: 16px;
@@ -753,7 +764,7 @@ onMounted(() => {
   border-color: rgba(255, 255, 255, 0.3);
 }
 
-/* Colores para los CHIPS dentro de los hubs */
+/* Colores chips */
 .bg-cyan-glass {
   background: rgba(0, 229, 255, 0.15);
 }
@@ -810,7 +821,6 @@ onMounted(() => {
   text-align: center;
 }
 
-/* Dot Indicators en tarjeta */
 .dot-indicator {
   width: 6px;
   height: 6px;
@@ -829,7 +839,6 @@ onMounted(() => {
   background: #ffffff;
 }
 
-/* Email Mockup */
 .email-mockup {
   border-radius: 8px;
   overflow: hidden;

@@ -4,7 +4,10 @@
 
     <div class="central-stage full-width relative-position z-10 q-pa-md q-pb-xl">
       <div class="row items-center justify-between q-mb-md animate-slide-down">
-        <div class="row items-center col-12 col-md-auto q-mb-sm-none">
+        <div
+          class="row items-center col-12 col-md-auto q-mb-sm-md q-mb-md-none"
+          :class="{ 'justify-center text-center': $q.screen.lt.md }"
+        >
           <q-btn round flat icon="arrow_back" color="white" to="/" class="glass-btn q-mr-md" />
           <div>
             <div class="text-h4 font-display text-white leading-none">Centro de Mando</div>
@@ -45,7 +48,7 @@
         </div>
 
         <div class="grid-area-actions column q-gutter-y-md">
-          <div class="col-12 col-md">
+          <div class="col-12 col-md map-wrapper-mobile">
             <EstablishmentMapCard />
           </div>
           <div class="col-12 col-md-auto">
@@ -68,10 +71,7 @@
         </q-card-section>
 
         <q-card-section class="q-pa-lg">
-          <div class="text-grey-4 q-mb-lg">
-            Simula eventos del sistema para verificar el enrutamiento de alertas al equipo.
-          </div>
-
+          <div class="text-grey-4 q-mb-lg">Simuladores de eventos del sistema.</div>
           <div class="row q-col-gutter-md q-mb-lg">
             <div class="col-12 col-sm-4">
               <q-btn
@@ -135,7 +135,6 @@ import { supabase } from 'boot/supabase'
 
 const dataStore = useDataStore()
 const $q = useQuasar()
-
 const isOnline = ref(navigator.onLine)
 const dialogoPruebas = ref(false)
 const simulando = ref(null)
@@ -143,7 +142,6 @@ const logsSimulacion = ref([])
 
 const updateStatus = () => (isOnline.value = navigator.onLine)
 
-// --- LÓGICA DE SIMULACIÓN ---
 async function simularEvento(tipo) {
   simulando.value = tipo
   const hora = new Date().toLocaleTimeString()
@@ -207,39 +205,35 @@ onUnmounted(() => {
 </script>
 
 <style lang="scss" scoped>
-/* FONDO QUE SE ADAPTA A TODO */
 .dashboard-pro-bg {
   background-image: url('src/assets/nutrogan-bg4.png');
   background-size: cover;
   background-position: center;
-  /* Importante: min-height 100vh asegura cubrir pantalla, pero permite crecer */
   min-height: 100vh;
   position: relative;
-  overflow-x: hidden; /* Evita scroll horizontal accidental */
+  overflow-x: hidden;
 }
 
 .backdrop-overlay {
   position: absolute;
   inset: 0;
-  background: rgba(0, 0, 0, 0); /* Capa por si quieres oscurecer fondo */
+  background: rgba(0, 0, 0, 0.4);
   z-index: 0;
 }
 
 .central-stage {
   width: 100%;
-  height: auto; /* Altura automática */
+  height: auto;
   display: flex;
   flex-direction: column;
 }
 
-/* LAYOUT DE GRILLA INTELIGENTE */
+/* LAYOUT DE GRILLA */
 .bento-grid-wrapper {
   display: grid;
-  /* Escritorio: 3 columnas fijas/flexibles */
   grid-template-columns: 340px 1fr 380px;
   gap: 24px;
   width: 100%;
-  /* Altura mínima en PC para llenar pantalla */
   min-height: calc(100vh - 130px);
 }
 
@@ -255,7 +249,7 @@ onUnmounted(() => {
   flex-direction: column;
 }
 
-/* --- TABLET (Media) --- */
+/* --- TABLET --- */
 @media (max-width: 1400px) {
   .bento-grid-wrapper {
     grid-template-columns: 320px 1fr;
@@ -273,39 +267,41 @@ onUnmounted(() => {
     .grid-area-team {
       grid-column: 1 / span 2;
       grid-row: 2;
-      /* Altura mínima para que el mapa/tabla se vea bien */
       min-height: 500px;
     }
   }
 }
 
-/* --- MÓVIL (Celular Real) --- */
+/* --- MÓVIL (CORRECCIÓN DEFINITIVA) --- */
 @media (max-width: 900px) {
   .bento-grid-wrapper {
     display: flex;
-    flex-direction: column; /* Apilar todo */
-    gap: 20px;
-    height: auto !important; /* Forzar altura automática */
+    flex-direction: column;
+    gap: 24px;
+    height: auto !important;
     min-height: auto !important;
   }
 
-  /* Anular posicionamiento de grilla */
+  /* IMPORTANTE: Altura automática para que crezca según su contenido (las tarjetas apiladas).
+    Antes tenía height: 600px !important, eso lo rompía.
+  */
+  .grid-area-team {
+    height: auto !important;
+    min-height: auto !important;
+  }
+
+  .map-wrapper-mobile {
+    height: 550px !important;
+  }
+
   .grid-area-profile,
   .grid-area-team,
   .grid-area-actions {
-    grid-column: auto;
-    grid-row: auto;
-    width: 100%; /* Ocupar todo el ancho */
-    min-height: auto; /* Dejar que el contenido defina la altura */
-  }
-
-  /* Ajustes específicos para móviles */
-  .grid-area-actions {
-    gap: 16px;
+    width: 100%;
   }
 }
 
-/* ESTILOS DE COMPONENTES */
+/* Estilos Generales */
 .glass-btn {
   background: rgba(255, 255, 255, 0.1);
   border: 1px solid rgba(255, 255, 255, 0.1);
@@ -315,10 +311,6 @@ onUnmounted(() => {
   border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 20px;
   height: 32px;
-}
-.glass-dialog {
-  background: #111 !important;
-  border: 1px solid rgba(0, 229, 255, 0.3);
 }
 .status-dot {
   width: 8px;
@@ -334,7 +326,6 @@ onUnmounted(() => {
   background: #ff1744;
   color: #ff1744;
 }
-
 .font-display {
   font-family: 'Outfit', sans-serif;
   font-weight: 800;
@@ -343,7 +334,6 @@ onUnmounted(() => {
 .font-mono {
   font-family: 'Fira Code', monospace;
 }
-
 .animate-slide-down {
   animation: slideDown 0.5s ease-out;
 }

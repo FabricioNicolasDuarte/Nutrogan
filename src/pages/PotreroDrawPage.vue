@@ -49,6 +49,7 @@
         ref="mapRef"
         v-model:zoom="zoom"
         :center="mapCenter"
+        :options="{ tap: false }"
         style="height: 100%; width: 100%"
         @ready="onMapReady"
       >
@@ -85,8 +86,6 @@ import 'leaflet/dist/leaflet.css'
 import 'leaflet-draw/dist/leaflet.draw.css'
 
 // --- FIX CRÍTICO PARA LEAFLET-DRAW EN VITE ---
-// Creamos una COPIA mutable de L (usando spread operator)
-// para que leaflet-draw pueda escribir propiedades como 'drawVersion' sin error.
 window.L = { ...L }
 
 import 'leaflet-draw'
@@ -114,7 +113,7 @@ const mapCenter = ref([-26.1775, -58.1756])
 const areaActual = ref(null)
 
 const potreroGeoJson = ref(null)
-const drawLayerGroup = shallowRef(null) // ShallowRef para evitar problemas de Proxy
+const drawLayerGroup = shallowRef(null)
 
 const geoJsonStyle = {
   color: '#FF0000',
@@ -157,6 +156,7 @@ async function onMapReady(mapObject) {
     }
   }
 
+  // Opciones TOUCH FRIENDLY para los controles de dibujo
   const drawControl = new L.Control.Draw({
     position: 'topleft',
     draw: {
@@ -164,6 +164,10 @@ async function onMapReady(mapObject) {
         allowIntersection: false,
         shapeOptions: geoJsonStyle,
         drawError: { color: '#e1e100', message: '<strong>Error:</strong> ¡Cruce de líneas!' },
+        touchIcon: new L.DivIcon({
+          iconSize: new L.Point(20, 20),
+          className: 'leaflet-div-icon leaflet-editing-icon leaflet-touch-icon',
+        }),
       },
       marker: false,
       circlemarker: false,
@@ -176,7 +180,6 @@ async function onMapReady(mapObject) {
 
   mapObject.addControl(drawControl)
 
-  // Eventos de dibujo
   mapObject.on('draw:created', (e) => {
     const layer = e.layer
     drawLayerGroup.value.clearLayers()
@@ -184,8 +187,6 @@ async function onMapReady(mapObject) {
 
     const geoJSON = layer.toGeoJSON()
     potreroGeoJson.value = geoJSON
-
-    // Mantener editando=true para que <l-geo-json> no se renderice y cause conflicto
     editando.value = true
   })
 
@@ -323,5 +324,28 @@ onMounted(async () => {
   height: 65vh;
   border-radius: 8px;
   overflow: hidden;
+}
+
+/* --- ESTILOS TOUCH PARA MÓVILES --- */
+/* Hacer los botones de la barra lateral más grandes */
+.leaflet-touch .leaflet-draw-toolbar .leaflet-draw-draw-polygon,
+.leaflet-touch .leaflet-draw-toolbar .leaflet-draw-edit-edit,
+.leaflet-touch .leaflet-draw-toolbar .leaflet-draw-edit-remove {
+  width: 44px !important;
+  height: 44px !important;
+  line-height: 44px !important;
+  background-size: 300px 30px !important;
+}
+
+/* Hacer los cuadrados blancos de edición mucho más grandes y fáciles de agarrar */
+.leaflet-touch .leaflet-div-icon.leaflet-editing-icon {
+  width: 20px !important;
+  height: 20px !important;
+  margin-left: -10px !important;
+  margin-top: -10px !important;
+  border-radius: 50%; /* Redondos es mejor para el dedo */
+  border: 2px solid #000;
+  background: #fff;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
 }
 </style>
