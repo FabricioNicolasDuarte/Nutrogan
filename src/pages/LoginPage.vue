@@ -9,14 +9,14 @@
         <div class="text-h5 text-white text-weight-bold q-mt-sm tracking-wide">
           Nutrogan <span class="text-primary"></span>
         </div>
-        <div class="text-caption text-grey-5">Acceso Corporativo</div>
+        <div class="text-caption text-grey-5">Ganadería de Precisión</div>
       </div>
 
       <div class="q-pa-md">
         <q-form @submit.prevent="handleLogin" class="q-gutter-y-md">
           <q-input
             v-model="form.email"
-            placeholder="usuario@cedeva.com.ar"
+            placeholder="usuario@nutrogan.com"
             outlined
             dark
             color="primary"
@@ -81,7 +81,7 @@
     </q-card>
 
     <div class="absolute-bottom text-center footer-gradient text-grey-5 text-caption">
-      &copy; 2025 Nutrogan | Ganadería de Precisión.
+      &copy; 2025 Nutrogan Tecnologies | Duarte Fabricio - Ascona Enzo - Amarilla Sebastián
     </div>
   </div>
 </template>
