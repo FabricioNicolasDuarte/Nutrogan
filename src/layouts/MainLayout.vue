@@ -1,6 +1,6 @@
 <template>
   <q-layout
-    view="lHh LpR lFf"
+    view="lHH LpR lFF"
     class="fullscreen bg-black overflow-hidden font-outfit"
     :class="{ 'sidebar-open': rightDrawerOpen }"
   >
@@ -41,10 +41,10 @@
       />
     </svg>
 
-    <q-header class="bg-transparent q-pt-none pointer-events-none" style="z-index: 5000">
+    <q-header class="bg-transparent q-pt-none pointer-events-none">
       <div class="row justify-center relative-position" style="height: 1px">
         <div
-          class="notch-container shadow-10 pointer-events-auto cursor-pointer"
+          class="notch-container shadow-10 pointer-events-auto cursor-pointer font-outfit"
           @click="$router.push('/about')"
         >
           <LivingLogo src="/images/nutrogan-logo3.svg" class="notch-content" />
@@ -232,7 +232,7 @@
       <router-view />
     </q-page-container>
 
-    <q-footer class="bg-transparent q-pb-none pointer-events-none" style="z-index: 5000">
+    <q-footer class="bg-transparent q-pb-none pointer-events-none">
       <div class="footer-wrapper column items-center pointer-events-auto">
         <div class="footer-base-rigid column items-center justify-center">
           <div class="tabs-pill shadow-5 full-width">
@@ -408,8 +408,7 @@ function handlePan(details) {
   font-family: 'Outfit', sans-serif !important;
 }
 
-/* --- DRAWER REDESIGN: GLASSMORPHISM --- */
-
+/* --- DRAWER REDESIGN --- */
 :deep(.q-drawer) {
   background: transparent !important;
   box-shadow: none !important;
@@ -421,8 +420,10 @@ function handlePan(details) {
   -webkit-backdrop-filter: blur(20px) saturate(180%);
   border-left: 1px solid rgba(255, 255, 255, 0.1);
   box-shadow: -15px 0 50px rgba(0, 0, 0, 0.8) !important;
+  z-index: 10000 !important;
+}
 
-  /* CRÍTICO: Z-Index muy alto para estar sobre el Footer */
+:deep(.q-drawer-container) {
   z-index: 10000 !important;
 }
 
@@ -431,8 +432,7 @@ function handlePan(details) {
   height: 100%;
 }
 
-/* --- EFECTO DE DESENFOQUE (BLUR) --- */
-/* Solo aplicamos el blur en pantallas grandes (Desktop) para evitar bugs en móviles */
+/* --- BLUR EFFECT --- */
 @media (min-width: 1024px) {
   .sidebar-open {
     .video-background,
@@ -448,18 +448,16 @@ function handlePan(details) {
   }
 }
 
-/* En móviles, solo oscurecemos un poco el fondo sin desenfoque (más rendimiento) */
 @media (max-width: 1023px) {
   .sidebar-open {
     .video-background,
     .q-page-container {
-      filter: brightness(0.4); /* Solo oscurecer */
+      filter: brightness(0.4);
       transition: filter 0.3s ease;
     }
   }
 }
 
-/* Transición de regreso suave (para todos) */
 .video-background,
 .unibody-frame,
 .q-header,
@@ -470,7 +468,42 @@ function handlePan(details) {
   filter: blur(0px) brightness(1);
 }
 
-/* --- ESTILOS DE COMPONENTES --- */
+/* --- NOTCH STYLES (CORREGIDO PADDING) --- */
+.notch-container {
+  position: relative;
+  background-color: #000000;
+  width: 500px;
+  height: 90px;
+  border-bottom-left-radius: 40px;
+  border-bottom-right-radius: 40px;
+  border: 1px solid rgba(51, 255, 0, 0.15);
+  border-top: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.8);
+  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+  z-index: 5001;
+  overflow: hidden;
+  /* CAMBIO: Padding top para bajar el logo */
+  padding-top: 12px;
+}
+.notch-content {
+  width: 70%;
+  height: 70%;
+}
+@media (max-width: 600px) {
+  .notch-container {
+    width: 220px;
+    height: 70px;
+    border-bottom-left-radius: 24px;
+    border-bottom-right-radius: 24px;
+    /* En móvil también un poco de padding pero menor porque es más chico */
+    padding-top: 8px;
+  }
+}
+
+/* --- RESTO DE ESTILOS --- */
 .avatar-container {
   position: relative;
   display: inline-block;
@@ -558,27 +591,23 @@ function handlePan(details) {
   }
 }
 
-/* --- ESTILO ITEM CERRAR SESIÓN (CYAN NEON) --- */
 .logout-item-integrated {
   border-radius: 12px;
-  color: #00e5ff; /* Cyan Neon */
+  color: #00e5ff;
   border: 1px solid rgba(0, 229, 255, 0.15);
   background: rgba(0, 229, 255, 0.05);
   margin-bottom: 4px;
   transition: all 0.3s ease;
-
   .logout-icon-side {
     color: #00e5ff;
     opacity: 0.7;
     transition: all 0.3s;
   }
-
   &:hover {
     background: rgba(0, 229, 255, 0.15);
     border-color: #00e5ff;
     box-shadow: 0 0 15px rgba(0, 229, 255, 0.2);
     padding-left: 15px;
-
     .logout-icon-side {
       opacity: 1;
       transform: scale(1.2);
@@ -598,7 +627,6 @@ function handlePan(details) {
   background: rgba(57, 255, 20, 0.1);
   color: #39ff14;
 }
-
 .border-neon {
   border: 1px solid rgba(57, 255, 20, 0.3);
 }
@@ -621,7 +649,6 @@ function handlePan(details) {
   z-index: 9999;
 }
 
-/* --- ELEMENTOS DE LAYOUT EXISTENTES --- */
 .unibody-frame {
   position: fixed;
   top: 0;
@@ -646,37 +673,6 @@ function handlePan(details) {
   position: absolute;
   inset: 0;
   background: transparent;
-}
-
-.notch-container {
-  position: relative;
-  background-color: #000000;
-  width: 500px;
-  height: 90px;
-  border-bottom-left-radius: 40px;
-  border-bottom-right-radius: 40px;
-  border: 1px solid rgba(51, 255, 0, 0.15);
-  border-top: none;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.8);
-  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
-  z-index: 5001;
-  overflow: hidden;
-  padding: 0;
-}
-.notch-content {
-  width: 70%;
-  height: 70%;
-}
-@media (max-width: 600px) {
-  .notch-container {
-    width: 220px;
-    height: 70px;
-    border-bottom-left-radius: 24px;
-    border-bottom-right-radius: 24px;
-  }
 }
 
 .side-notch {
