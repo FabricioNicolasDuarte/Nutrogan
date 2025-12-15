@@ -82,11 +82,11 @@ serve(async (req) => {
              </a>
           </div>
 
-          <div style="background-color: #81ffb1ff; padding: 30px; text-align: center; border-top: 1px solid #f0f0f0;">
-            <p style="margin: 0; color: #71717a; font-size: 12px;">
+          <div style="background-color: #000000ff; padding: 30px; text-align: center; border-top: 1px solid #f0f0f0;">
+            <p style="margin: 0; color: #ffffffff; font-size: 12px;">
               © ${new Date().getFullYear()} Nutrogan Systems. Todos los derechos reservados.
             </p>
-            <p style="margin: 10px 0 0; color: #a1a1aa; font-size: 11px; line-height: 1.4;">
+            <p style="margin: 10px 0 0; color: #ffffffff; font-size: 11px; line-height: 1.4;">
               Estás recibiendo este correo porque formas parte del equipo operativo del establecimiento.
               <br/>
               Si crees que es un error, contacta al administrador.
