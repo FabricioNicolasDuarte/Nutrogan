@@ -1,7 +1,6 @@
 // Archivo: supabase/functions/send-alert/index.ts
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
 
-// Clave de API de Resend (La configurarás en el Dashboard de Supabase > Edge Functions > Secrets)
 const RESEND_API_KEY = Deno.env.get('RESEND_API_KEY')
 
 const corsHeaders = {
@@ -9,14 +8,27 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
 
+interface AlertPayload {
+  titulo: string
+  mensaje: string
+  prioridad: 'normal' | 'urgente' | 'success'
+  categoria: string
+  destinatarios: { email: string; nombre: string }[]
+  metadata?: {
+    logo_url?: string
+    footer_text?: string
+  }
+}
+
 serve(async (req) => {
-  // Manejo de CORS (para que tu app pueda llamar a la función)
+  // Manejo de CORS
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders })
   }
 
   try {
-    const { tipo, mensaje, destinatarios } = await req.json()
+    const payload: AlertPayload = await req.json()
+    const { titulo, mensaje, prioridad, destinatarios, metadata } = payload
 
     if (!destinatarios || destinatarios.length === 0) {
       return new Response(JSON.stringify({ message: 'Sin destinatarios' }), {
@@ -25,12 +37,46 @@ serve(async (req) => {
       })
     }
 
-    const resultados = []
+    // 1. Determinar Color según Prioridad (Mismo esquema que el Frontend)
+    let colorHeader = '#2196f3' // Azul (Normal)
+    if (prioridad === 'urgente') colorHeader = '#d32f2f' // Rojo
+    if (prioridad === 'success') colorHeader = '#4caf50' // Verde
 
-    // 1. PROCESAR EMAILS (REAL con Resend)
-    const emails = destinatarios.filter((d: any) => d.canal === 'email' && d.email)
+    // 2. Construir HTML del Email
+    // Usamos un diseño limpio que imita la tarjeta del Dashboard
+    const logoUrl = metadata?.logo_url || 'https://tu-bucket.supabase.co/nutrogan-logo.png' // Reemplazar con URL real por defecto
 
-    if (emails.length > 0 && RESEND_API_KEY) {
+    const htmlContent = `
+      <div style="font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; max-width: 600px; margin: 0 auto; background-color: #ffffff; border: 1px solid #e0e0e0; border-radius: 8px; overflow: hidden;">
+
+        <div style="background-color: #f5f5f5; padding: 20px; text-align: center; border-bottom: 1px solid #ddd;">
+           <img src="${logoUrl}" alt="Nutrogan" style="height: 40px; object-fit: contain;" />
+        </div>
+
+        <div style="background-color: ${colorHeader}; height: 6px; width: 100%;"></div>
+
+        <div style="padding: 30px;">
+          <h2 style="color: #333; margin-top: 0; font-size: 24px;">${titulo}</h2>
+
+          <div style="color: #555; font-size: 16px; line-height: 1.6; white-space: pre-wrap;">
+            ${mensaje}
+          </div>
+
+          <div style="margin-top: 30px; padding: 15px; background-color: #f9f9f9; border-left: 4px solid #333; color: #666; font-size: 14px;">
+            <strong>Categoría:</strong> ${payload.categoria.toUpperCase()}<br/>
+            <strong>Prioridad:</strong> ${prioridad.toUpperCase()}
+          </div>
+        </div>
+
+        <div style="background-color: #333; color: #999; padding: 20px; text-align: center; font-size: 12px;">
+          <p style="margin: 0;">${metadata?.footer_text || 'Sistema de Gestión Ganadera Nutrogan'}</p>
+          <p style="margin: 5px 0 0;">Este es un mensaje automático. No responder.</p>
+        </div>
+      </div>
+    `
+
+    // 3. Enviar con Resend
+    if (RESEND_API_KEY) {
       const res = await fetch('https://api.resend.com/emails', {
         method: 'POST',
         headers: {
@@ -38,38 +84,29 @@ serve(async (req) => {
           Authorization: `Bearer ${RESEND_API_KEY}`,
         },
         body: JSON.stringify({
-          from: 'Nutrogan Alertas <onboarding@resend.dev>', // Usa tu dominio si lo tienes, o el de prueba
-          to: emails.map((e: any) => e.email),
-          subject: `🚨 Alerta Nutrogan: ${tipo.toUpperCase()}`,
-          html: `
-            <div style="font-family: sans-serif; color: #333;">
-              <h1 style="color: #39ff14; background: #000; padding: 10px;">Nutrogan Monitor</h1>
-              <h2>Reporte de Evento: ${tipo}</h2>
-              <p style="font-size: 16px;">${mensaje}</p>
-              <hr>
-              <p style="font-size: 12px; color: #666;">Este es un mensaje automático del sistema de gestión ganadera.</p>
-            </div>
-          `,
+          from: 'Nutrogan Alertas <onboarding@resend.dev>', // Configura tu dominio verificado en prod
+          to: destinatarios.map((d) => d.email),
+          subject: `[Nutrogan] ${titulo}`,
+          html: htmlContent,
         }),
       })
+
       const data = await res.json()
-      resultados.push({ canal: 'email', status: res.ok ? 'enviado' : 'error', data })
-    }
 
-    // 2. PROCESAR WHATSAPP (Estructura para Twilio)
-    // Requiere TWILIO_ACCOUNT_SID y TWILIO_AUTH_TOKEN en Secrets
-    /*
-    const whatsapps = destinatarios.filter((d: any) => d.canal === 'whatsapp' && d.telefono)
-    if (whatsapps.length > 0) {
-       // Aquí iría la llamada a la API de Twilio
-       // resultados.push({ canal: 'whatsapp', status: 'simulado (falta api key)' })
-    }
-    */
+      if (!res.ok) {
+        throw new Error(data.message || 'Error en Resend')
+      }
 
-    return new Response(JSON.stringify({ success: true, resultados }), {
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      status: 200,
-    })
+      return new Response(JSON.stringify({ success: true, data }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: 200,
+      })
+    } else {
+      return new Response(JSON.stringify({ success: false, error: 'Falta API Key' }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: 500,
+      })
+    }
   } catch (error) {
     return new Response(JSON.stringify({ error: error.message }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },

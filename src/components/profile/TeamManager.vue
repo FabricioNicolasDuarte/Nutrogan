@@ -1,239 +1,270 @@
 <template>
-  <q-card
-    class="interactive-board column no-shadow relative-position"
-    :class="{ 'full-height': !$q.screen.lt.md }"
-  >
-    <div class="row items-center justify-between q-pa-md border-b glass-header" style="gap: 10px">
-      <div class="col-12 col-sm-auto">
-        <div class="text-h6 text-white leading-none">Gestión de Equipo</div>
-        <div class="text-caption text-grey-5 q-mt-xs">Roles y Alertas</div>
+  <div class="column q-gutter-y-md">
+    <div class="glass-header q-pa-md row justify-between items-center rounded-borders">
+      <div>
+        <div class="text-subtitle1 text-weight-bold">Centro de Comando</div>
+        <div class="text-caption text-grey-5">Gestión de equipo y comunicaciones</div>
       </div>
-
-      <div class="row q-gutter-sm col-12 col-sm-auto justify-end">
+      <div class="row q-gutter-x-sm">
         <q-btn
           unelevated
-          rounded
           color="primary"
           text-color="black"
           icon="campaign"
-          label="NOTIFICACIONES"
-          class="text-weight-bold shadow-glow"
-          size="sm"
+          label="Redactar Alerta"
+          class="text-weight-bold"
           @click="abrirAlertas"
         />
-
-        <q-btn
-          flat
-          rounded
-          color="white"
-          icon="person_add"
-          label="Crear Usuario"
-          class="glass-btn"
-          size="sm"
-          @click="showCreateDialog = true"
-        />
+        <q-btn flat round icon="person_add" color="white" @click="showCreateDialog = true">
+          <q-tooltip>Nuevo Usuario</q-tooltip>
+        </q-btn>
       </div>
     </div>
 
-    <div class="board-content col column q-pa-md">
+    <div v-if="dataStore.miembrosEquipo.length === 0" class="text-center q-pa-xl text-grey-6">
+      <q-spinner-dots size="2em" />
+      <div class="q-mt-sm">Sincronizando equipo...</div>
+    </div>
+
+    <div v-else class="column q-gutter-y-sm">
       <div
-        class="scroll relative-position q-mb-md team-list-container"
-        :class="$q.screen.lt.md ? '' : 'col-grow'"
+        v-for="miembro in dataStore.miembrosEquipo"
+        :key="miembro.id"
+        class="member-row bg-dark-glass q-pa-md rounded-borders transition-hover"
       >
-        <div
-          v-if="dataStore.miembrosEquipo.length === 0"
-          class="absolute-center text-center text-grey-6"
-        >
-          <q-spinner-dots size="3em" class="q-mb-sm" />
-          <div class="q-mt-sm">Cargando equipo...</div>
-        </div>
-
-        <div v-else class="team-grid">
-          <div
-            v-for="miembro in dataStore.miembrosEquipo"
-            :key="miembro.id"
-            class="member-card cursor-grab"
-            draggable="true"
-            @dragstart="onDragStart($event, miembro)"
-          >
-            <div class="row items-center justify-between">
-              <div
-                class="row items-center no-wrap cursor-pointer"
-                @click="abrirEditarPerfil(miembro)"
-              >
-                <q-avatar
-                  :color="getColor(miembro.rol)"
-                  text-color="black"
-                  size="md"
-                  font-size="12px"
-                  class="q-mr-sm"
+        <div class="row items-center justify-between">
+          <div class="row items-center cursor-pointer" @click="abrirEditar(miembro)">
+            <q-avatar
+              size="40px"
+              :color="getRoleColor(miembro.rol)"
+              text-color="black"
+              class="q-mr-md shadow-2 text-weight-bold"
+            >
+              {{ miembro.nombre_completo?.substring(0, 2).toUpperCase() }}
+            </q-avatar>
+            <div>
+              <div class="text-subtitle2 leading-tight">{{ miembro.nombre_completo }}</div>
+              <div class="row items-center q-gutter-x-xs">
+                <q-badge
+                  :color="getRoleBadgeColor(miembro.rol)"
+                  class="text-uppercase text-caption"
                 >
-                  {{ getIniciales(miembro.nombre_completo) }}
-                </q-avatar>
-                <div class="column">
-                  <span
-                    class="text-white text-weight-bold text-body2 ellipsis"
-                    style="max-width: 110px"
-                    >{{ miembro.nombre_completo }}</span
-                  >
-                  <span
-                    class="text-primary text-caption text-uppercase"
-                    style="font-size: 0.65rem"
-                    >{{ miembro.rol }}</span
-                  >
-                </div>
+                  {{ miembro.rol }}
+                </q-badge>
+                <span class="text-caption text-grey-6">• {{ miembro.email }}</span>
               </div>
-
-              <q-btn-dropdown
-                flat
-                round
-                dense
-                :color="getColor(miembro.rol)"
-                size="sm"
-                icon="settings"
-              >
-                <q-list class="bg-dark text-white border-neon">
-                  <q-item-label header>ACCIONES</q-item-label>
-                  <q-item clickable v-close-popup @click="abrirEditarPerfil(miembro)">
-                    <q-item-section avatar><q-icon name="edit" color="white" /></q-item-section>
-                    <q-item-section>Editar Datos</q-item-section>
-                  </q-item>
-                  <q-separator dark />
-                  <q-item-label header>CAMBIAR ROL</q-item-label>
-                  <q-item clickable v-close-popup @click="cambiarRol(miembro, 'admin')">
-                    <q-item-section avatar><q-icon name="shield" color="primary" /></q-item-section>
-                    <q-item-section>Admin</q-item-section>
-                  </q-item>
-                  <q-item clickable v-close-popup @click="cambiarRol(miembro, 'tecnico')">
-                    <q-item-section avatar
-                      ><q-icon name="engineering" color="cyan"
-                    /></q-item-section>
-                    <q-item-section>Técnico</q-item-section>
-                  </q-item>
-                  <q-item clickable v-close-popup @click="cambiarRol(miembro, 'operario')">
-                    <q-item-section avatar
-                      ><q-icon name="agriculture" color="grey"
-                    /></q-item-section>
-                    <q-item-section>Operario</q-item-section>
-                  </q-item>
-                  <q-separator dark />
-                  <q-item
-                    clickable
-                    v-close-popup
-                    @click="eliminarMiembro(miembro)"
-                    class="text-red"
-                  >
-                    <q-item-section avatar><q-icon name="person_remove" /></q-item-section>
-                    <q-item-section>Eliminar Usuario</q-item-section>
-                  </q-item>
-                </q-list>
-              </q-btn-dropdown>
-            </div>
-
-            <div class="row q-mt-sm q-gutter-x-xs justify-end">
-              <div
-                v-if="miembro.config_notificaciones?.lluvia"
-                class="dot-indicator bg-cyan-4"
-              ></div>
-              <div
-                v-if="miembro.config_notificaciones?.sanidad"
-                class="dot-indicator bg-yellow-500"
-              ></div>
-              <div
-                v-if="miembro.config_notificaciones?.stock"
-                class="dot-indicator bg-primary"
-              ></div>
-              <div
-                v-if="miembro.config_notificaciones?.general"
-                class="dot-indicator bg-white"
-              ></div>
             </div>
           </div>
-        </div>
-      </div>
 
-      <q-separator dark class="q-mb-md opacity-20" />
-
-      <div class="text-subtitle2 text-grey-5 q-mb-sm font-mono text-uppercase">
-        Canales de Suscripción (Arrastrar usuario)
-      </div>
-
-      <div class="row q-col-gutter-md hub-container">
-        <div class="col-12 col-sm-6 col-lg-3" v-for="cat in categoriasHub" :key="cat.id">
-          <div
-            class="notification-hub column"
-            :class="`hub-${cat.color}`"
-            @dragover.prevent
-            @drop="onDrop($event, cat.id)"
-          >
-            <div class="hub-header" :class="`text-${cat.text_color}`">
-              <div class="row items-center justify-center">
-                <q-icon :name="cat.icon" size="xs" class="q-mr-xs" /> {{ cat.label }}
-              </div>
-            </div>
-
-            <div class="hub-body col relative-position scroll q-pa-sm">
-              <div v-if="getSubscribers(cat.id).length > 0" class="q-gutter-y-xs full-width">
-                <div
-                  v-for="(m, index) in getSubscribers(cat.id)"
-                  :key="m.id"
-                  class="tech-chip row items-center justify-between animate-pop"
-                  :class="`border-${cat.color}`"
+          <q-btn flat round dense icon="more_vert" color="grey-5">
+            <q-menu class="bg-grey-10 text-white border-neon">
+              <q-list dense style="min-width: 150px">
+                <q-item-label header class="text-grey-5 text-uppercase">Acciones</q-item-label>
+                <q-item clickable v-close-popup @click="abrirEditar(miembro)">
+                  <q-item-section avatar><q-icon name="edit" size="xs" /></q-item-section>
+                  <q-item-section>Editar Datos</q-item-section>
+                </q-item>
+                <q-separator dark />
+                <q-item-label header class="text-grey-5 text-uppercase">Permisos</q-item-label>
+                <q-item clickable v-close-popup @click="cambiarRol(miembro, 'admin')"
+                  ><q-item-section>Admin</q-item-section></q-item
                 >
-                  <div class="row items-center no-wrap col ellipsis">
-                    <div
-                      class="index-box font-mono"
-                      :class="`bg-${cat.color}-glass text-${cat.text_color}`"
-                    >
-                      {{ (index + 1).toString().padStart(2, '0') }}
-                    </div>
-                    <span class="text-caption text-white q-ml-sm ellipsis">{{
-                      m.nombre_completo
-                    }}</span>
-                  </div>
-                  <q-btn
-                    flat
-                    round
-                    dense
-                    icon="close"
-                    size="xs"
-                    color="grey-6"
-                    class="hover-red"
-                    @click="unsubscribe(m, cat.id)"
-                  >
-                    <q-tooltip class="bg-red text-white">Desvincular</q-tooltip>
-                  </q-btn>
-                </div>
-              </div>
+                <q-item clickable v-close-popup @click="cambiarRol(miembro, 'tecnico')"
+                  ><q-item-section>Técnico</q-item-section></q-item
+                >
+                <q-item clickable v-close-popup @click="cambiarRol(miembro, 'operario')"
+                  ><q-item-section>Operario</q-item-section></q-item
+                >
+                <q-separator dark />
+                <q-item clickable v-close-popup class="text-red-4" @click="eliminar(miembro)">
+                  <q-item-section avatar><q-icon name="person_remove" size="xs" /></q-item-section>
+                  <q-item-section>Eliminar Acceso</q-item-section>
+                </q-item>
+              </q-list>
+            </q-menu>
+          </q-btn>
+        </div>
 
-              <div
-                v-else
-                class="absolute-center text-center opacity-30 full-width pointer-events-none"
-              >
-                <q-icon :name="cat.icon" size="2em" />
-                <div class="text-caption text-uppercase q-mt-xs" style="font-size: 0.6rem">
-                  Arrastra Aquí
-                </div>
-              </div>
-            </div>
+        <div class="row items-center q-mt-sm q-pt-sm border-top-dim">
+          <div class="text-caption text-grey-6 q-mr-md font-mono">SUSCRIPCIONES:</div>
+          <div class="row q-gutter-x-sm">
+            <q-toggle
+              v-for="cat in categorias"
+              :key="cat.id"
+              :model-value="
+                !!(miembro.config_notificaciones && miembro.config_notificaciones[cat.id])
+              "
+              @update:model-value="toggleSub(miembro, cat.id)"
+              dense
+              :label="cat.label"
+              :color="cat.color"
+              size="xs"
+              class="text-caption"
+            />
           </div>
         </div>
       </div>
     </div>
+
+    <q-dialog
+      v-model="dialogAlertas"
+      maximized
+      transition-show="slide-up"
+      transition-hide="slide-down"
+    >
+      <q-card class="bg-black text-white column">
+        <q-toolbar class="bg-dark-header q-py-md border-bottom">
+          <q-btn flat round icon="close" v-close-popup color="grey-5" />
+          <q-toolbar-title class="text-center font-outfit"> COMUNICACIÓN OFICIAL </q-toolbar-title>
+          <q-btn
+            unelevated
+            rounded
+            color="primary"
+            text-color="black"
+            label="ENVIAR"
+            icon="send"
+            :loading="loadingAlert"
+            @click="enviarAlerta"
+          />
+        </q-toolbar>
+
+        <div class="col row">
+          <div class="col-12 col-md-6 q-pa-lg scroll border-right-dim">
+            <div class="text-h6 q-mb-lg flex items-center">
+              <q-icon name="edit_note" class="q-mr-sm text-primary" /> Redactar Mensaje
+            </div>
+
+            <q-form class="q-gutter-y-lg">
+              <div class="row q-col-gutter-md">
+                <div class="col-12 col-sm-6">
+                  <q-select
+                    v-model="alertaForm.prioridad"
+                    :options="prioridades"
+                    label="Estética / Prioridad"
+                    filled
+                    dark
+                    option-label="label"
+                    emit-value
+                    map-options
+                  >
+                    <template v-slot:option="scope">
+                      <q-item v-bind="scope.itemProps">
+                        <q-item-section avatar>
+                          <q-icon name="circle" :color="scope.opt.color" size="xs" />
+                        </q-item-section>
+                        <q-item-section>
+                          <q-item-label>{{ scope.opt.label }}</q-item-label>
+                        </q-item-section>
+                      </q-item>
+                    </template>
+                  </q-select>
+                </div>
+                <div class="col-12 col-sm-6">
+                  <q-select
+                    v-model="alertaForm.categoria"
+                    :options="categorias"
+                    label="Canal de Distribución"
+                    filled
+                    dark
+                    option-value="id"
+                    option-label="label"
+                    emit-value
+                    map-options
+                  />
+                </div>
+              </div>
+
+              <q-input
+                v-model="alertaForm.titulo"
+                label="Asunto del Mensaje"
+                filled
+                dark
+                class="text-h6"
+                placeholder="Ej: Informe de Lluvias Semanal"
+              />
+
+              <q-input
+                v-model="alertaForm.mensaje"
+                label="Cuerpo del Mensaje"
+                filled
+                dark
+                type="textarea"
+                rows="10"
+                class="input-area"
+                placeholder="Escriba aquí el comunicado oficial..."
+              />
+            </q-form>
+          </div>
+
+          <div class="col-12 col-md-6 q-pa-lg scroll bg-dark-soft">
+            <div class="text-subtitle2 text-grey-5 q-mb-md text-uppercase">
+              VISTA PREVIA (SIMULACIÓN EMAIL)
+            </div>
+
+            <div
+              class="email-preview bg-white text-black rounded-borders overflow-hidden shadow-5"
+              style="max-width: 500px; margin: 0 auto"
+            >
+              <div
+                class="q-pa-md text-center"
+                style="background: #f5f5f5; border-bottom: 1px solid #ddd"
+              >
+                <img src="src/assets/nutrogan-logo.svg" style="height: 30px" alt="Nutrogan" />
+              </div>
+
+              <div
+                :class="`bg-${getColorCode(alertaForm.prioridad)}`"
+                style="height: 6px; width: 100%"
+              ></div>
+
+              <div class="q-pa-lg">
+                <div class="text-h5 text-weight-bold q-mb-md">
+                  {{ alertaForm.titulo || '(Sin Asunto)' }}
+                </div>
+
+                <div class="text-body1" style="white-space: pre-wrap; line-height: 1.6">
+                  {{ alertaForm.mensaje || '...' }}
+                </div>
+
+                <div class="q-mt-xl q-pt-md border-top text-center text-caption text-grey-6">
+                  <div class="text-weight-bold">Sistema de Gestión Ganadera Nutrogan</div>
+                  <div>Comunicado Oficial • {{ new Date().toLocaleDateString() }}</div>
+                </div>
+              </div>
+            </div>
+
+            <div class="q-mt-xl">
+              <div class="text-h6 text-white q-mb-md">Historial Reciente</div>
+              <q-list separator dark>
+                <q-item v-for="notif in dataStore.notifications" :key="notif.id">
+                  <q-item-section>
+                    <q-item-label>{{ notif.titulo }}</q-item-label>
+                    <q-item-label caption>{{ notif.mensaje?.substring(0, 50) }}...</q-item-label>
+                  </q-item-section>
+                  <q-item-section side>
+                    <q-badge :color="notif.estado === 'enviado' ? 'green' : 'orange'">
+                      {{ notif.estado }}
+                    </q-badge>
+                  </q-item-section>
+                </q-item>
+              </q-list>
+            </div>
+          </div>
+        </div>
+      </q-card>
+    </q-dialog>
 
     <q-dialog v-model="showCreateDialog">
-      <q-card class="bg-dark text-white border-neon" style="width: 400px">
-        <q-card-section class="bg-dark-header">
-          <div class="text-h6">Nuevo Usuario CEDEVA</div>
-          <div class="text-caption text-grey-5">Crear credenciales de acceso</div>
-        </q-card-section>
-
+      <q-card class="bg-grey-10 text-white border-neon" style="width: 400px">
+        <q-card-section class="bg-header-gradient"
+          ><div class="text-h6">Nuevo Miembro</div></q-card-section
+        >
         <q-form @submit.prevent="crearUsuario">
-          <q-card-section class="q-gutter-md">
+          <q-card-section class="q-gutter-y-md">
             <q-input
               v-model="newUser.email"
-              label="Correo Oficial"
-              outlined
+              label="Email Corporativo"
+              filled
               dark
               color="primary"
               :rules="[(val) => !!val || 'Requerido']"
@@ -241,7 +272,7 @@
             <q-input
               v-model="newUser.nombre"
               label="Nombre Completo"
-              outlined
+              filled
               dark
               color="primary"
               :rules="[(val) => !!val || 'Requerido']"
@@ -249,176 +280,50 @@
             <q-select
               v-model="newUser.rol"
               :options="['admin', 'tecnico', 'operario']"
-              label="Rol"
-              outlined
+              label="Rol Asignado"
+              filled
               dark
               color="primary"
             />
-
-            <q-separator dark />
-            <div class="text-caption text-primary">Credenciales Iniciales</div>
-
             <q-input
               v-model="newUser.password"
-              label="Contraseña Temporal"
-              outlined
+              label="Contraseña Provisoria"
+              filled
               dark
               color="primary"
               type="password"
-              :rules="[(val) => val.length >= 6 || 'Mínimo 6 caracteres']"
             />
           </q-card-section>
-
-          <q-card-actions align="right" class="bg-dark-soft">
-            <q-btn flat label="Cancelar" color="grey" v-close-popup />
-            <q-btn label="Crear Usuario" type="submit" color="primary" :loading="creating" />
+          <q-card-actions align="right">
+            <q-btn flat label="Cancelar" v-close-popup color="grey" />
+            <q-btn
+              label="Crear Acceso"
+              type="submit"
+              color="primary"
+              text-color="black"
+              :loading="loading"
+            />
           </q-card-actions>
         </q-form>
       </q-card>
     </q-dialog>
 
     <q-dialog v-model="showEditDialog">
-      <q-card class="bg-dark text-white border-neon" style="width: 400px">
-        <q-card-section>
-          <div class="text-h6">Editar Ficha</div>
-          <div class="text-caption text-grey-5">{{ editForm.email }}</div>
-        </q-card-section>
-
-        <q-form @submit.prevent="guardarEdicionPerfil">
-          <q-card-section class="q-gutter-md">
-            <q-input
-              v-model="editForm.nombre_completo"
-              label="Nombre Completo"
-              outlined
-              dark
-              color="primary"
-              :rules="[(val) => !!val || 'Requerido']"
-            />
-            <q-input
-              v-model="editForm.telefono"
-              label="Teléfono / Celular"
-              outlined
-              dark
-              color="primary"
-            />
-            <q-input
-              v-model="editForm.direccion"
-              label="Dirección"
-              outlined
-              dark
-              color="primary"
-              type="textarea"
-              autogrow
-            />
+      <q-card class="bg-grey-10 text-white border-neon" style="width: 400px">
+        <q-card-section><div class="text-h6">Editar Ficha</div></q-card-section>
+        <q-form @submit.prevent="guardarEdit">
+          <q-card-section class="q-gutter-y-md">
+            <q-input v-model="editForm.nombre_completo" label="Nombre" filled dark />
+            <q-input v-model="editForm.telefono" label="Teléfono" filled dark />
           </q-card-section>
-
           <q-card-actions align="right">
-            <q-btn flat label="Cancelar" color="grey" v-close-popup />
-            <q-btn label="Guardar" type="submit" color="primary" :loading="editLoading" />
+            <q-btn flat label="Cancelar" v-close-popup color="grey" />
+            <q-btn label="Guardar" type="submit" color="primary" text-color="black" />
           </q-card-actions>
         </q-form>
       </q-card>
     </q-dialog>
-
-    <q-dialog
-      v-model="dialogoAlertas"
-      full-width
-      full-height
-      transition-show="slide-up"
-      transition-hide="slide-down"
-    >
-      <q-card class="bg-dark text-white column">
-        <q-toolbar class="bg-dark-header border-b">
-          <q-icon name="campaign" color="primary" size="md" />
-          <q-toolbar-title class="font-display">Centro de Comunicaciones</q-toolbar-title>
-          <q-btn flat round dense icon="close" v-close-popup />
-        </q-toolbar>
-
-        <div class="row col">
-          <div class="col-12 col-md-6 border-r q-pa-md scroll">
-            <div class="text-h6 q-mb-md">Redactar Nueva Alerta</div>
-            <q-form @submit.prevent="enviarAlertaManual" class="q-gutter-y-md">
-              <div class="row q-col-gutter-md">
-                <div class="col-12 col-sm-6">
-                  <q-select
-                    v-model="alertaForm.categoria"
-                    :options="categoriasHub.map((c) => ({ label: c.label, value: c.id }))"
-                    label="Canal Destino"
-                    outlined
-                    dark
-                    color="primary"
-                    emit-value
-                    map-options
-                  />
-                </div>
-                <div class="col-12 col-sm-6">
-                  <q-select
-                    v-model="alertaForm.prioridad"
-                    :options="['Urgente', 'Normal']"
-                    label="Prioridad"
-                    outlined
-                    dark
-                    color="primary"
-                  />
-                </div>
-              </div>
-              <q-input
-                v-model="alertaForm.titulo"
-                label="Asunto"
-                outlined
-                dark
-                color="primary"
-                :rules="[(val) => !!val || 'Requerido']"
-              />
-              <q-input
-                v-model="alertaForm.mensaje"
-                type="textarea"
-                label="Mensaje"
-                outlined
-                dark
-                color="primary"
-                autogrow
-              />
-
-              <div class="row justify-end q-pt-md">
-                <q-btn
-                  label="Enviar Notificación"
-                  type="submit"
-                  color="primary"
-                  text-color="black"
-                  icon="send"
-                  :loading="loadingAlert"
-                />
-              </div>
-            </q-form>
-          </div>
-
-          <div class="col-12 col-md-6 q-pa-md scroll bg-dark-soft">
-            <div class="text-h6 q-mb-md">Historial de Alertas</div>
-            <div v-if="dataStore.notifications.length === 0" class="text-grey-6">
-              No hay alertas enviadas.
-            </div>
-            <q-list separator dark v-else>
-              <q-item v-for="notif in dataStore.notifications" :key="notif.id">
-                <q-item-section>
-                  <q-item-label>{{ notif.titulo }}</q-item-label>
-                  <q-item-label caption class="text-grey-5">
-                    {{ new Date(notif.created_at).toLocaleDateString() }} •
-                    {{ notif.categoria }}
-                  </q-item-label>
-                </q-item-section>
-                <q-item-section side>
-                  <q-badge :color="notif.estado === 'enviado' ? 'green' : 'orange'">{{
-                    notif.estado
-                  }}</q-badge>
-                </q-item-section>
-              </q-item>
-            </q-list>
-          </div>
-        </div>
-      </q-card>
-    </q-dialog>
-  </q-card>
+  </div>
 </template>
 
 <script setup>
@@ -426,377 +331,248 @@ import { ref, reactive, onMounted } from 'vue'
 import { useDataStore } from 'stores/data-store'
 import { useAuthStore } from 'stores/auth-store'
 import { useQuasar } from 'quasar'
+import { supabase } from 'boot/supabase' // <--- IMPORTANTE: Importación necesaria para Edge Functions
 
 const dataStore = useDataStore()
 const authStore = useAuthStore()
 const $q = useQuasar()
 
-// --- ESTADOS ---
+// --- ESTADO Y FORMULARIOS ---
 const showCreateDialog = ref(false)
 const showEditDialog = ref(false)
-const dialogoAlertas = ref(false)
-const creating = ref(false)
-const editLoading = ref(false)
+const dialogAlertas = ref(false)
+const loading = ref(false)
 const loadingAlert = ref(false)
 
 const newUser = reactive({ email: '', nombre: '', rol: 'operario', password: '' })
-const editForm = reactive({
-  usuario_id: null,
-  nombre_completo: '',
-  email: '',
-  telefono: '',
-  direccion: '',
-})
+const editForm = reactive({ usuario_id: null, nombre_completo: '', telefono: '' })
+
+// Alerta "Pro" con soporte para Resend
 const alertaForm = reactive({
   titulo: '',
   mensaje: '',
   categoria: 'general',
-  prioridad: 'Urgente',
+  prioridad: 'normal', // 'urgente', 'info', 'success'
 })
 
-const categoriasHub = [
-  { id: 'lluvia', label: 'CLIMA', icon: 'thunderstorm', color: 'cyan', text_color: 'cyan-4' },
-  {
-    id: 'sanidad',
-    label: 'SANIDAD',
-    icon: 'medical_services',
-    color: 'red',
-    text_color: 'yellow-7',
-  },
-  { id: 'stock', label: 'STOCK', icon: 'inventory_2', color: 'green', text_color: 'primary' },
-  { id: 'general', label: 'GENERAL', icon: 'notifications', color: 'white', text_color: 'white' },
+// --- CONFIGURACIÓN ---
+const categorias = [
+  { id: 'lluvia', label: 'Clima / Lluvias', color: 'cyan' },
+  { id: 'sanidad', label: 'Sanidad Animal', color: 'red' },
+  { id: 'stock', label: 'Movimiento Stock', color: 'green' },
+  { id: 'general', label: 'General / RRHH', color: 'grey' },
+]
+
+const prioridades = [
+  { label: 'Normal (Informativo)', value: 'normal', color: 'blue' },
+  { label: 'Urgente (Alerta Roja)', value: 'urgente', color: 'red' },
+  { label: 'Éxito (Verde)', value: 'success', color: 'green' },
 ]
 
 // --- HELPERS ---
-function getIniciales(text) {
-  return text ? text.substring(0, 2).toUpperCase() : 'NN'
+function getRoleColor(r) {
+  return r === 'admin' ? 'primary' : 'grey-4'
 }
-function getColor(rol) {
-  if (rol === 'admin') return 'primary'
-  if (rol === 'tecnico') return 'cyan-4'
-  return 'blue-grey-4'
+function getRoleBadgeColor(r) {
+  return r === 'admin' ? 'green-9' : r === 'tecnico' ? 'cyan-9' : 'grey-8'
 }
-function getSubscribers(tipo) {
-  return dataStore.miembrosEquipo.filter(
-    (m) => m.config_notificaciones && m.config_notificaciones[tipo],
-  )
+function getColorCode(prio) {
+  if (prio === 'urgente') return 'red-8'
+  if (prio === 'success') return 'green-6'
+  return 'blue-6'
 }
 
-// --- ACCIONES DE USUARIO ---
+// --- LOGICA SUSCRIPCIONES (TOGGLES) ---
+async function toggleSub(m, cat) {
+  if (!m.config_notificaciones) m.config_notificaciones = {}
+  // Optimistic update
+  const oldVal = m.config_notificaciones[cat]
+  m.config_notificaciones[cat] = !oldVal
 
-// 1. Crear Usuario (Super Admin)
-async function crearUsuario() {
-  creating.value = true
-  const res = await authStore.adminCreateUser({
-    email: newUser.email,
-    password: newUser.password,
-    nombre: newUser.nombre,
-    rol: newUser.rol,
-    establecimiento_id: dataStore.establecimientoActual?.id,
-  })
-
-  if (res.success) {
-    $q.notify({ type: 'positive', message: 'Usuario creado exitosamente' })
-    showCreateDialog.value = false
-    newUser.email = ''
-    newUser.password = ''
-    newUser.nombre = ''
-    dataStore.fetchMiembrosEquipo()
-  } else {
-    $q.notify({ type: 'negative', message: 'Error: ' + res.error })
-  }
-  creating.value = false
-}
-
-// 2. Editar Usuario
-function abrirEditarPerfil(miembro) {
-  editForm.usuario_id = miembro.usuario_id || miembro.id // Fallback por si id es distinto
-  editForm.nombre_completo = miembro.nombre_completo
-  editForm.email = miembro.email
-  editForm.telefono = miembro.telefono || ''
-  editForm.direccion = miembro.direccion || ''
-  showEditDialog.value = true
-}
-
-async function guardarEdicionPerfil() {
-  editLoading.value = true
   try {
-    // Usamos el ID del perfil (que es el mismo que usuario_id en la tabla perfiles)
-    await dataStore.updatePerfilMiembro(editForm.usuario_id, {
-      nombre_completo: editForm.nombre_completo,
-      telefono: editForm.telefono,
-      direccion: editForm.direccion,
+    await dataStore.updatePerfilMiembro(m.usuario_id, {
+      config_notificaciones: m.config_notificaciones,
     })
-    $q.notify({ type: 'positive', message: 'Datos actualizados' })
-    showEditDialog.value = false
+    $q.notify({
+      type: 'positive',
+      message: 'Suscripción actualizada',
+      timeout: 500,
+      position: 'bottom-right',
+    })
   } catch (e) {
-    $q.notify({ type: 'negative', message: 'Error: ' + e.message })
-  } finally {
-    editLoading.value = false
-  }
-}
-
-// 3. Cambiar Rol
-async function cambiarRol(miembro, nuevoRol) {
-  try {
-    await dataStore.updateMiembroRol(miembro.id, nuevoRol) // ID de la membresía
-    $q.notify({ type: 'positive', message: 'Rol actualizado' })
-  } catch (e) {
-    $q.notify({ type: 'negative', message: 'Error: ' + e.message })
-  }
-}
-
-// 4. Eliminar Usuario
-function eliminarMiembro(miembro) {
-  $q.dialog({
-    title: 'Eliminar Usuario',
-    message: `¿Estás seguro de quitar a ${miembro.nombre_completo} del equipo?`,
-    dark: true,
-    cancel: true,
-    class: 'border-neon',
-  }).onOk(async () => {
-    try {
-      // CORREGIDO: Enviamos usuario_id para que el RPC elimine todo
-      await dataStore.removeMiembro(miembro.usuario_id)
-      $q.notify({ type: 'info', message: 'Miembro eliminado' })
-    } catch (e) {
-      $q.notify({ type: 'negative', message: 'Error: ' + e.message })
-    }
-  })
-}
-
-// --- ARRASTRAR Y SOLTAR (NOTIFICACIONES) ---
-function onDragStart(event, miembro) {
-  event.dataTransfer.setData('text/plain', JSON.stringify(miembro))
-}
-
-async function onDrop(event, tipo) {
-  try {
-    const rawData = event.dataTransfer.getData('text/plain')
-    if (!rawData) return
-    const miembroData = JSON.parse(rawData)
-    const miembroReal = dataStore.miembrosEquipo.find((m) => m.id === miembroData.id)
-
-    if (miembroReal) {
-      // Inicializar objeto si no existe
-      if (!miembroReal.config_notificaciones) miembroReal.config_notificaciones = {}
-
-      // Activar canal
-      miembroReal.config_notificaciones[tipo] = true
-
-      // Guardar en DB (Actualizar perfil)
-      await dataStore.updatePerfilMiembro(miembroReal.usuario_id, {
-        config_notificaciones: miembroReal.config_notificaciones,
-      })
-
-      $q.notify({
-        type: 'positive',
-        message: `Asignado a ${tipo.toUpperCase()}`,
-        caption: `Usuario: ${miembroReal.nombre_completo}`,
-      })
-    }
-  } catch (e) {
+    m.config_notificaciones[cat] = oldVal // Revert
     console.error(e)
   }
 }
 
-async function unsubscribe(miembro, tipo) {
-  if (miembro.config_notificaciones) {
-    miembro.config_notificaciones[tipo] = false
-    await dataStore.updatePerfilMiembro(miembro.usuario_id, {
-      config_notificaciones: miembro.config_notificaciones,
-    })
-    $q.notify({ type: 'info', message: 'Desvinculado', timeout: 500 })
-  }
-}
-
-// --- ALERTAS ---
+// --- LOGICA ALERTAS Y RESEND ---
 function abrirAlertas() {
   dataStore.fetchNotifications()
-  dialogoAlertas.value = true
+  dialogAlertas.value = true
 }
 
-async function enviarAlertaManual() {
+async function enviarAlerta() {
+  if (!alertaForm.titulo || !alertaForm.mensaje) {
+    $q.notify({ type: 'warning', message: 'Complete asunto y mensaje' })
+    return
+  }
+
   loadingAlert.value = true
   try {
-    const dest = dataStore.miembrosEquipo.map((m) => ({
-      nombre: m.nombre_completo,
-      email: m.email,
-    }))
-    const notifData = {
-      ...alertaForm,
-      destinatarios_snapshot: JSON.stringify(dest),
+    // 1. Obtener destinatarios según categoría
+    const destinatarios = dataStore.miembrosEquipo
+      .filter((m) => m.config_notificaciones && m.config_notificaciones[alertaForm.categoria])
+      .map((m) => ({ email: m.email, nombre: m.nombre_completo }))
+
+    if (destinatarios.length === 0) {
+      throw new Error('No hay usuarios suscritos a esta categoría')
     }
-    await dataStore.createNotification(notifData)
-    $q.notify({ type: 'positive', message: 'Alerta Enviada', icon: 'send' })
+
+    // 2. Construir Payload para la Base de Datos y Function
+    const emailPayload = {
+      titulo: alertaForm.titulo,
+      mensaje: alertaForm.mensaje,
+      categoria: alertaForm.categoria,
+      prioridad: alertaForm.prioridad,
+      destinatarios: destinatarios,
+      metadata: {
+        // IMPORTANTE: URL pública de tu logo. Ajustar según tu bucket de Supabase
+        logo_url:
+          'https://cglogstrtjvbpsoaghib.supabase.co/storage/v1/object/public/assets/nutrogan-logo.png',
+        footer_text: 'Enviado desde el Panel de Control Nutrogan',
+      },
+    }
+
+    // 3. Llamada a Edge Function para envío REAL de email
+    const { error: functionError } = await supabase.functions.invoke('send-alert', {
+      body: emailPayload,
+    })
+
+    if (functionError) throw functionError
+
+    // 4. Guardar en Base de Datos (Historial)
+    await dataStore.createNotification({
+      titulo: alertaForm.titulo,
+      mensaje: alertaForm.mensaje,
+      categoria: alertaForm.categoria,
+      prioridad: alertaForm.prioridad,
+      estado: 'enviado',
+      destinatarios_snapshot: JSON.stringify(destinatarios),
+    })
+
+    $q.notify({
+      type: 'positive',
+      message: 'Comunicado enviado con éxito',
+      caption: `Notificados: ${destinatarios.length} miembros`,
+      icon: 'mark_email_read',
+    })
+
+    // Limpiar form
     alertaForm.titulo = ''
     alertaForm.mensaje = ''
+    dialogAlertas.value = false
+
+    dataStore.fetchNotifications()
   } catch (e) {
-    $q.notify({ type: 'negative', message: 'Error: ' + e.message })
+    console.error(e)
+    $q.notify({ type: 'negative', message: 'Error al enviar: ' + e.message })
   } finally {
     loadingAlert.value = false
   }
 }
 
-onMounted(() => {
-  dataStore.fetchMiembrosEquipo()
-})
+// --- CRUD USUARIOS (Lógica standard) ---
+async function crearUsuario() {
+  loading.value = true
+  const res = await authStore.adminCreateUser({
+    ...newUser,
+    establecimiento_id: dataStore.establecimientoActual?.id,
+  })
+  if (res.success) {
+    $q.notify({ type: 'positive', message: 'Usuario creado' })
+    showCreateDialog.value = false
+    dataStore.fetchMiembrosEquipo()
+    // Reset form
+    newUser.email = ''
+    newUser.nombre = ''
+    newUser.password = ''
+  } else {
+    $q.notify({ type: 'negative', message: res.error })
+  }
+  loading.value = false
+}
+
+function abrirEditar(m) {
+  editForm.usuario_id = m.usuario_id
+  editForm.nombre_completo = m.nombre_completo
+  editForm.telefono = m.telefono
+  showEditDialog.value = true
+}
+
+async function guardarEdit() {
+  await dataStore.updatePerfilMiembro(editForm.usuario_id, {
+    nombre_completo: editForm.nombre_completo,
+    telefono: editForm.telefono,
+  })
+  showEditDialog.value = false
+  $q.notify({ type: 'positive', message: 'Datos guardados' })
+}
+
+async function cambiarRol(m, rol) {
+  await dataStore.updateMiembroRol(m.id, rol)
+  $q.notify({ type: 'positive', message: 'Permisos actualizados a ' + rol.toUpperCase() })
+}
+
+function eliminar(m) {
+  $q.dialog({
+    title: 'Revocar Acceso',
+    message: `¿Eliminar a ${m.nombre_completo}?`,
+    cancel: true,
+    dark: true,
+    ok: { label: 'Eliminar', color: 'red' },
+  }).onOk(async () => {
+    await dataStore.removeMiembro(m.usuario_id)
+  })
+}
+
+onMounted(() => dataStore.fetchMiembrosEquipo())
 </script>
 
 <style scoped lang="scss">
-.interactive-board {
-  background: rgba(20, 20, 25, 0.75);
-  backdrop-filter: blur(20px);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 24px;
-  overflow: hidden;
-}
-.team-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: 12px;
-}
-.member-card {
+.glass-header {
   background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+.bg-dark-glass {
+  background: rgba(0, 0, 0, 0.3);
   border: 1px solid rgba(255, 255, 255, 0.05);
-  border-radius: 12px;
-  padding: 12px;
+}
+.transition-hover {
   transition: all 0.2s;
   &:hover {
-    border-color: #39ff14;
-    background: rgba(255, 255, 255, 0.08);
+    background: rgba(255, 255, 255, 0.05);
+    border-color: rgba(255, 255, 255, 0.1);
   }
+}
+.border-top-dim {
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+}
+.border-right-dim {
+  border-right: 1px solid rgba(255, 255, 255, 0.1);
+}
+.border-bottom {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 }
 .border-neon {
   border: 1px solid #39ff14;
 }
-.glass-btn {
-  background: rgba(255, 255, 255, 0.1);
+.bg-header-gradient {
+  background: linear-gradient(90deg, #111 0%, #222 100%);
 }
-.glass-header {
-  background: rgba(0, 0, 0, 0.4);
+.bg-dark-soft {
+  background: #1a1a1a;
 }
-.ellipsis {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-/* Hubs Estilo "Pro" */
-.notification-hub {
-  border-radius: 16px;
-  height: 100%;
-  min-height: 220px;
-  border: 1px dashed rgba(255, 255, 255, 0.2);
-  background: rgba(0, 0, 0, 0.2);
-  transition: all 0.3s;
-}
-.hub-cyan {
-  border-color: rgba(0, 229, 255, 0.3);
-}
-.hub-red {
-  border-color: rgba(201, 255, 23, 0.3);
-}
-.hub-green {
-  border-color: rgba(57, 255, 20, 0.3);
-}
-.hub-white {
-  border-color: rgba(255, 255, 255, 0.3);
-}
-
-/* Colores chips */
-.bg-cyan-glass {
-  background: rgba(0, 229, 255, 0.15);
-}
-.bg-red-glass {
-  background: rgba(212, 255, 23, 0.15);
-}
-.bg-green-glass {
-  background: rgba(57, 255, 20, 0.15);
-}
-.bg-white-glass {
-  background: rgba(255, 255, 255, 0.15);
-}
-
-.border-cyan {
-  border-left: 3px solid #00e5ff;
-}
-.border-red {
-  border-left: 3px solid #aeff17;
-}
-.border-green {
-  border-left: 3px solid #39ff14;
-}
-.border-white {
-  border-left: 3px solid #ffffff;
-}
-
-.tech-chip {
-  background: rgba(255, 255, 255, 0.03);
-  border-radius: 6px;
-  padding: 4px 6px;
-  margin-bottom: 4px;
-  transition: background 0.2s;
-  &:hover {
-    background: rgba(255, 255, 255, 0.08);
-    .hover-red {
-      opacity: 1;
-    }
-  }
-}
-.hover-red {
-  opacity: 0;
-  transition: opacity 0.2s;
-  &:hover {
-    color: #ff1744 !important;
-    opacity: 1;
-  }
-}
-.index-box {
-  font-size: 0.7rem;
-  font-weight: bold;
-  padding: 2px 5px;
-  border-radius: 4px;
-  min-width: 24px;
-  text-align: center;
-}
-
-.dot-indicator {
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-}
-.bg-cyan-4 {
-  background: #00e5ff;
-}
-.bg-yellow-500 {
-  background: #b9ff17;
-}
-.bg-primary {
-  background: #39ff14;
-}
-.bg-white {
-  background: #ffffff;
-}
-
-.bg-dark-header {
-  background-color: #111;
-}
-.font-display {
+.font-outfit {
   font-family: 'Outfit', sans-serif;
-  font-weight: 800;
-}
-
-/* Estilo Móvil Específico */
-@media (max-width: 1023px) {
-  .team-list-container {
-    height: 300px;
-    overflow-y: auto;
-    margin-bottom: 20px;
-    padding-right: 5px;
-  }
-  .hub-container {
-    padding-bottom: 20px;
-  }
 }
 </style>

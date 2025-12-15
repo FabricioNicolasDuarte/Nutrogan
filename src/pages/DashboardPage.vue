@@ -20,7 +20,7 @@
           </div>
         </div>
         <div class="absolute-center z-top q-mt-xs">
-          <div class="page-title-box">DASHBOARD</div>
+          <div class="page-title-box">PANEL DE CONTROL</div>
         </div>
         <div class="row items-center justify-end q-gutter-x-md z-top">
           <div class="glass-capsule row items-center q-px-md shadow-3">

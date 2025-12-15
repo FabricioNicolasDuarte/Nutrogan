@@ -230,10 +230,12 @@ export const useDataStore = defineStore(
     async function fetchMiembrosEquipo() {
       const estId = authStore.profile?.establecimiento_id
       if (!estId) return
+
+      // CORRECCIÓN: Agregamos 'config_notificaciones' al select
       const { data, error } = await supabase
         .from('miembros_establecimiento')
         .select(
-          `id, rol, usuario_id, perfiles_usuarios:usuario_id (nombre_completo, email, telefono, direccion, avatar_url)`,
+          `id, rol, usuario_id, perfiles_usuarios:usuario_id (nombre_completo, email, telefono, direccion, avatar_url, config_notificaciones)`,
         )
         .eq('establecimiento_id', estId)
 
@@ -251,15 +253,15 @@ export const useDataStore = defineStore(
         telefono: m.perfiles_usuarios?.telefono,
         direccion: m.perfiles_usuarios?.direccion,
         avatar_url: m.perfiles_usuarios?.avatar_url,
+        // CORRECCIÓN: Mapeamos la configuración o un objeto vacío por defecto
+        config_notificaciones: m.perfiles_usuarios?.config_notificaciones || {},
       }))
     }
 
-    // --- INVITAR MIEMBRO (LISTA BLANCA) ---
     async function invitarMiembro(email, rol) {
       const estId = authStore.profile?.establecimiento_id
       if (!estId) throw new Error('No hay establecimiento activo para invitar')
 
-      // Insertamos en la "Sala de Espera" (Whitelist)
       const { data, error } = await supabase
         .from('invitaciones_equipo')
         .insert({
@@ -270,7 +272,6 @@ export const useDataStore = defineStore(
         .select()
 
       if (error) {
-        // Si ya existe, actualizamos su rol
         if (error.code === '23505') {
           await supabase
             .from('invitaciones_equipo')
@@ -292,18 +293,14 @@ export const useDataStore = defineStore(
       await fetchMiembrosEquipo()
     }
 
-    // --- ELIMINAR MIEMBRO (CORREGIDO: RPC TOTAL) ---
-    // Esta función ahora borra al usuario de TODAS partes usando el RPC de base de datos
     async function removeMiembro(usuarioId) {
       const { error } = await supabase.rpc('eliminar_usuario_total', {
         p_usuario_id: usuarioId,
       })
-
       if (error) {
         console.error('Error eliminando usuario:', error)
         throw error
       }
-
       await fetchMiembrosEquipo()
     }
 
@@ -704,15 +701,40 @@ export const useDataStore = defineStore(
         .subscribe()
     }
 
+    // --- GESTIÓN INTELIGENTE DE AGUA (ACTUALIZADO) ---
+    function calcularCalidadAgua(datos) {
+      const ph = parseFloat(datos.ph)
+      const tds = parseFloat(datos.solidos_totales)
+      const nitratos = parseFloat(datos.nitratos || 0)
+
+      if (ph < 5.5 || ph > 9.0) return 'Peligro'
+      if (tds > 4000) return 'Peligro'
+      if (nitratos > 100) return 'Peligro'
+
+      if (ph < 6.5 || ph > 8.5) return 'Precaución'
+      if (tds > 2000) return 'Precaución'
+      if (nitratos > 45) return 'Precaución'
+
+      return 'Óptimo'
+    }
+
     async function agregarAnalisisDeAgua(data) {
       const nuevoAnalisis = await createRegistro('analisis_de_agua', data)
+      const nuevoEstado = calcularCalidadAgua(data)
+
+      await updateRegistro('fuentes_de_agua', data.fuente_id, {
+        ultimo_estado: nuevoEstado,
+      })
+
       const fuente = fuentesAgua.value.find((f) => f.id === data.fuente_id)
       if (fuente) {
         if (!fuente.analisis_de_agua) fuente.analisis_de_agua = []
         fuente.analisis_de_agua.unshift(nuevoAnalisis)
+        fuente.ultimo_estado = nuevoEstado
       }
-      return { estado: 'Óptimo', peligros: [] }
+      return { estado: nuevoEstado, peligros: [] }
     }
+
     async function createFuenteAgua(data) {
       return createRegistro('fuentes_de_agua', data)
     }

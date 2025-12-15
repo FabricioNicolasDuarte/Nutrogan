@@ -12,7 +12,6 @@
           class="glass-btn"
         />
       </div>
-
       <div class="absolute-center full-width text-center pointer-events-none" style="z-index: 0">
         <div class="page-title-box shadow-5" style="margin: 0; pointer-events: auto">
           Gestión Hídrica
@@ -140,9 +139,7 @@
             layer-type="base"
             name="Stadia Dark"
           />
-
           <l-geo-json v-if="potrerosGeoJson" :geojson="potrerosGeoJson" :options="geoJsonOptions" />
-
           <l-marker
             v-for="fuente in fuentesConGeo"
             :key="fuente.id"
@@ -160,7 +157,6 @@
             </l-popup>
           </l-marker>
         </l-map>
-
         <div class="absolute-bottom-right q-ma-md pointer-events-auto column q-gutter-y-xs">
           <q-btn flat round dense icon="add" class="glass-btn" @click="zoom++" />
           <q-btn flat round dense icon="remove" class="glass-btn" @click="zoom--" />
@@ -197,101 +193,13 @@
 
     <div class="row q-col-gutter-lg">
       <div v-for="fuente in fuentesPaginadas" :key="fuente.id" class="col-12 col-sm-6 col-md-4">
-        <q-card
-          class="water-card full-height column justify-between"
-          :class="getBorderClass(fuente.ultimo_estado)"
-        >
-          <q-card-section class="q-pb-xs">
-            <div class="row items-center no-wrap">
-              <div class="fuente-icon-wrapper q-mr-md">
-                <div
-                  class="fuente-icon-shape"
-                  :style="{
-                    '-webkit-mask-image': `url(${getFuenteIconPath(fuente)})`,
-                    'mask-image': `url(${getFuenteIconPath(fuente)})`,
-                    backgroundColor: getStatusColor(fuente.ultimo_estado),
-                  }"
-                ></div>
-              </div>
-
-              <div class="col overflow-hidden">
-                <div class="text-h6 ellipsis">{{ fuente.nombre }}</div>
-                <div class="text-caption text-grey-5 font-mono">
-                  {{ fuente.tipo }}
-                  <span v-if="fuente.es_inteligente" class="text-secondary">
-                    | IoT <q-icon name="wifi" size="10px" />
-                  </span>
-                </div>
-              </div>
-
-              <q-btn flat round dense icon="more_vert" color="grey-5">
-                <q-menu class="bg-dark text-white border-neon">
-                  <q-list dense style="min-width: 140px">
-                    <q-item clickable v-close-popup @click="abrirFormFuente(fuente)">
-                      <q-item-section avatar><q-icon name="edit" size="xs" /></q-item-section>
-                      <q-item-section>Editar</q-item-section>
-                    </q-item>
-                    <q-item
-                      clickable
-                      v-close-popup
-                      @click="confirmarEliminar(fuente)"
-                      class="text-red"
-                    >
-                      <q-item-section avatar><q-icon name="delete" size="xs" /></q-item-section>
-                      <q-item-section>Eliminar</q-item-section>
-                    </q-item>
-                  </q-list>
-                </q-menu>
-              </q-btn>
-            </div>
-          </q-card-section>
-
-          <q-card-section class="q-py-sm">
-            <div class="row q-col-gutter-sm">
-              <div class="col-6">
-                <div class="metric-box">
-                  <div class="label text-primary">pH</div>
-                  <div class="value font-numeric">{{ getLastAnalisis(fuente).ph }}</div>
-                </div>
-              </div>
-              <div class="col-6">
-                <div class="metric-box">
-                  <div class="label text-cyan-4">TDS (ppm)</div>
-                  <div class="value font-numeric">{{ getLastAnalisis(fuente).tds }}</div>
-                </div>
-              </div>
-            </div>
-
-            <div class="text-caption text-grey-6 q-mt-sm font-mono text-center">
-              <q-icon name="history" size="xs" /> {{ getLastAnalisis(fuente).fecha }}
-            </div>
-          </q-card-section>
-
-          <q-separator dark class="opacity-10" />
-          <q-card-actions class="bg-dark-soft row q-col-gutter-sm q-pa-sm">
-            <div class="col-6">
-              <q-btn
-                outline
-                color="primary"
-                label="Analizar"
-                size="sm"
-                class="full-width font-weight-bold"
-                icon="science"
-                @click="abrirFormAnalisis(fuente)"
-              />
-            </div>
-            <div class="col-6">
-              <q-btn
-                flat
-                color="white"
-                label="Historial"
-                size="sm"
-                class="full-width"
-                @click="abrirHistorial(fuente)"
-              />
-            </div>
-          </q-card-actions>
-        </q-card>
+        <SmartWaterCard
+          :fuente="fuente"
+          @editar="abrirFormFuente"
+          @eliminar="confirmarEliminar"
+          @nuevoAnalisis="abrirFormAnalisis"
+          @verHistorial="abrirHistorial"
+        />
       </div>
     </div>
 
@@ -344,6 +252,7 @@ import { supabase } from 'boot/supabase'
 import FormFuenteAgua from 'components/agua/FormFuenteAgua.vue'
 import FormAnalisisAgua from 'components/agua/FormAnalisisAgua.vue'
 import DialogAnalisisHistorial from 'components/agua/DialogAnalisisHistorial.vue'
+import SmartWaterCard from 'components/agua/SmartWaterCard.vue'
 
 const dataStore = useDataStore()
 const $q = useQuasar()
@@ -370,7 +279,6 @@ const zoom = ref(14)
 const mapCenter = ref([-26.1775, -58.1756])
 
 // --- COMPUTADAS VISUALES ---
-
 const kpiResumen = computed(() => {
   const lista = dataStore.fuentesAgua || []
   const conAnalisis = lista.filter((f) => f.analisis_de_agua && f.analisis_de_agua.length > 0)
@@ -409,69 +317,19 @@ const potrerosGeoJson = computed(() => {
   return { type: 'FeatureCollection', features }
 })
 
-// Estilo Neón para Polígonos
 const geoJsonOptions = computed(() => ({
-  style: {
-    color: '#39ff14',
-    weight: 1,
-    opacity: 0.4,
-    fillColor: '#39ff14',
-    fillOpacity: 0.05,
-  },
+  style: { color: '#39ff14', weight: 1, opacity: 0.4, fillColor: '#39ff14', fillOpacity: 0.05 },
 }))
 
-// --- FUNCIONES HELPERS VISUALES (Para Cards) ---
-
-function getFuenteIconPath(fuente) {
-  // Lógica para usar los SVGs personalizados en /public/icons/water-icons/
-  if (fuente.es_inteligente) {
-    return '/icons/water-icons/bebedero-inteligente.svg'
-  }
-
-  const tipo = fuente.tipo ? fuente.tipo.toLowerCase() : 'otros'
-  let filename = 'otros.svg'
-
-  if (tipo.includes('tanque')) filename = 'tanque.svg'
-  else if (tipo.includes('bebedero')) filename = 'bebedero.svg'
-  else if (tipo.includes('represa')) filename = 'represa.svg'
-  else if (tipo.includes('pozo')) filename = 'pozo.svg'
-  else if (tipo.includes('arroyo')) filename = 'arroyo.svg'
-
-  return `/icons/water-icons/${filename}`
-}
-
 function getStatusColor(estado) {
-  if (estado === 'Óptimo') return '#39ff14' // Verde Neón
-  if (estado === 'Precaución') return '#00e5ff' // Cian
-  if (estado === 'Peligro') return '#ffffff' // Blanco (Alto contraste)
-  return '#555555' // Gris
+  if (estado === 'Óptimo') return '#39ff14'
+  if (estado === 'Precaución') return '#00e5ff'
+  if (estado === 'Peligro') return '#ffffff'
+  return '#555555'
 }
 
-function getBorderClass(estado) {
-  if (estado === 'Óptimo') return 'border-neon-card'
-  if (estado === 'Precaución') return 'border-cyan-card'
-  if (estado === 'Peligro') return 'border-white-card'
-  return ''
-}
-
-function getLastAnalisis(fuente) {
-  if (fuente.analisis_de_agua && fuente.analisis_de_agua.length > 0) {
-    const ult = fuente.analisis_de_agua[0]
-    return {
-      ph: ult.ph || '-',
-      tds: ult.solidos_totales || '-',
-      fecha: new Date(ult.fecha_analisis).toLocaleDateString('es-AR'),
-    }
-  }
-  return { ph: '-', tds: '-', fecha: 'Sin datos' }
-}
-
-// --- ICONOS DE MAPA (PINES ESTÁNDAR) ---
-// Regresamos al estilo de Pin SVG (Gota) para el mapa,
-// pero mantenemos los colores de estado.
 function getIconoLeaflet(fuente) {
   const color = getStatusColor(fuente.ultimo_estado)
-
   const svg = `
     <svg width="36" height="36" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="filter: drop-shadow(0 0 8px ${color});">
       <path d="M12 2C7 2 3 7 3 10.5C3 12.1627 3.65992 13.8824 5.30514 15.6558C7.54572 18.068 10.5186 21.0963 11.5367 22.0833C11.724 22.2662 12.016 22.2662 12.2033 22.0833C13.2214 21.0963 16.1943 18.068 18.4349 15.6558C20.7628 13.2985 21 11.6033 21 10.5C21 7 17 2 12 2Z"
@@ -499,7 +357,6 @@ function onMapReady() {
   }, 300)
 }
 
-// --- ACCIONES (CRUD) ---
 function abrirFormFuente(f) {
   fuenteSeleccionada.value = f
   dialogos.formFuente = true
@@ -529,15 +386,12 @@ async function abrirHistorial(f) {
   dialogos.historial = true
 }
 function confirmarEliminar(f) {
-  $q.dialog({
-    title: 'Eliminar',
-    message: `¿Borrar ${f.nombre}?`,
-    cancel: true,
-    dark: true,
-  }).onOk(async () => {
-    await dataStore.deleteFuenteAgua(f.id)
-    $q.notify({ type: 'positive', message: 'Eliminado' })
-  })
+  $q.dialog({ title: 'Eliminar', message: `¿Borrar ${f.nombre}?`, cancel: true, dark: true }).onOk(
+    async () => {
+      await dataStore.deleteFuenteAgua(f.id)
+      $q.notify({ type: 'positive', message: 'Eliminado' })
+    },
+  )
 }
 
 onMounted(async () => {
@@ -549,7 +403,6 @@ onMounted(async () => {
 </script>
 
 <style lang="scss" scoped>
-/* Fondo Pro */
 .dashboard-pro-bg {
   background-image: url('src/assets/nutrogan-bg.jpg');
   background-size: cover;
@@ -557,7 +410,6 @@ onMounted(async () => {
   background-attachment: fixed;
   min-height: 100vh;
 }
-
 .page-title-box {
   background: #000000;
   color: #ffffff;
@@ -569,8 +421,6 @@ onMounted(async () => {
   font-size: 1.5rem;
   font-weight: 700;
 }
-
-/* KPI Cards */
 .kpi-card {
   background: rgba(15, 15, 20, 0.85);
   backdrop-filter: blur(15px);
@@ -586,7 +436,6 @@ onMounted(async () => {
     background: rgba(20, 20, 25, 0.95);
   }
 }
-
 .border-neon-left {
   border-left: 4px solid #39ff14;
 }
@@ -599,8 +448,6 @@ onMounted(async () => {
 .border-blue-left {
   border-left: 4px solid #0037ff;
 }
-
-/* Mapa Card */
 .map-card-pro {
   background: rgba(15, 15, 20, 0.6);
   border: 1px solid rgba(255, 255, 255, 0.1);
@@ -623,74 +470,6 @@ onMounted(async () => {
   border-radius: 50%;
   box-shadow: 0 0 5px currentColor;
 }
-
-/* Water Cards */
-.water-card {
-  background: rgba(10, 10, 12, 0.7);
-  backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 16px;
-  transition: all 0.3s ease;
-  overflow: hidden;
-  &:hover {
-    box-shadow: 0 0 20px rgba(0, 229, 255, 0.15);
-    background: rgba(15, 15, 20, 0.9);
-  }
-}
-/* Borders dinámicos */
-.border-neon-card {
-  border-left: 3px solid #39ff14;
-}
-.border-cyan-card {
-  border-left: 3px solid #00e5ff;
-}
-.border-white-card {
-  border-left: 3px solid #ffffff;
-}
-
-/* Icono Máscara SVG */
-.fuente-icon-wrapper {
-  width: 48px;
-  height: 48px;
-  border-radius: 12px;
-  background: rgba(255, 255, 255, 0.05);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-}
-.fuente-icon-shape {
-  width: 32px;
-  height: 32px;
-  /* El color se inyecta inline dinámicamente */
-  -webkit-mask-size: contain;
-  mask-size: contain;
-  -webkit-mask-repeat: no-repeat;
-  mask-repeat: no-repeat;
-  -webkit-mask-position: center;
-  mask-position: center;
-}
-
-/* Metric Box */
-.metric-box {
-  background: rgba(0, 0, 0, 0.4);
-  border-radius: 8px;
-  padding: 8px;
-  text-align: center;
-  border: 1px solid rgba(255, 255, 255, 0.05);
-  .label {
-    font-size: 0.7rem;
-    font-weight: 700;
-    text-transform: uppercase;
-  }
-  .value {
-    font-size: 1.2rem;
-    font-weight: bold;
-    color: white;
-  }
-}
-
-/* Typography & Utils */
 .font-mono {
   font-family: 'Fira Code', monospace;
 }
@@ -710,14 +489,9 @@ onMounted(async () => {
 .opacity-20 {
   opacity: 0.2;
 }
-.opacity-10 {
-  opacity: 0.1;
-}
 .bg-dark-soft {
   background: rgba(0, 0, 0, 0.3);
 }
-
-/* Paginación */
 :deep(.glass-pagination .q-btn) {
   background: rgba(0, 0, 0, 0.3) !important;
   backdrop-filter: blur(4px);
@@ -727,8 +501,6 @@ onMounted(async () => {
   color: black !important;
   font-weight: bold;
 }
-
-/* Leaflet Popups */
 :deep(.leaflet-popup-content-wrapper) {
   background: rgba(10, 10, 10, 0.9);
   color: white;
@@ -738,5 +510,11 @@ onMounted(async () => {
 :deep(.leaflet-popup-tip) {
   background: rgba(10, 10, 10, 0.9);
   border: 1px solid #39ff14;
+}
+:deep(.glass-dialog-form .q-card) {
+  background: rgba(40, 40, 40, 0.85) !important;
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: white;
 }
 </style>

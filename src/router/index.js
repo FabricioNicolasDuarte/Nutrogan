@@ -25,7 +25,7 @@ export default route(function (/* { store, ssrContext } */) {
   Router.beforeEach(async (to, from, next) => {
     const authStore = useAuthStore()
 
-    // 1. Verificar sesión activa
+    // 1. Lógica de Sesión: Solo verificar si NO tenemos usuario en memoria
     if (!authStore.user) {
       await authStore.checkAuth()
     }
@@ -33,53 +33,42 @@ export default route(function (/* { store, ssrContext } */) {
     const requiresAuth = to.matched.some((record) => record.meta.requiresAuth)
     const requiresRole = to.meta.requiresRole
 
-    // --- LÓGICA DE SEGURIDAD ---
+    // --- SEGURIDAD ---
 
     if (requiresAuth) {
       // A. Si no hay usuario -> Login
-      if (!authStore.user) {
+      if (!authStore.isAuthenticated) {
         next('/login')
         return
       }
 
-      // B. SEGURIDAD EXTRA: Verificar que tenga perfil válido
-      // Si está logueado pero no tiene perfil (ej: intruso), lo sacamos.
+      // B. Si hay usuario pero no perfil (caso raro de error de carga)
       if (!authStore.profile) {
-        await authStore.fetchProfile() // Último intento de carga
-
+        await authStore.fetchProfile()
         if (!authStore.profile) {
-          console.warn('ALERTA: Usuario sin perfil detectado. Cerrando sesión...')
-          await authStore.logout()
-
-          Notify.create({
-            type: 'negative',
-            message: 'Acceso Denegado: Usuario no autorizado por el administrador.',
-            icon: 'security',
-            position: 'top',
-          })
-
           next('/login')
           return
         }
       }
 
-      // C. Verificación de Roles (Si la ruta lo requiere)
+      // C. Verificación de Roles
       if (requiresRole) {
         const userRole = authStore.currentRole
         if (!userRole || !requiresRole.includes(userRole)) {
           Notify.create({
             type: 'warning',
-            message: 'No tiene permisos suficientes para esta sección.',
+            message: 'No tienes permisos para acceder a esta sección.',
             position: 'top',
           })
-          next('/') // Volver al Home si no tiene permiso
+          // Redirigir al home o dashboard según rol
+          next('/')
           return
         }
       }
     }
 
-    // Si ya está logueado y quiere ir al login, lo mandamos al dashboard
-    if (!requiresAuth && authStore.user && to.path === '/login') {
+    // Evitar ir al login si ya está logueado
+    if (to.path === '/login' && authStore.isAuthenticated) {
       next('/')
       return
     }
