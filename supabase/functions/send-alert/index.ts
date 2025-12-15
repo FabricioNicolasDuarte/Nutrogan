@@ -46,9 +46,10 @@ serve(async (req) => {
     }
     const colorHeader = colors[prioridad] || colors.default
 
-    const logoUrl = metadata?.logo_url || 'https://tu-bucket.supabase.co/nutrogan-logo.png'
-    const appUrl = metadata?.app_url || 'https://app.nutrogan.com' // Cambia esto por tu URL real
-
+    const logoUrl =
+      metadata?.logo_url ||
+      'https://cglogstrtjvbpsoaghib.supabase.co/storage/v1/object/public/assets/nutrogan-logo.png'
+    const appUrl = metadata?.app_url || 'https://nutrogan.com'
     // HTML PROFESIONAL LIMPIO
     const htmlContent = `
       <!DOCTYPE html>
@@ -81,7 +82,7 @@ serve(async (req) => {
              </a>
           </div>
 
-          <div style="background-color: #fafafa; padding: 30px; text-align: center; border-top: 1px solid #f0f0f0;">
+          <div style="background-color: #81ffb1ff; padding: 30px; text-align: center; border-top: 1px solid #f0f0f0;">
             <p style="margin: 0; color: #71717a; font-size: 12px;">
               © ${new Date().getFullYear()} Nutrogan Systems. Todos los derechos reservados.
             </p>

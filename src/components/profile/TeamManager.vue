@@ -197,9 +197,7 @@
           </div>
 
           <div class="col-12 col-md-6 q-pa-lg scroll bg-dark-soft">
-            <div class="text-subtitle2 text-grey-5 q-mb-md text-uppercase">
-              VISTA PREVIA (SIMULACIÓN EMAIL)
-            </div>
+            <div class="text-subtitle2 text-grey-5 q-mb-md text-uppercase">VISTA PREVIA:</div>
 
             <div
               class="email-preview bg-white text-black rounded-borders overflow-hidden shadow-5"
@@ -211,7 +209,7 @@
               ></div>
 
               <div class="q-pa-md text-center" style="border-bottom: 1px solid #f0f0f0">
-                <img src="src/assets/nutrogan-logo.svg" style="height: 28px" alt="Nutrogan" />
+                <img src="public/messages/nutrogan-logo.png" style="height: 28px" alt="Nutrogan" />
               </div>
 
               <div class="q-pa-lg">
@@ -342,7 +340,7 @@ import { ref, reactive, onMounted } from 'vue'
 import { useDataStore } from 'stores/data-store'
 import { useAuthStore } from 'stores/auth-store'
 import { useQuasar } from 'quasar'
-import { supabase } from 'boot/supabase' // <--- IMPORTANTE: Importación necesaria para Edge Functions
+import { supabase } from 'boot/supabase'
 
 const dataStore = useDataStore()
 const authStore = useAuthStore()
@@ -447,10 +445,12 @@ async function enviarAlerta() {
       prioridad: alertaForm.prioridad,
       destinatarios: destinatarios,
       metadata: {
-        // IMPORTANTE: URL pública de tu logo. Ajustar según tu bucket de Supabase
+        // IMPORTANTE: URL pública de tu logo.
         logo_url:
           'https://cglogstrtjvbpsoaghib.supabase.co/storage/v1/object/public/assets/nutrogan-logo.png',
         footer_text: 'Enviado desde el Panel de Control Nutrogan',
+        // CORRECCIÓN FINAL: Apuntar siempre a PROD
+        app_url: 'https://www.nutrogan.com',
       },
     }
 
@@ -492,7 +492,7 @@ async function enviarAlerta() {
   }
 }
 
-// --- CRUD USUARIOS (Lógica standard) ---
+// --- CRUD USUARIOS ---
 async function crearUsuario() {
   loading.value = true
   const res = await authStore.adminCreateUser({
@@ -503,7 +503,6 @@ async function crearUsuario() {
     $q.notify({ type: 'positive', message: 'Usuario creado' })
     showCreateDialog.value = false
     dataStore.fetchMiembrosEquipo()
-    // Reset form
     newUser.email = ''
     newUser.nombre = ''
     newUser.password = ''
