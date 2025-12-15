@@ -206,29 +206,40 @@
               style="max-width: 500px; margin: 0 auto"
             >
               <div
-                class="q-pa-md text-center"
-                style="background: #f5f5f5; border-bottom: 1px solid #ddd"
-              >
-                <img src="src/assets/nutrogan-logo.svg" style="height: 30px" alt="Nutrogan" />
-              </div>
-
-              <div
                 :class="`bg-${getColorCode(alertaForm.prioridad)}`"
-                style="height: 6px; width: 100%"
+                style="height: 4px; width: 100%"
               ></div>
 
+              <div class="q-pa-md text-center" style="border-bottom: 1px solid #f0f0f0">
+                <img src="src/assets/nutrogan-logo.svg" style="height: 28px" alt="Nutrogan" />
+              </div>
+
               <div class="q-pa-lg">
-                <div class="text-h5 text-weight-bold q-mb-md">
+                <div class="text-h6 text-weight-bold q-mb-md letter-spacing-tight text-grey-9">
                   {{ alertaForm.titulo || '(Sin Asunto)' }}
                 </div>
 
-                <div class="text-body1" style="white-space: pre-wrap; line-height: 1.6">
-                  {{ alertaForm.mensaje || '...' }}
+                <div class="text-body2 text-grey-8" style="white-space: pre-wrap; line-height: 1.6">
+                  {{ alertaForm.mensaje || 'Escriba su mensaje para previsualizar...' }}
                 </div>
 
-                <div class="q-mt-xl q-pt-md border-top text-center text-caption text-grey-6">
-                  <div class="text-weight-bold">Sistema de Gestión Ganadera Nutrogan</div>
-                  <div>Comunicado Oficial • {{ new Date().toLocaleDateString() }}</div>
+                <div class="text-center q-mt-xl q-mb-md">
+                  <div
+                    class="bg-dark text-white q-py-sm q-px-md inline-block rounded-borders text-weight-medium"
+                    style="font-size: 12px"
+                  >
+                    Ir al Panel de Control
+                  </div>
+                </div>
+              </div>
+
+              <div class="bg-grey-1 q-pa-md text-center border-top">
+                <div class="text-caption text-grey-6">
+                  © {{ new Date().getFullYear() }} Nutrogan Systems
+                </div>
+                <div class="text-caption text-grey-5 q-mt-xs" style="font-size: 0.65rem">
+                  Estás recibiendo este correo porque formas parte del equipo operativo.<br />
+                  No responder a este mensaje automático.
                 </div>
               </div>
             </div>

@@ -17,11 +17,11 @@ interface AlertPayload {
   metadata?: {
     logo_url?: string
     footer_text?: string
+    app_url?: string // Nueva opción para redirigir al usuario
   }
 }
 
 serve(async (req) => {
-  // Manejo de CORS
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders })
   }
@@ -37,45 +37,65 @@ serve(async (req) => {
       })
     }
 
-    // 1. Determinar Color según Prioridad (Mismo esquema que el Frontend)
-    let colorHeader = '#2196f3' // Azul (Normal)
-    if (prioridad === 'urgente') colorHeader = '#d32f2f' // Rojo
-    if (prioridad === 'success') colorHeader = '#4caf50' // Verde
+    // Colores corporativos según urgencia
+    const colors = {
+      urgente: '#d32f2f', // Rojo
+      success: '#2e7d32', // Verde
+      normal: '#1976d2', // Azul
+      default: '#333333',
+    }
+    const colorHeader = colors[prioridad] || colors.default
 
-    // 2. Construir HTML del Email
-    // Usamos un diseño limpio que imita la tarjeta del Dashboard
-    const logoUrl = metadata?.logo_url || 'https://tu-bucket.supabase.co/nutrogan-logo.png' // Reemplazar con URL real por defecto
+    const logoUrl = metadata?.logo_url || 'https://tu-bucket.supabase.co/nutrogan-logo.png'
+    const appUrl = metadata?.app_url || 'https://app.nutrogan.com' // Cambia esto por tu URL real
 
+    // HTML PROFESIONAL LIMPIO
     const htmlContent = `
-      <div style="font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; max-width: 600px; margin: 0 auto; background-color: #ffffff; border: 1px solid #e0e0e0; border-radius: 8px; overflow: hidden;">
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      </head>
+      <body style="margin: 0; padding: 0; background-color: #f4f4f5; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;">
 
-        <div style="background-color: #f5f5f5; padding: 20px; text-align: center; border-bottom: 1px solid #ddd;">
-           <img src="${logoUrl}" alt="Nutrogan" style="height: 40px; object-fit: contain;" />
-        </div>
+        <div style="max-width: 600px; margin: 40px auto; background-color: #ffffff; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.05);">
 
-        <div style="background-color: ${colorHeader}; height: 6px; width: 100%;"></div>
+          <div style="height: 4px; background-color: ${colorHeader}; width: 100%;"></div>
 
-        <div style="padding: 30px;">
-          <h2 style="color: #333; margin-top: 0; font-size: 24px;">${titulo}</h2>
-
-          <div style="color: #555; font-size: 16px; line-height: 1.6; white-space: pre-wrap;">
-            ${mensaje}
+          <div style="padding: 30px 40px; text-align: center; border-bottom: 1px solid #f0f0f0;">
+             <img src="${logoUrl}" alt="Nutrogan" style="height: 32px; object-fit: contain;" />
           </div>
 
-          <div style="margin-top: 30px; padding: 15px; background-color: #f9f9f9; border-left: 4px solid #333; color: #666; font-size: 14px;">
-            <strong>Categoría:</strong> ${payload.categoria.toUpperCase()}<br/>
-            <strong>Prioridad:</strong> ${prioridad.toUpperCase()}
+          <div style="padding: 40px 40px 20px 40px;">
+            <h1 style="margin-top: 0; color: #111827; font-size: 20px; font-weight: 600; letter-spacing: -0.5px;">${titulo}</h1>
+
+            <div style="color: #374151; font-size: 16px; line-height: 1.6; white-space: pre-wrap; margin-top: 20px;">
+              ${mensaje}
+            </div>
+          </div>
+
+          <div style="padding: 20px 40px 40px 40px; text-align: center;">
+             <a href="${appUrl}" style="display: inline-block; padding: 12px 24px; background-color: #18181b; color: #ffffff; text-decoration: none; border-radius: 6px; font-weight: 500; font-size: 14px;">
+                Ir al Panel de Control
+             </a>
+          </div>
+
+          <div style="background-color: #fafafa; padding: 30px; text-align: center; border-top: 1px solid #f0f0f0;">
+            <p style="margin: 0; color: #71717a; font-size: 12px;">
+              © ${new Date().getFullYear()} Nutrogan Systems. Todos los derechos reservados.
+            </p>
+            <p style="margin: 10px 0 0; color: #a1a1aa; font-size: 11px; line-height: 1.4;">
+              Estás recibiendo este correo porque formas parte del equipo operativo del establecimiento.
+              <br/>
+              Si crees que es un error, contacta al administrador.
+            </p>
           </div>
         </div>
-
-        <div style="background-color: #333; color: #999; padding: 20px; text-align: center; font-size: 12px;">
-          <p style="margin: 0;">${metadata?.footer_text || 'Sistema de Gestión Ganadera Nutrogan'}</p>
-          <p style="margin: 5px 0 0;">Este es un mensaje automático. No responder.</p>
-        </div>
-      </div>
+      </body>
+      </html>
     `
 
-    // 3. Enviar con Resend
     if (RESEND_API_KEY) {
       const res = await fetch('https://api.resend.com/emails', {
         method: 'POST',
@@ -84,18 +104,16 @@ serve(async (req) => {
           Authorization: `Bearer ${RESEND_API_KEY}`,
         },
         body: JSON.stringify({
-          from: 'Nutrogan Alertas <onboarding@resend.dev>', // Configura tu dominio verificado en prod
+          from: 'Nutrogan Alertas <onboarding@resend.dev>',
           to: destinatarios.map((d) => d.email),
-          subject: `[Nutrogan] ${titulo}`,
+          subject: `${titulo}`, // Asunto limpio sin etiquetas
           html: htmlContent,
         }),
       })
 
       const data = await res.json()
 
-      if (!res.ok) {
-        throw new Error(data.message || 'Error en Resend')
-      }
+      if (!res.ok) throw new Error(data.message || 'Error en Resend')
 
       return new Response(JSON.stringify({ success: true, data }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
