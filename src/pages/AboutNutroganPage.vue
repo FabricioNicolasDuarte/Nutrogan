@@ -220,24 +220,13 @@
               <div class="row q-col-gutter-md">
                 <div
                   class="col-12 col-md-4 cursor-pointer hover-scale"
-                  @click="openLink('https://www.sentinel-hub.com/')"
+                  @click="openLink('https://planetarycomputer.microsoft.com/')"
                 >
                   <div
                     class="glass-panel q-pa-lg full-height column border-green-dim text-center relative-position"
                   >
                     <div class="row flex-center q-mb-md" style="height: 80px">
-                      <q-img
-                        src="https://www.sentinel-hub.com/img/logo-sentinel-hub.png"
-                        width="90px"
-                        fit="contain"
-                        class="no-pointer-events"
-                      >
-                        <template v-slot:error>
-                          <div class="row flex-center text-green-13">
-                            <q-icon name="satellite_alt" size="3em" />
-                          </div>
-                        </template>
-                      </q-img>
+                      <q-icon name="cloud" color="green-13" size="4em" />
                     </div>
 
                     <div class="text-h6 text-weight-bold q-mb-sm text-white">Sentinel-2 · PC</div>
@@ -256,6 +245,11 @@
                           icon="cloud"
                           label="Planetary Computer"
                         />
+                      </div>
+                      <div
+                        class="text-caption text-green-13 font-mono row flex-center justify-center"
+                      >
+                        VISITAR SITIO <q-icon name="arrow_outward" class="q-ml-xs" />
                       </div>
                     </div>
                   </div>

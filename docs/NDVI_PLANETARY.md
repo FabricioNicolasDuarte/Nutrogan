@@ -14,10 +14,14 @@ Sentinel Hub (OAuth client credentials) **ya no se usa**. La edge `analizar-ndvi
 ## Deploy
 
 ```bash
+npx supabase login   # cuenta con acceso a nutrogan-mvp
 npx supabase functions deploy analizar-ndvi --project-ref cglogstrtjvbpsoaghib
+npx supabase functions deploy send-alert --project-ref cglogstrtjvbpsoaghib
 ```
 
 Secrets opcionales: `AGRO_API_KEY`. Ya no hacen falta `SENTINEL_CLIENT_ID` / `SENTINEL_CLIENT_SECRET`.
+
+`send-alert` usa `https://www.nutrogan.site` como `app_url` por defecto en los mails del equipo.
 
 ## Contrato UI (sin cambios)
 
