@@ -134,7 +134,15 @@ export const useAuthStore = defineStore('auth', () => {
       profile.value = null
       currentRole.value = null
       userEstablishments.value = []
-      localStorage.clear()
+      // No localStorage.clear(): preserva cola IndexedDB y evita borrar cache offline.
+      // Solo limpia tokens de sesión Supabase en localStorage.
+      try {
+        Object.keys(localStorage)
+          .filter((k) => k.startsWith('sb-') || k.includes('supabase'))
+          .forEach((k) => localStorage.removeItem(k))
+      } catch {
+        /* ignore */
+      }
       window.location.replace('/login')
     }
   }

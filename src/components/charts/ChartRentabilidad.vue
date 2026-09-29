@@ -63,16 +63,18 @@ defineExpose({ vchartRef, isPrintMode })
 
 const totalKilosGanadosMes = computed(() => {
   let gananciaDiariaTotal = 0
+  let lotesConGdpv = 0
   dataStore.lotes.forEach((lote) => {
     const evalsLote = dataStore.evaluaciones.filter((e) => e.lote_id === lote.id)
-    let gdpv = 0.5 // Default conservador
-    if (dataStore.getGDPV && evalsLote.length >= 2) {
-      const calc = parseFloat(dataStore.getGDPV(evalsLote))
-      if (!isNaN(calc) && calc > -0.5 && calc < 3) gdpv = calc
-    }
+    if (!dataStore.getGDPV || evalsLote.length < 2) return
+    const calc = parseFloat(dataStore.getGDPV(evalsLote))
+    if (isNaN(calc) || calc <= -0.5 || calc >= 3) return
     const cabezas = Number(lote.cantidad_animales) || 0
-    gananciaDiariaTotal += cabezas * gdpv
+    gananciaDiariaTotal += cabezas * calc
+    lotesConGdpv++
   })
+  // Sin GDPV real no inventamos 0.5 kg/día
+  if (lotesConGdpv === 0) return '0'
   return (gananciaDiariaTotal * 30).toFixed(0)
 })
 

@@ -23,7 +23,7 @@
       </div>
 
       <div class="row q-col-gutter-md q-mt-md">
-        <div class="col-12 col-sm-6 col-md-3">
+        <div class="col-12 col-sm-6 col-md-6">
           <q-card flat class="kpi-card">
             <q-card-section>
               <div class="text-caption text-grey-4">Peso Prom. Actual</div>
@@ -31,27 +31,11 @@
             </q-card-section>
           </q-card>
         </div>
-        <div class="col-12 col-sm-6 col-md-3">
+        <div class="col-12 col-sm-6 col-md-6">
           <q-card flat class="kpi-card">
             <q-card-section>
               <div class="text-caption text-grey-4">GDPV (kg/día)</div>
               <div class="text-h6">{{ kpi_gdpv }}</div>
-            </q-card-section>
-          </q-card>
-        </div>
-        <div class="col-12 col-sm-6 col-md-3">
-          <q-card flat class="kpi-card">
-            <q-card-section>
-              <div class="text-caption text-grey-4">Costo por Kg Ganado</div>
-              <div class="text-h6">${{ kpi_costo_kg }}</div>
-            </q-card-section>
-          </q-card>
-        </div>
-        <div class="col-12 col-sm-6 col-md-3">
-          <q-card flat class="kpi-card" :class="kpi_tasa_prenez === 'N/A' ? 'kpi-card-na' : ''">
-            <q-card-section>
-              <div class="text-caption text-grey-4">Tasa de Preñez</div>
-              <div class="text-h6">{{ kpi_tasa_prenez }}%</div>
             </q-card-section>
           </q-card>
         </div>
@@ -524,30 +508,16 @@ function getObjetivoColor(objetivo) {
 
 // --- KPIs (Lógica actualizada para N/A) ---
 const kpi_peso_actual = computed(() => {
-  if (!dataStore.evaluaciones || dataStore.evaluaciones.length === 0)
-    return dataStore.loteActual?.peso_ingreso_kg || 0
-  return dataStore.evaluaciones[0].peso_promedio_kg
+  const conPeso = (dataStore.evaluaciones || []).find((e) => {
+    const p = parseFloat(e.peso_promedio_kg)
+    return Number.isFinite(p) && p > 0
+  })
+  if (conPeso) return conPeso.peso_promedio_kg
+  return dataStore.loteActual?.peso_ingreso_kg || '—'
 })
 const kpi_gdpv = computed(() => {
-  if (!dataStore.evaluaciones || dataStore.evaluaciones.length < 2) return 'N/A'
-  return dataStore.getGDPV(dataStore.evaluaciones)
-})
-const kpi_costo_kg = computed(() => {
-  if (!dataStore.evaluaciones || dataStore.evaluaciones.length < 2 || !dataStore.loteActual)
-    return 'N/A'
-  return dataStore.getCostoKgGanado(
-    dataStore.evaluaciones,
-    dataStore.consumos,
-    dataStore.loteActual.cantidad_animales,
-  )
-})
-const kpi_tasa_prenez = computed(() => {
-  if (dataStore.loteActual?.objetivo !== 'Cría' || !dataStore.loteActual) return 'N/A'
-  const tasa = dataStore.getTasaPrenez(
-    dataStore.eventosReproductivos,
-    dataStore.loteActual.cantidad_animales,
-  )
-  return tasa === '0.0' ? '0' : tasa // Evitar "0.0%"
+  const gdpv = dataStore.getGDPV(dataStore.evaluaciones)
+  return gdpv === 0 || gdpv === '0' || gdpv === 'N/A' || gdpv == null ? 'N/A' : gdpv
 })
 </script>
 

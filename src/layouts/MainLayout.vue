@@ -4,10 +4,11 @@
     class="fullscreen bg-black overflow-hidden font-outfit"
     :class="{ 'sidebar-open': rightDrawerOpen }"
   >
-    <div class="video-background">
-      <video autoplay loop muted playsinline>
-        <source src="/videos/video-background-nutrogan.mp4" type="video/mp4" />
-      </video>
+    <div
+      class="video-background"
+      role="presentation"
+      aria-hidden="true"
+    >
       <div class="video-overlay"></div>
     </div>
 
@@ -669,16 +670,16 @@ function handlePan(details) {
   inset: 0;
   z-index: -1;
   overflow: hidden;
-}
-.video-background video {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
+  background-color: #050505;
+  background-image: url('/images/nutrogan-bg.png');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
 }
 .video-overlay {
   position: absolute;
   inset: 0;
-  background: transparent;
+  background: rgba(0, 0, 0, 0.45);
 }
 
 .side-notch {

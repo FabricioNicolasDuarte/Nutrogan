@@ -175,13 +175,37 @@ export const useDataStore = defineStore(
     async function fetchInventarioMovimientos() {
       const estId = authStore.profile?.establecimiento_id
       if (!estId) return
+
+      // Filtrar por establecimiento vía join (la tabla de movimientos no siempre tiene est_id)
       const { data, error } = await supabase
         .from('inventario_movimientos')
-        .select('*, inventario_items(nombre, unidad, precio_unitario), lotes(identificacion)')
+        .select(
+          '*, inventario_items!inner(nombre, unidad, precio_unitario, establecimiento_id), lotes(identificacion)',
+        )
+        .eq('inventario_items.establecimiento_id', estId)
         .order('fecha', { ascending: false })
         .limit(200)
 
-      if (!error) inventarioMovimientos.value = data
+      if (error) {
+        // Fallback: filtrar en cliente por ítems del establecimiento
+        console.warn('[inventario_movimientos] join filter falló, fallback local:', error.message)
+        const itemIds = new Set(
+          (inventarioItems.value || [])
+            .filter((i) => i.establecimiento_id === estId || !i.establecimiento_id)
+            .map((i) => i.id),
+        )
+        const { data: raw } = await supabase
+          .from('inventario_movimientos')
+          .select('*, inventario_items(nombre, unidad, precio_unitario), lotes(identificacion)')
+          .order('fecha', { ascending: false })
+          .limit(200)
+        inventarioMovimientos.value = (raw || []).filter(
+          (m) => itemIds.has(m.item_id) || itemIds.has(m.inventario_item_id),
+        )
+        return
+      }
+
+      inventarioMovimientos.value = data || []
     }
 
     async function fetchFuentesAgua() {
@@ -661,18 +685,23 @@ export const useDataStore = defineStore(
 
     // --- HELPERS ---
     function getGDPV(evaluacionesDelLote) {
-      if (!evaluacionesDelLote || evaluacionesDelLote.length < 2) return 0
-      const evs = [...evaluacionesDelLote].sort(
-        (a, b) => new Date(a.fecha_evaluacion) - new Date(b.fecha_evaluacion),
-      )
-      const p1 = parseFloat(evs[0].peso_promedio_kg),
-        p2 = parseFloat(evs[evs.length - 1].peso_promedio_kg)
+      if (!evaluacionesDelLote || evaluacionesDelLote.length < 2) return 'N/A'
+      const evs = [...evaluacionesDelLote]
+        .filter((e) => {
+          const p = parseFloat(e.peso_promedio_kg)
+          return Number.isFinite(p) && p > 0
+        })
+        .sort((a, b) => new Date(a.fecha_evaluacion) - new Date(b.fecha_evaluacion))
+      if (evs.length < 2) return 'N/A'
+      const p1 = parseFloat(evs[0].peso_promedio_kg)
+      const p2 = parseFloat(evs[evs.length - 1].peso_promedio_kg)
       const diff = Math.ceil(
         Math.abs(
           new Date(evs[evs.length - 1].fecha_evaluacion) - new Date(evs[0].fecha_evaluacion),
         ) / 86400000,
       )
-      return diff > 0 ? ((p2 - p1) / diff).toFixed(3) : 0
+      if (diff <= 0) return 'N/A'
+      return ((p2 - p1) / diff).toFixed(3)
     }
     function getCostoKgGanado() {
       return 0
@@ -898,7 +927,7 @@ export const useDataStore = defineStore(
   {
     persist: {
       key: 'nutrogan_offline_data',
-      paths: [
+      pick: [
         'lotes',
         'potreros',
         'inventarioItems',
@@ -908,7 +937,6 @@ export const useDataStore = defineStore(
         'dietas',
         'marketPrice',
       ],
-      storage: localStorage,
     },
   },
 )

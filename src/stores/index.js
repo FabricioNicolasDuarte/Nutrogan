@@ -1,20 +1,26 @@
 import { store } from 'quasar/wrappers'
 import { createPinia } from 'pinia'
-import { createPersistedState } from 'pinia-plugin-persistedstate' // Importamos el plugin
+import { createPersistedState } from 'pinia-plugin-persistedstate'
+import localforage from 'localforage'
 
-/*
- * Si no has ejecutado el comando aún, recuerda:
- * npm install pinia-plugin-persistedstate
- */
+const offlineDataDb = localforage.createInstance({
+  name: 'nutrogan',
+  storeName: 'app_data',
+  description: 'Cache offline Nutrogan (IndexedDB)',
+})
+
+const idbStorage = {
+  getItem: (key) => offlineDataDb.getItem(key),
+  setItem: (key, value) => offlineDataDb.setItem(key, value),
+}
 
 export default store((/* { ssrContext } */) => {
   const pinia = createPinia()
 
-  // Instalamos el plugin en la instancia de Pinia
   pinia.use(
     createPersistedState({
-      storage: localStorage, // Configuramos localStorage como el almacén por defecto
-      auto: false, // Desactivamos 'auto' para controlar manualmente qué stores persistir
+      storage: idbStorage,
+      auto: false,
     }),
   )
 

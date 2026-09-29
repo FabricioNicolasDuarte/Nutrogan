@@ -69,8 +69,8 @@
 
         <div class="col-6 col-md-4">
           <button class="industrial-btn bg-white full-width" @click="iniciarFlujo('scan_cc')">
-            <q-icon name="camera_alt" size="3em" class="q-mb-xs" />
-            <span class="btn-label">SCAN IA</span>
+            <q-icon name="fitness_center" size="3em" class="q-mb-xs" />
+            <span class="btn-label">CC INTA</span>
           </button>
         </div>
       </div>
@@ -230,12 +230,13 @@
         style="min-width: 350px; border: 4px solid black"
       >
         <q-card-section class="bg-black text-white text-center q-py-md">
-          <div class="text-h5 text-weight-bold">EVALUACIÓN DUAL</div>
+          <div class="text-h5 text-weight-bold">CC · ESCALA INTA</div>
+          <div class="text-caption text-grey-4">Registro manual 1–9 (Argentina)</div>
         </q-card-section>
 
         <q-card-section class="q-pa-lg text-center">
           <div class="text-subtitle1 text-grey-8 q-mb-sm text-weight-bold">
-            CONDICIÓN CORPORAL (1-9)
+            CONDICIÓN CORPORAL
           </div>
 
           <div class="row justify-center items-center q-gutter-x-md">
@@ -250,7 +251,7 @@
             />
 
             <div class="text-h1 text-weight-bolder text-black" style="min-width: 120px">
-              {{ ccResult }}
+              {{ formatCcInta(ccResult) }}
             </div>
 
             <q-btn
@@ -262,6 +263,10 @@
               text-color="white"
               @click="ajustarCC(0.5)"
             />
+          </div>
+
+          <div class="text-body2 text-grey-7 q-mt-md" style="min-height: 2.5em">
+            {{ describeCcInta(ccResult) }}
           </div>
         </q-card-section>
 
@@ -284,6 +289,12 @@ import { ref, computed, onMounted, onUnmounted, nextTick } from 'vue'
 import { useDataStore } from 'stores/data-store'
 import { syncService } from 'src/services/SyncService'
 import { useQuasar } from 'quasar'
+import {
+  CC_INTA_DEFAULT,
+  clampCcInta,
+  describeCcInta,
+  formatCcInta,
+} from 'src/utils/ccInta'
 
 const dataStore = useDataStore()
 const $q = useQuasar()
@@ -304,8 +315,7 @@ const videoRef = ref(null)
 const stream = ref(null)
 const procesandoFoto = ref(false)
 const showResultDialog = ref(false)
-const ccResult = ref(0)
-const ccDetectado = ref(0)
+const ccResult = ref(CC_INTA_DEFAULT)
 
 // Helpers Vista
 const esVistaLista = computed(() =>
@@ -350,7 +360,9 @@ function seleccionarLote(lote) {
     configNumpad(`PESO: ${lote.identificacion}`, 'KG')
     currentView.value = 'numpad'
   } else if (currentFlow.value === 'scan_cc') {
-    startCamera()
+    // Registro manual escala INTA — sin simulación de IA
+    ccResult.value = CC_INTA_DEFAULT
+    showResultDialog.value = true
   } else if (currentFlow.value === 'evento_sanitario') {
     currentOptions.value = ['Vacunación', 'Desparasitación', 'Tratamiento', 'Otro']
     currentView.value = 'select_option'
@@ -413,35 +425,29 @@ function cerrarCamara() {
 }
 
 function capturarFotoReal() {
-  procesandoFoto.value = true
-  setTimeout(() => {
-    const iaValue = Math.floor(Math.random() * (7 - 3 + 1) + 3)
-    ccDetectado.value = iaValue
-    ccResult.value = iaValue
-    stopCamera()
-    currentView.value = 'menu'
-    procesandoFoto.value = false
-    showResultDialog.value = true
-  }, 1500)
+  // La cámara queda como apoyo visual opcional; el CC se carga a mano (INTA).
+  stopCamera()
+  currentView.value = 'menu'
+  procesandoFoto.value = false
+  ccResult.value = CC_INTA_DEFAULT
+  showResultDialog.value = true
 }
 
 function ajustarCC(delta) {
-  let val = ccResult.value + delta
-  if (val < 1) val = 1
-  if (val > 9) val = 9
-  ccResult.value = val
+  ccResult.value = clampCcInta(ccResult.value + delta)
 }
 
 async function guardarCC() {
   showResultDialog.value = false
+  const cc = clampCcInta(ccResult.value)
   await syncService.addAction('evaluacion', {
     lote_id: selectedLote.value.id,
     fecha_evaluacion: new Date().toISOString().split('T')[0],
     peso_promedio_kg: null,
-    condicion_corporal: ccResult.value,
-    observaciones: `Escaneo CC (IA: ${ccDetectado.value} | Final: ${ccResult.value})`,
+    condicion_corporal: cc,
+    observaciones: `CC INTA ${formatCcInta(cc)} — ${describeCcInta(cc)}`,
   })
-  notificarExito(`CC GUARDADA: ${ccResult.value}`)
+  notificarExito(`CC INTA GUARDADA: ${formatCcInta(cc)}`)
   volverMenu()
 }
 

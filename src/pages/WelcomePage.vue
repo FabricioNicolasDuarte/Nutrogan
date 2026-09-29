@@ -1,102 +1,76 @@
 <template>
-  <div class="fullscreen bg-black overflow-hidden flex flex-center">
+  <div class="fullscreen bg-black overflow-hidden flex flex-center welcome-shell">
     <transition name="fade">
-      <div v-if="showVideo" class="video-container absolute-full">
-        <video
-          ref="videoRef"
-          class="absolute-full fit"
-          autoplay
-          muted
-          playsinline
-          style="object-fit: cover"
-          @ended="irAlDashboard"
-        >
-          <source src="/videos/welcome.mp4" type="video/mp4" />
-        </video>
-
-        <div class="overlay absolute-full"></div>
-
-        <div class="absolute-bottom-right q-ma-lg" style="z-index: 20">
-          <q-btn
-            flat
-            color="white"
-            label="Saltar"
-            icon-right="skip_next"
-            @click="irAlDashboard"
-            class="glass-btn"
-          />
+      <div v-if="showSplash" class="splash absolute-full flex flex-center column">
+        <img src="/images/nutrogan-logo.svg" alt="Nutrogan" class="logo q-mb-md" />
+        <div class="text-h5 text-white text-weight-medium q-mb-xs">Nutrogan</div>
+        <div class="text-caption text-grey-5 text-uppercase tracking-wide">
+          Ganadería de precisión, también sin señal
         </div>
+        <q-btn
+          flat
+          color="white"
+          label="Entrar"
+          icon-right="arrow_forward"
+          class="glass-btn q-mt-xl"
+          @click="irAlDashboard"
+        />
       </div>
     </transition>
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, onBeforeUnmount } from 'vue'
 import { useRouter } from 'vue-router'
 
 const router = useRouter()
-const videoRef = ref(null)
-const showVideo = ref(true)
+const showSplash = ref(true)
+let timer = null
 
 function irAlDashboard() {
-  // Ocultar video (inicia transición fade out)
-  showVideo.value = false
-
-  // Esperar brevemente y redirigir
+  showSplash.value = false
+  if (timer) clearTimeout(timer)
   setTimeout(() => {
     router.replace('/')
-  }, 500)
+  }, 280)
 }
 
 onMounted(() => {
-  // Forzar reproducción segura
-  if (videoRef.value) {
-    videoRef.value.play().catch((err) => {
-      console.warn('Autoplay bloqueado, redirigiendo...', err)
-      irAlDashboard()
-    })
-  }
+  // Splash liviano (sin video de ~19 MB). Auto-entra en 2.2s.
+  timer = setTimeout(irAlDashboard, 2200)
+})
+
+onBeforeUnmount(() => {
+  if (timer) clearTimeout(timer)
 })
 </script>
 
 <style scoped>
-.overlay {
-  background: rgba(0, 0, 0, 0.3);
+.welcome-shell {
+  background:
+    linear-gradient(180deg, rgba(0, 0, 0, 0.55), rgba(0, 0, 0, 0.75)),
+    url('/images/nutrogan-bg.png') center / cover no-repeat;
 }
-
-.text-shadow {
-  text-shadow: 0 4px 20px rgba(0, 0, 0, 0.8);
+.logo {
+  width: 72px;
+  height: 72px;
 }
-
 .glass-btn {
   background: rgba(255, 255, 255, 0.1);
   backdrop-filter: blur(10px);
   border-radius: 30px;
   padding: 8px 20px;
 }
-
-/* Animación de entrada del texto */
-.fade-in-text {
-  animation: fadeIn 2s ease-in;
-}
-
-@keyframes fadeIn {
-  0% {
-    opacity: 0;
-    transform: translateY(20px);
-  }
-  100% {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-/* Transición de salida (Fade Out) */
+.fade-enter-active,
 .fade-leave-active {
-  transition: opacity 0.8s ease;
+  transition: opacity 0.35s ease;
 }
+.fade-enter-from,
 .fade-leave-to {
   opacity: 0;
+}
+.tracking-wide {
+  letter-spacing: 0.12em;
 }
 </style>

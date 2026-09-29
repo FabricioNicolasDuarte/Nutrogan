@@ -175,28 +175,29 @@
                       >
                     </div>
                     <video
-                      src="videos/Video_Escaneo_Corporal_Vaca_Brangus.mp4"
+                      src="/videos/Video_Escaneo_Corporal_Vaca_Brangus.mp4"
+                      poster="/images/nutrogan-bg.png"
                       class="fit object-cover"
-                      autoplay
-                      loop
+                      preload="none"
                       muted
                       playsinline
+                      controls
                     ></video>
                   </div>
                 </div>
                 <div class="q-px-sm">
                   <q-badge
-                    color="cyan-10"
-                    text-color="white"
-                    label="EDGE AI COMPUTING"
+                    color="primary"
+                    text-color="black"
+                    label="ESCALA INTA 1–9"
                     class="q-mb-sm shadow-5"
                   />
                   <h2 class="text-h4 text-weight-bold q-my-none responsive-title">
-                    Visión Artificial
+                    Condición corporal
                   </h2>
                   <p class="text-grey-4 text-body1 q-mt-sm">
-                    Inferencia biométrica local. Estimación de Condición Corporal (CC) directamente
-                    en el dispositivo del usuario, garantizando privacidad y velocidad sin internet.
+                    Registro de CC según escala INTA Argentina (1–9). El valor lo define quien
+                    evalúa en el potrero; Nutrogan lo guarda offline y sincroniza después.
                   </p>
                 </div>
               </div>
@@ -543,13 +544,13 @@ const techStack = [
     url: 'https://quasar.dev/',
   },
   {
-    title: 'TensorFlow',
-    subtitle: 'Edge AI',
+    title: 'Escala INTA',
+    subtitle: 'Condición corporal',
     description:
-      'Ejecución de modelos ML en el navegador. Garantiza privacidad y análisis biométrico instantáneo sin depender de la nube.',
-    icon: 'img:https://cdn.simpleicons.org/tensorflow/ff6f00',
-    color: '#ff6f00',
-    url: 'https://www.tensorflow.org/',
+      'CC bovina 1–9 (INTA Argentina). Registro manual en campo; sin modelo de visión artificial en el dispositivo.',
+    icon: 'fitness_center',
+    color: '#39ff14',
+    url: 'https://www.argentina.gob.ar/inta',
   },
   {
     title: 'Leaflet',

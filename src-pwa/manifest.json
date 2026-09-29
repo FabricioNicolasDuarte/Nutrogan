@@ -1,7 +1,12 @@
 {
+  "name": "Nutrogan",
+  "short_name": "Nutrogan",
+  "description": "Ganadería de precisión, también sin señal",
+  "display": "standalone",
   "orientation": "portrait",
-  "background_color": "#ffffff",
-  "theme_color": "#027be3",
+  "background_color": "#050505",
+  "theme_color": "#39ff14",
+  "start_url": ".",
   "icons": [
     {
       "src": "icons/icon-128x128.png",

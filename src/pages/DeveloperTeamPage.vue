@@ -19,11 +19,7 @@
     <div class="row justify-center q-col-gutter-xl relative-position z-10">
       <div v-for="(dev, index) in developers" :key="dev.name" class="col-12 col-md-4">
         <q-card class="team-card glass-panel column items-center text-center">
-          <div
-            class="avatar-wrapper q-mt-lg q-mb-md cursor-pointer"
-            @mouseenter="playVideo(index)"
-            @mouseleave="pauseVideo(index)"
-          >
+          <div class="avatar-wrapper q-mt-lg q-mb-md">
             <div
               class="glow-ring"
               :style="{
@@ -33,15 +29,7 @@
             ></div>
 
             <q-avatar size="140px" class="dev-avatar shadow-5">
-              <video
-                :ref="(el) => setVideoRef(el, index)"
-                :src="dev.video"
-                :poster="dev.image"
-                loop
-                muted
-                playsinline
-                class="video-avatar"
-              ></video>
+              <img :src="dev.image" :alt="dev.name" />
             </q-avatar>
 
             <div class="role-badge" :style="{ background: dev.color, color: '#000' }">
@@ -103,25 +91,13 @@
 <script setup>
 import { ref } from 'vue'
 
-// Array reactivo para almacenar las referencias a los elementos <video>
-const videoRefs = ref([])
-
-// Función para asignar refs dentro del v-for de forma segura
-const setVideoRef = (el, index) => {
-  if (el) {
-    videoRefs.value[index] = el
-  }
-}
-
-// Datos RESUMIDOS
 const developers = ref([
   {
     name: 'Fabricio N. Duarte',
     role: 'Tech Lead / Frontend',
     code: 'LEAD',
-    color: '#39ff14', // Verde Neón
+    color: '#39ff14',
     image: '/images/team/duarte.jpg',
-    video: '/videos/team/duarte.mp4',
     bio: 'Líder Técnico. Arquitectura PWA, UX/UI y Sistemas de IA/GIS.',
     whatsapp: 'https://wa.me/5493704022201',
     linkedin: 'https://www.linkedin.com/in/fabricio-nicolas-duarte-313139113/',
@@ -134,7 +110,6 @@ const developers = ref([
     code: 'DATA',
     color: '#39ff14',
     image: '/images/team/ascona.jpg',
-    video: '/videos/team/ascona.mp4',
     bio: 'Arquitectura de Datos. Seguridad, lógica de negocio y motor financiero.',
     whatsapp: 'https://wa.me/5493705005983',
     linkedin: 'https://www.linkedin.com/in/enzo-ascona-0543321a4',
@@ -147,7 +122,6 @@ const developers = ref([
     code: 'OPS',
     color: '#39ff14',
     image: '/images/team/amarilla.jpg',
-    video: '/videos/team/amarilla.mp4',
     bio: 'Infraestructura y Calidad. Docker, CI/CD y testing automatizado.',
     whatsapp: 'https://wa.me/5493718446935',
     linkedin: 'https://www.linkedin.com/in/sebastian-emanuel-amarilla-755149234',
@@ -155,22 +129,6 @@ const developers = ref([
     instagram: 'https://www.instagram.com/sebaamarilla1/',
   },
 ])
-
-// --- CONTROL DE VIDEO ---
-function playVideo(index) {
-  const vid = videoRefs.value[index]
-  if (vid) {
-    vid.play().catch((e) => console.log('Reproducción interrumpida:', e))
-  }
-}
-
-function pauseVideo(index) {
-  const vid = videoRefs.value[index]
-  if (vid) {
-    vid.pause()
-    vid.currentTime = 0 // Reinicia el video al principio
-  }
-}
 </script>
 
 <style lang="scss" scoped>

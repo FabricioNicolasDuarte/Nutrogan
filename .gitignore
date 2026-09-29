@@ -36,10 +36,20 @@ yarn-error.log*
 .env
 .env.*
 !.env.example
+.vercel
 
 # Testing & Coverage artifacts
 /coverage
 /cypress/videos
 /cypress/screenshots
 lcov.info
-.env.local
+
+# Heavy media masters — no servir en runtime (usar posters /images)
+public/videos/**/*.mp4
+!public/videos/Video_Escaneo_Corporal_Vaca_Brangus.mp4
+videos/
+**/video-background-nutrogan*.mp4
+**/welcome.mp4
+src/assets/**/*copia*
+public/videos/**/*copia*
+

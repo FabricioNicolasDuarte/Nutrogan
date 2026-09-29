@@ -1,53 +1,104 @@
+import localforage from 'localforage'
 import { useDataStore } from 'stores/data-store'
 import { Notify } from 'quasar'
 
-const QUEUE_KEY = 'nutrogan_offline_queue'
+const QUEUE_KEY = 'pending'
+const FAILED_KEY = 'failed'
+const LEGACY_LS_KEY = 'nutrogan_offline_queue'
+const MAX_ATTEMPTS = 5
 
+const queueDb = localforage.createInstance({
+  name: 'nutrogan',
+  storeName: 'sync_queue',
+  description: 'Cola offline Nutrogan',
+})
+
+/**
+ * Cola offline durable (IndexedDB via localforage).
+ * Migra la cola vieja de localStorage si existe.
+ */
 class SyncService {
   constructor() {
     this.isSyncing = false
-    this.queue = this.loadQueue()
+    this.queue = []
+    this.failed = []
+    this.ready = this.init()
 
-    // Escuchar eventos de red
-    window.addEventListener('online', () => this.processQueue())
+    window.addEventListener('online', () => {
+      this.processQueue()
+    })
   }
 
-  loadQueue() {
+  async init() {
     try {
-      return JSON.parse(localStorage.getItem(QUEUE_KEY) || '[]')
-    } catch {
-      return []
+      const legacyRaw = localStorage.getItem(LEGACY_LS_KEY)
+      if (legacyRaw) {
+        try {
+          const legacy = JSON.parse(legacyRaw)
+          if (Array.isArray(legacy) && legacy.length) {
+            const existing = (await queueDb.getItem(QUEUE_KEY)) || []
+            await queueDb.setItem(QUEUE_KEY, [...existing, ...legacy])
+          }
+        } catch {
+          /* ignore corrupt legacy */
+        }
+        localStorage.removeItem(LEGACY_LS_KEY)
+      }
+
+      this.queue = (await queueDb.getItem(QUEUE_KEY)) || []
+      this.failed = (await queueDb.getItem(FAILED_KEY)) || []
+      this.emitUpdate()
+    } catch (e) {
+      console.error('[Sync] init falló, fallback memoria:', e)
+      this.queue = []
+      this.failed = []
     }
   }
 
-  saveQueue() {
-    localStorage.setItem(QUEUE_KEY, JSON.stringify(this.queue))
-    window.dispatchEvent(new CustomEvent('queue-updated'))
+  async ensureReady() {
+    await this.ready
+  }
+
+  async persist() {
+    await queueDb.setItem(QUEUE_KEY, this.queue)
+    await queueDb.setItem(FAILED_KEY, this.failed)
+    this.emitUpdate()
+  }
+
+  emitUpdate() {
+    window.dispatchEvent(
+      new CustomEvent('queue-updated', {
+        detail: {
+          pending: this.queue.length,
+          failed: this.failed.length,
+          syncing: this.isSyncing,
+        },
+      }),
+    )
   }
 
   async addAction(tipo, payload) {
+    await this.ensureReady()
     const dataStore = useDataStore()
 
-    // 1. UI OPTIMISTA (Actualizar estado local visualmente)
     try {
       this.applyOptimisticUpdate(dataStore, tipo, payload)
     } catch (e) {
-      console.warn('Error en actualización optimista:', e)
+      console.warn('[Sync] optimistic update:', e)
     }
 
-    // 2. ENCOLAR
     const action = {
-      id: Date.now() + Math.random().toString(36).substr(2, 9),
+      id: `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`,
       tipo,
       payload,
       timestamp: new Date().toISOString(),
       attempts: 0,
+      lastError: null,
     }
 
     this.queue.push(action)
-    this.saveQueue()
+    await this.persist()
 
-    // 3. INTENTAR SUBIR
     if (navigator.onLine) {
       this.processQueue()
     }
@@ -57,54 +108,99 @@ class SyncService {
     if (tipo === 'mover_lote') {
       const lote = store.lotes.find((l) => l.id === payload.lote_id)
       if (lote) lote.potrero_actual_id = payload.potrero_id
+      return
     }
-    // Aquí podrías agregar lógica para restar stock visualmente, etc.
+
+    if (tipo === 'evaluacion' && Array.isArray(store.evaluaciones)) {
+      store.evaluaciones.unshift({
+        id: `local-${Date.now()}`,
+        ...payload,
+        _offline: true,
+      })
+      return
+    }
+
+    if (tipo === 'lluvia' && Array.isArray(store.registrosLluvia)) {
+      store.registrosLluvia.unshift({
+        id: `local-${Date.now()}`,
+        ...payload,
+        _offline: true,
+      })
+      return
+    }
+
+    if (tipo === 'consumo' && payload.p_item_id && Array.isArray(store.inventarioItems)) {
+      const item = store.inventarioItems.find((i) => i.id === payload.p_item_id)
+      if (item && typeof payload.p_cantidad === 'number') {
+        item.stock_actual = Number(item.stock_actual || 0) + Number(payload.p_cantidad)
+      }
+    }
   }
 
   async processQueue() {
+    await this.ensureReady()
     if (this.isSyncing || this.queue.length === 0 || !navigator.onLine) return
 
     this.isSyncing = true
-    const dataStore = useDataStore()
-    const failedQueue = []
-    let processedCount = 0
+    this.emitUpdate()
 
-    for (const item of this.queue) {
+    const dataStore = useDataStore()
+    const stillPending = []
+    let processedCount = 0
+    let movedToFailed = 0
+
+    // Snapshot para no mutar mientras iteramos
+    const batch = [...this.queue]
+    this.queue = []
+
+    for (const item of batch) {
       try {
         await this.executeAction(dataStore, item)
         processedCount++
       } catch (error) {
-        console.error(`[Sync] Error item ${item.id}:`, error)
-        item.attempts++
-        // Si falló 3 veces, quizás deberíamos dejarlo en una lista de "Errores" y no reintentar infinitamente
-        failedQueue.push(item)
+        item.attempts = (item.attempts || 0) + 1
+        item.lastError = error?.message || String(error)
+        console.error(`[Sync] fallo ${item.tipo} (${item.attempts}/${MAX_ATTEMPTS}):`, error)
+
+        if (item.attempts >= MAX_ATTEMPTS) {
+          this.failed.push({ ...item, failedAt: new Date().toISOString() })
+          movedToFailed++
+        } else {
+          stillPending.push(item)
+        }
       }
     }
 
-    this.queue = failedQueue
-    this.saveQueue()
+    this.queue = stillPending
+    await this.persist()
+
     this.isSyncing = false
+    this.emitUpdate()
 
     if (processedCount > 0) {
       Notify.create({
-        message: `Sincronización: ${processedCount} registros subidos.`,
+        message: `Sincronizados ${processedCount} registro${processedCount === 1 ? '' : 's'}`,
         color: 'positive',
         position: 'top',
         icon: 'cloud_done',
-        classes: 'field-notify-success-industrial',
+      })
+    }
+
+    if (movedToFailed > 0) {
+      Notify.create({
+        message: `${movedToFailed} registro${movedToFailed === 1 ? '' : 's'} fallaron tras ${MAX_ATTEMPTS} intentos`,
+        color: 'warning',
+        position: 'top',
+        icon: 'error_outline',
       })
     }
   }
 
-  /**
-   * Mapeo de acciones Offline -> Supabase
-   */
   async executeAction(store, item) {
     switch (item.tipo) {
-      case 'evaluacion': // Peso / CC
+      case 'evaluacion':
         await store.createRegistro('evaluaciones', item.payload)
         break
-
       case 'mover_lote':
         await store.moverLote(
           item.payload.lote_id,
@@ -112,30 +208,64 @@ class SyncService {
           item.payload.fecha_entrada,
         )
         break
-
       case 'evento_sanitario':
         await store.createRegistro('eventos_sanitarios', item.payload)
         break
-
       case 'evento_reproductivo':
         await store.createRegistro('eventos_reproductivos', item.payload)
         break
-
-      case 'consumo': // Uso de inventario
+      case 'consumo':
         await store.registrarMovimientoInventario(item.payload)
         break
-
       case 'lluvia':
         await store.createRegistro('registros_lluvia', item.payload)
         break
-
       default:
-        console.warn('Tipo desconocido:', item.tipo)
+        throw new Error(`Tipo de acción desconocido: ${item.tipo}`)
     }
   }
 
   getPendingCount() {
     return this.queue.length
+  }
+
+  getFailedCount() {
+    return this.failed.length
+  }
+
+  getPending() {
+    return [...this.queue]
+  }
+
+  getFailed() {
+    return [...this.failed]
+  }
+
+  /** Reencola fallidos para otro intento */
+  async retryFailed() {
+    await this.ensureReady()
+    if (!this.failed.length) return
+    const retrying = this.failed.map((item) => ({
+      ...item,
+      attempts: 0,
+      lastError: null,
+    }))
+    this.failed = []
+    this.queue.push(...retrying)
+    await this.persist()
+    if (navigator.onLine) this.processQueue()
+  }
+
+  async discardFailed(id) {
+    await this.ensureReady()
+    this.failed = this.failed.filter((i) => i.id !== id)
+    await this.persist()
+  }
+
+  async discardAllFailed() {
+    await this.ensureReady()
+    this.failed = []
+    await this.persist()
   }
 }
 

@@ -52,6 +52,14 @@ export default defineConfig(() => {
 
     pwa: {
       workboxMode: 'GenerateSW',
+      injectPwaMetaTags: true,
+      swFilename: 'sw.js',
+      manifestFilename: 'manifest.json',
+      useCredentialsForManifestTag: false,
+      workboxOptions: {
+        skipWaiting: true,
+        clientsClaim: true,
+      },
     },
   }
 })

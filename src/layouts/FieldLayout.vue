@@ -5,19 +5,27 @@
         <div
           class="status-indicator row items-center cursor-pointer bg-white text-black q-px-md q-py-xs rounded-borders"
           style="border: 3px solid black"
-          @click="forzarSincronizacion"
+          @click="abrirPanelSync"
         >
           <q-icon
             :name="statusIcon"
             size="1.8em"
             class="q-mr-sm"
-            :class="{ 'text-green-6': isOnline, 'text-red-6': !isOnline, 'spin-fast': isSyncing }"
+            :class="{
+              'text-green-6': isOnline && fallidos === 0,
+              'text-orange-9': fallidos > 0,
+              'text-red-6': !isOnline,
+              'spin-fast': isSyncing,
+            }"
           />
 
           <div class="column">
             <span class="text-subtitle1 text-weight-bolder leading-none">{{ statusText }}</span>
             <span v-if="pendientes > 0" class="text-caption text-weight-bold text-orange-9">
               {{ pendientes }} PENDIENTES
+            </span>
+            <span v-else-if="fallidos > 0" class="text-caption text-weight-bold text-negative">
+              {{ fallidos }} FALLIDOS
             </span>
           </div>
         </div>
@@ -36,6 +44,73 @@
     <q-page-container>
       <router-view :is-online="isOnline" @sync-status-change="actualizarEstadoSync" />
     </q-page-container>
+
+    <q-dialog v-model="showSyncPanel">
+      <q-card class="bg-white text-black" style="min-width: 320px; max-width: 420px">
+        <q-card-section class="row items-center justify-between">
+          <div class="text-h6 text-weight-bolder">Cola offline</div>
+          <q-btn flat round dense icon="close" v-close-popup />
+        </q-card-section>
+        <q-separator />
+        <q-card-section>
+          <div class="text-body2 q-mb-sm">
+            Estado: <strong>{{ isOnline ? 'Online' : 'Offline' }}</strong>
+            · Pendientes: <strong>{{ pendientes }}</strong>
+            · Fallidos: <strong>{{ fallidos }}</strong>
+          </div>
+
+          <div v-if="pendientes === 0 && fallidos === 0" class="text-grey-7 q-py-md text-center">
+            Nada pendiente de subir.
+          </div>
+
+          <q-list v-if="pendientesList.length" bordered separator class="rounded-borders q-mb-md">
+            <q-item-label header>Pendientes</q-item-label>
+            <q-item v-for="item in pendientesList" :key="item.id">
+              <q-item-section>
+                <q-item-label>{{ labelAccion(item) }}</q-item-label>
+                <q-item-label caption>
+                  Intento {{ item.attempts || 0 }}/5 · {{ formatHora(item.timestamp) }}
+                </q-item-label>
+              </q-item-section>
+            </q-item>
+          </q-list>
+
+          <q-list v-if="fallidosList.length" bordered separator class="rounded-borders">
+            <q-item-label header class="text-negative">Fallidos</q-item-label>
+            <q-item v-for="item in fallidosList" :key="item.id">
+              <q-item-section>
+                <q-item-label>{{ labelAccion(item) }}</q-item-label>
+                <q-item-label caption class="text-negative">
+                  {{ item.lastError || 'Error desconocido' }}
+                </q-item-label>
+              </q-item-section>
+              <q-item-section side>
+                <q-btn flat dense size="sm" color="negative" label="Descartar" @click="descartar(item.id)" />
+              </q-item-section>
+            </q-item>
+          </q-list>
+        </q-card-section>
+        <q-card-actions align="right" class="q-pa-md">
+          <q-btn
+            v-if="fallidos > 0"
+            flat
+            color="primary"
+            label="Reintentar fallidos"
+            :disable="!isOnline || isSyncing"
+            @click="reintentarFallidos"
+          />
+          <q-btn
+            unelevated
+            color="black"
+            text-color="white"
+            label="Sincronizar ahora"
+            :disable="!isOnline || isSyncing || pendientes === 0"
+            :loading="isSyncing"
+            @click="triggerSync"
+          />
+        </q-card-actions>
+      </q-card>
+    </q-dialog>
   </q-layout>
 </template>
 
@@ -50,10 +125,19 @@ const $q = useQuasar()
 
 const isOnline = ref(navigator.onLine)
 const pendientes = ref(0)
+const fallidos = ref(0)
 const isSyncing = ref(false)
+const showSyncPanel = ref(false)
+const pendientesList = ref([])
+const fallidosList = ref([])
 
-const checkPendientes = () => {
+async function refreshQueue() {
+  await syncService.ensureReady()
   pendientes.value = syncService.getPendingCount()
+  fallidos.value = syncService.getFailedCount()
+  pendientesList.value = syncService.getPending()
+  fallidosList.value = syncService.getFailed()
+  isSyncing.value = syncService.isSyncing
 }
 
 const updateOnlineStatus = () => {
@@ -61,52 +145,106 @@ const updateOnlineStatus = () => {
   if (isOnline.value && pendientes.value > 0) triggerSync()
 }
 
+function onQueueUpdated(e) {
+  if (e?.detail) {
+    pendientes.value = e.detail.pending ?? pendientes.value
+    fallidos.value = e.detail.failed ?? fallidos.value
+    isSyncing.value = !!e.detail.syncing
+  }
+  refreshQueue()
+}
+
 function actualizarEstadoSync(status) {
   if (status.syncing !== undefined) isSyncing.value = status.syncing
 }
 
-function forzarSincronizacion() {
-  if (!isOnline.value)
+function abrirPanelSync() {
+  refreshQueue()
+  showSyncPanel.value = true
+}
+
+async function triggerSync() {
+  if (!isOnline.value) {
     return $q.notify({ message: 'SIN CONEXIÓN', color: 'negative', icon: 'wifi_off' })
-  triggerSync()
+  }
+  isSyncing.value = true
+  try {
+    await syncService.processQueue()
+  } finally {
+    await refreshQueue()
+  }
 }
 
-function triggerSync() {
-  syncService.processQueue()
+async function reintentarFallidos() {
+  await syncService.retryFailed()
+  await refreshQueue()
 }
 
-onMounted(() => {
-  checkPendientes()
+async function descartar(id) {
+  await syncService.discardFailed(id)
+  await refreshQueue()
+}
+
+function labelAccion(item) {
+  const map = {
+    evaluacion: 'Evaluación / peso',
+    mover_lote: 'Mover lote',
+    evento_sanitario: 'Sanidad',
+    evento_reproductivo: 'Reproducción',
+    consumo: 'Consumo despensa',
+    lluvia: 'Lluvia',
+  }
+  return map[item.tipo] || item.tipo
+}
+
+function formatHora(iso) {
+  if (!iso) return '—'
+  try {
+    return new Date(iso).toLocaleString('es-AR', {
+      day: '2-digit',
+      month: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+    })
+  } catch {
+    return '—'
+  }
+}
+
+onMounted(async () => {
+  await refreshQueue()
   window.addEventListener('online', updateOnlineStatus)
   window.addEventListener('offline', updateOnlineStatus)
-  window.addEventListener('queue-updated', checkPendientes)
+  window.addEventListener('queue-updated', onQueueUpdated)
 })
 
 onUnmounted(() => {
   window.removeEventListener('online', updateOnlineStatus)
   window.removeEventListener('offline', updateOnlineStatus)
-  window.removeEventListener('queue-updated', checkPendientes)
+  window.removeEventListener('queue-updated', onQueueUpdated)
 })
 
 const statusIcon = computed(() => {
   if (!isOnline.value) return 'wifi_off'
   if (isSyncing.value) return 'sync'
+  if (fallidos.value > 0) return 'error_outline'
   return 'wifi'
 })
 
 const statusText = computed(() => {
   if (!isOnline.value) return 'OFFLINE'
   if (isSyncing.value) return 'SUBIENDO...'
+  if (fallidos.value > 0) return 'CON ERRORES'
   return 'ONLINE'
 })
 
 function confirmarSalida() {
-  if (pendientes.value > 0) {
+  if (pendientes.value > 0 || fallidos.value > 0) {
     $q.dialog({
-      title: '⚠️ DATOS PENDIENTES',
-      message: `Tienes ${pendientes.value} registros sin subir.`,
+      title: 'Datos sin sincronizar',
+      message: `Tenés ${pendientes.value} pendientes y ${fallidos.value} fallidos.`,
       ok: { label: 'SALIR IGUAL', color: 'negative' },
-      cancel: true,
+      cancel: { label: 'QUEDARME', flat: true },
     }).onOk(() => router.push('/'))
   } else {
     router.push('/')

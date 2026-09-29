@@ -52,7 +52,12 @@
             </div>
             <div class="vertical-sep"></div>
             <div class="column items-center">
-              <span class="text-nano text-grey-5 font-mono">OCUPACIÓN</span>
+              <span class="text-nano text-grey-5 font-mono">
+                EN PASTO
+                <q-tooltip anchor="top middle" self="bottom middle">
+                  Cabezas en potrero / hacienda total. El resto está en Mi Corral.
+                </q-tooltip>
+              </span>
               <span class="text-subtitle2 text-cyan-4 leading-none text-weight-bold"
                 >{{ kpis.ocupacion }}%</span
               >
@@ -99,10 +104,11 @@
                     occupied: potrero.loteAsignado,
                     free: !potrero.loteAsignado,
                     'drop-target-active': isDraggingFromCorral && !potrero.loteAsignado,
+                    'drop-zone-enlarged': isDraggingFromCorral && !potrero.loteAsignado,
                   }"
                   @click.stop="selectPotrero(potrero)"
-                  @dragover.prevent
-                  @drop="onDropOnPotrero(potrero)"
+                  @dragover.prevent="onDragOverPotrero"
+                  @drop.prevent="onDropOnPotrero(potrero, $event)"
                   :draggable="!!potrero.loteAsignado"
                   @dragstart="onDragStartMap(potrero, $event)"
                 >
@@ -172,6 +178,9 @@
                 @close="selectedPotrero = null"
                 @view-history="irADetalle(selectedPotrero.loteData?.id)"
                 @drag-lote="onCardDragStart"
+                @action-mover="iniciarMovimiento(selectedPotrero)"
+                @action-corral="enviarACorral(selectedPotrero)"
+                @action-asignar="iniciarAsignacion(selectedPotrero)"
               />
             </div>
           </transition>
@@ -469,7 +478,10 @@
         </q-card-section>
         <q-separator dark />
         <q-card-section class="scroll" style="max-height: 50vh">
-          <q-list dark separator>
+          <div v-if="potrerosLibres.length === 0" class="text-center q-pa-md text-grey-5">
+            No hay potreros libres. Liberá uno enviando su lote al corral.
+          </div>
+          <q-list dark separator v-else>
             <q-item
               v-for="p in potrerosLibres"
               :key="p.id"
@@ -497,7 +509,10 @@
         </q-card-section>
         <q-separator dark />
         <q-card-section class="scroll" style="max-height: 50vh">
-          <q-list dark separator>
+          <div v-if="lotesDisponibles.length === 0" class="text-center q-pa-md text-grey-5">
+            El corral está vacío.
+          </div>
+          <q-list dark separator v-else>
             <q-item
               v-for="l in lotesDisponibles"
               :key="l.id"
@@ -544,7 +559,7 @@ const mapCenter = ref([-26.1775, -58.1756])
 let mapObject = null
 const mapRefDesktop = ref(null) // Renombrado para coincidir con template Desktop
 const mapRefMobile = ref(null) // Mobile
-const mapMode = ref('dark')
+const mapMode = ref('satellite')
 const searchTarget = ref(null)
 
 const selectedPotrero = ref(null)
@@ -572,20 +587,20 @@ const isDraggingFromMap = ref(false)
 const draggingPayload = ref(null)
 const markerPositions = ref({})
 
-// Computadas
+// Computadas — Esri free (Carto dark exige API key)
 const currentTileLayer = computed(() =>
   mapMode.value === 'satellite'
     ? 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}'
-    : 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',
+    : 'https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}',
 )
 
 const kpis = computed(() => {
   const total = dataStore.lotes.reduce((acc, l) => acc + (l.cantidad_animales || 0), 0)
-  const ocupados = dataStore.potreros.filter((p) => lotesEnPotrero(p.id)).length
-  const pct = dataStore.potreros.length
-    ? Math.round((ocupados / dataStore.potreros.length) * 100)
-    : 0
-  return { totalAnimales: total, ocupacion: pct }
+  const enPasto = dataStore.lotes
+    .filter((l) => l.potrero_actual_id)
+    .reduce((acc, l) => acc + (l.cantidad_animales || 0), 0)
+  const pct = total ? Math.round((enPasto / total) * 100) : 0
+  return { totalAnimales: total, ocupacion: pct, enPasto, enCorral: total - enPasto }
 })
 
 const searchOptions = computed(() => {
@@ -647,11 +662,27 @@ const potrerosConPosicion = computed(() => {
 const geoJsonOptions = computed(() => ({
   style: (feature) => ({
     color: feature.properties.ocupado ? '#00e5ff' : '#39ff14',
-    weight: 2,
-    opacity: 0.6,
+    weight: isDraggingFromCorral.value && !feature.properties.ocupado ? 3 : 2,
+    opacity: 0.75,
     fillColor: feature.properties.ocupado ? '#0037ff' : '#39ff14',
-    fillOpacity: 0.15,
+    fillOpacity: isDraggingFromCorral.value && !feature.properties.ocupado ? 0.35 : 0.15,
   }),
+  onEachFeature: (feature, layer) => {
+    layer.on({
+      click: () => {
+        const id = feature.properties?.id
+        if (!id) return
+        const potrero = dataStore.potreros.find((p) => p.id === id)
+        if (!potrero) return
+        const wrapped = { ...potrero, loteAsignado: lotesEnPotrero(id) }
+        if ($q.screen.lt.md) {
+          abrirDialogoPotreroMobile(wrapped)
+        } else {
+          selectPotrero(wrapped)
+        }
+      },
+    })
+  },
 }))
 
 // --- FUNCIONES MÓVILES (NUEVAS) ---
@@ -685,10 +716,15 @@ async function confirmarMovimiento(potreroDest) {
     await dataStore.moverLote(loteEnTransito.value.id, potreroDest.id)
     await dataStore.fetchLotes()
     playMuu()
-    $q.notify({ message: 'Lote movido', color: 'positive' })
+    $q.notify({ message: `Lote en ${potreroDest.nombre}`, color: 'positive' })
     cerrarTodosDialogos()
-  } catch {
-    $q.notify({ message: 'Error', color: 'negative' })
+    selectedPotrero.value = null
+  } catch (err) {
+    $q.notify({
+      message: 'No se pudo mover',
+      caption: err?.message || 'Error',
+      color: 'negative',
+    })
   } finally {
     globalLoading.value = false
   }
@@ -700,10 +736,15 @@ async function confirmarAsignacion(lote) {
     await dataStore.moverLote(lote.id, potreroDestino.value.id)
     await dataStore.fetchLotes()
     playMuu()
-    $q.notify({ message: 'Lote asignado', color: 'positive' })
+    $q.notify({ message: `${lote.identificacion} → ${potreroDestino.value.nombre}`, color: 'positive' })
     cerrarTodosDialogos()
-  } catch {
-    $q.notify({ message: 'Error', color: 'negative' })
+    selectedPotrero.value = null
+  } catch (err) {
+    $q.notify({
+      message: 'No se pudo asignar',
+      caption: err?.message || 'Error',
+      color: 'negative',
+    })
   } finally {
     globalLoading.value = false
   }
@@ -805,77 +846,6 @@ function centrarMapa() {
   })
 }
 
-// Drag & Drop Handlers (Solo Desktop)
-function onDragStartCorral(event, lote) {
-  isDraggingFromCorral.value = true
-  draggingPayload.value = { type: 'corral_lote', loteId: lote.id }
-  event.dataTransfer.effectAllowed = 'move'
-  event.dataTransfer.setData('text/plain', JSON.stringify(draggingPayload.value))
-}
-function onCardDragStart(payload) {
-  isDraggingFromMap.value = true
-  draggingPayload.value = payload
-}
-function onDragStartMap(potrero, event) {
-  if (!potrero.loteAsignado) return
-  isDraggingFromMap.value = true
-  draggingPayload.value = {
-    type: 'card_lote',
-    loteId: potrero.loteAsignado.id,
-    potreroOrigenId: potrero.id,
-  }
-  event.dataTransfer.effectAllowed = 'move'
-  event.dataTransfer.setData('text/plain', JSON.stringify(draggingPayload.value))
-}
-function onDragEnd() {
-  isDraggingFromCorral.value = false
-  isDraggingFromMap.value = false
-  draggingPayload.value = null
-}
-async function onDropOnPotrero(potrero) {
-  // ... lógica existente de drop
-  if (isDraggingFromCorral.value && draggingPayload.value?.type === 'corral_lote') {
-    if (potrero.loteAsignado) return
-    try {
-      globalLoading.value = true
-      await dataStore.moverLote(draggingPayload.value.loteId, potrero.id)
-      await dataStore.fetchLotes()
-      playMuu()
-      $q.notify({ message: 'Asignado', color: 'positive' })
-    } catch {
-      $q.notify({ message: 'Error', color: 'negative' })
-    } finally {
-      globalLoading.value = false
-      onDragEnd()
-    }
-  }
-}
-async function onDropCorral(e) {
-  let data = draggingPayload.value
-  if (!data)
-    try {
-      data = JSON.parse(e.dataTransfer.getData('text/plain'))
-    } catch {
-      // ignore
-    }
-  if (data && data.type === 'card_lote') {
-    try {
-      globalLoading.value = true
-      await dataStore.moverLoteACorral(data.loteId, data.potreroOrigenId)
-      await dataStore.fetchLotes()
-      playMuu()
-      $q.notify({ message: 'En Corral', color: 'info' })
-      selectedPotrero.value = null
-    } catch {
-      $q.notify({ message: 'Error', color: 'negative' })
-    } finally {
-      globalLoading.value = false
-      onDragEnd()
-    }
-  }
-  onDragEnd()
-}
-
 // Utils (Compartidos)
 function selectPotrero(p) {
   const l = p.loteAsignado
@@ -901,14 +871,108 @@ function selectPotrero(p) {
   }
 }
 function selectLote(l) {
-  $q.notify({
-    message: l.identificacion,
-    caption: 'Arrastra al mapa',
-    color: 'dark',
-    icon: 'touch_app',
-    position: 'top',
-  })
+  prepararAsignacionDesdeCorral(l)
 }
+
+function onDragOverPotrero(event) {
+  if (event.dataTransfer) event.dataTransfer.dropEffect = 'move'
+}
+
+function parseDragPayload(event) {
+  if (draggingPayload.value) return draggingPayload.value
+  try {
+    const raw = event?.dataTransfer?.getData('text/plain')
+    return raw ? JSON.parse(raw) : null
+  } catch {
+    return null
+  }
+}
+
+// Drag & Drop Handlers (Solo Desktop)
+function onDragStartCorral(event, lote) {
+  isDraggingFromCorral.value = true
+  draggingPayload.value = { type: 'corral_lote', loteId: lote.id }
+  event.dataTransfer.effectAllowed = 'move'
+  event.dataTransfer.setData('text/plain', JSON.stringify(draggingPayload.value))
+}
+function onCardDragStart(payload) {
+  isDraggingFromMap.value = true
+  draggingPayload.value = payload
+}
+function onDragStartMap(potrero, event) {
+  if (!potrero.loteAsignado) return
+  isDraggingFromMap.value = true
+  draggingPayload.value = {
+    type: 'card_lote',
+    loteId: potrero.loteAsignado.id,
+    potreroOrigenId: potrero.id,
+  }
+  event.dataTransfer.effectAllowed = 'move'
+  event.dataTransfer.setData('text/plain', JSON.stringify(draggingPayload.value))
+}
+function onDragEnd() {
+  // Retraso breve: en algunos browsers dragend corre antes que drop
+  setTimeout(() => {
+    isDraggingFromCorral.value = false
+    isDraggingFromMap.value = false
+    draggingPayload.value = null
+  }, 50)
+}
+async function onDropOnPotrero(potrero, event) {
+  const data = parseDragPayload(event)
+  if (!data || data.type !== 'corral_lote') return
+  if (potrero.loteAsignado) {
+    $q.notify({
+      message: `${potrero.nombre} ya tiene un lote`,
+      caption: 'Mové el lote actual al corral o a otro potrero',
+      color: 'warning',
+    })
+    onDragEnd()
+    return
+  }
+  try {
+    globalLoading.value = true
+    await dataStore.moverLote(data.loteId, potrero.id)
+    await dataStore.fetchLotes()
+    playMuu()
+    $q.notify({ message: `Asignado a ${potrero.nombre}`, color: 'positive' })
+    selectedPotrero.value = null
+  } catch (err) {
+    $q.notify({
+      message: 'No se pudo asignar',
+      caption: err?.message || 'Error de red o permisos',
+      color: 'negative',
+    })
+  } finally {
+    globalLoading.value = false
+    onDragEnd()
+  }
+}
+async function onDropCorral(e) {
+  let data = parseDragPayload(e)
+  if (data && data.type === 'card_lote') {
+    try {
+      globalLoading.value = true
+      await dataStore.moverLoteACorral(data.loteId, data.potreroOrigenId)
+      await dataStore.fetchLotes()
+      playMuu()
+      $q.notify({ message: 'En Corral', color: 'info' })
+      selectedPotrero.value = null
+    } catch (err) {
+      $q.notify({
+        message: 'No se pudo devolver al corral',
+        caption: err?.message || 'Error',
+        color: 'negative',
+      })
+    } finally {
+      globalLoading.value = false
+      onDragEnd()
+    }
+    return
+  }
+  onDragEnd()
+}
+
 function irADetalle(id) {
   if (id) router.push(`/lote/${id}`)
 }
@@ -1106,6 +1170,20 @@ watch(
     &:hover {
       transform: scale(1.2);
     }
+  }
+  &.drop-target-active,
+  &.drop-zone-enlarged {
+    width: 64px;
+    height: 64px;
+    border-color: #a2ff00;
+    box-shadow: 0 0 0 6px rgba(162, 255, 0, 0.25);
+    transform: scale(1.15);
+    animation: pulse-drop 1s ease-in-out infinite;
+  }
+}
+@keyframes pulse-drop {
+  50% {
+    box-shadow: 0 0 0 10px rgba(162, 255, 0, 0.1);
   }
 }
 .map-lote-icon {

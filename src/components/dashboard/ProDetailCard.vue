@@ -110,32 +110,51 @@
         />
       </div>
 
-      <div class="row justify-end q-mt-sm" v-else>
-        <q-btn
-          flat
-          dense
-          size="sm"
-          color="grey-5"
-          label="Ver Historial"
-          icon-right="arrow_forward"
-          @click="$emit('view-history')"
-        />
+      <div v-else class="column q-gutter-y-xs q-mt-md">
+        <div class="row q-gutter-sm">
+          <q-btn
+            color="primary"
+            outline
+            label="Mover"
+            class="col"
+            size="sm"
+            icon="swap_horiz"
+            @click="$emit('action-mover')"
+          />
+          <q-btn
+            color="white"
+            outline
+            label="A Corral"
+            class="col"
+            size="sm"
+            icon="input"
+            @click="$emit('action-corral')"
+          />
+        </div>
+        <div class="row justify-end">
+          <q-btn
+            flat
+            dense
+            size="sm"
+            color="grey-5"
+            label="Ver Historial"
+            icon-right="arrow_forward"
+            @click="$emit('view-history')"
+          />
+        </div>
       </div>
     </q-card-section>
 
     <q-card-section v-else class="bg-dark-soft text-center q-py-lg">
-      <div v-if="mobileMode">
-        <q-btn
-          color="primary"
-          label="Asignar Lote Aquí"
-          icon="add_circle"
-          class="full-width shadow-glow"
-          @click="$emit('action-asignar')"
-        />
-      </div>
-      <div v-else>
-        <q-icon name="add_circle_outline" size="2em" color="grey-8" />
-        <div class="text-caption text-grey-6 q-mt-xs">Arrastra un lote aquí para asignar</div>
+      <q-btn
+        color="primary"
+        label="Asignar Lote Aquí"
+        icon="add_circle"
+        class="full-width shadow-glow"
+        @click="$emit('action-asignar')"
+      />
+      <div v-if="!mobileMode" class="text-caption text-grey-6 q-mt-sm">
+        O arrastrá un lote desde Mi Corral
       </div>
     </q-card-section>
   </q-card>

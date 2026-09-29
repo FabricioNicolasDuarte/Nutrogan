@@ -138,27 +138,29 @@ const rows = computed(() => {
       .filter((e) => e.lote_id === lote.id && e.fecha_evaluacion)
       .sort((a, b) => new Date(b.fecha_evaluacion) - new Date(a.fecha_evaluacion))
 
-    const ultimaEv = evs[0]
+    const evsConPeso = evs.filter((e) => Number(e.peso_promedio_kg) > 0)
+
+    const ultimaEv = evsConPeso[0] || evs[0]
     let pesoMostrar = '-'
     let gdpvCalc = '-'
 
-    if (ultimaEv && Number(ultimaEv.peso_promedio_kg) > 0) {
-      pesoMostrar = parseFloat(ultimaEv.peso_promedio_kg).toFixed(1)
+    if (evsConPeso[0]) {
+      pesoMostrar = parseFloat(evsConPeso[0].peso_promedio_kg).toFixed(1)
     } else if (lote.peso_ingreso_kg && Number(lote.peso_ingreso_kg) > 0) {
       pesoMostrar = parseFloat(lote.peso_ingreso_kg).toFixed(1)
     }
 
-    if (evs.length >= 2) {
-      gdpvCalc = calcularGDPVManual(evs[1], evs[0])
-    } else if (evs.length === 1 && lote.peso_ingreso_kg > 0) {
+    if (evsConPeso.length >= 2) {
+      gdpvCalc = calcularGDPVManual(evsConPeso[1], evsConPeso[0])
+    } else if (evsConPeso.length === 1 && lote.peso_ingreso_kg > 0) {
       const fechaIngreso = new Date(lote.created_at)
-      const fechaEval = new Date(evs[0].fecha_evaluacion)
+      const fechaEval = new Date(evsConPeso[0].fecha_evaluacion)
       if (fechaEval > fechaIngreso) {
         const fakePrevEv = {
           peso_promedio_kg: lote.peso_ingreso_kg,
           fecha_evaluacion: lote.created_at,
         }
-        gdpvCalc = calcularGDPVManual(fakePrevEv, evs[0])
+        gdpvCalc = calcularGDPVManual(fakePrevEv, evsConPeso[0])
       }
     }
 

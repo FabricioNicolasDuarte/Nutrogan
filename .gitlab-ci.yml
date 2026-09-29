@@ -76,12 +76,12 @@ build_app:
     - cp src/assets/nutrogan-bg2.png src/assets/nutrogan-bg4.png || true
     - cp src/assets/nutrogan-bg2.png src/assets/nutrogan-bg4.jpg || true
 
-    - echo "🏗️ Compilando..."
-    - npx quasar build --mode spa
+    - echo "🏗️ Compilando PWA..."
+    - npx quasar build --mode pwa
   artifacts:
     name: 'nutrogan-dist'
     paths:
-      - dist/spa
+      - dist/pwa
     expire_in: 1 week
 
 # --- ETAPA 6: DESPLIEGUE ---
