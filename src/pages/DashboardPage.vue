@@ -1113,9 +1113,6 @@ watch(
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  box-sizing: border-box;
-  /* Espacio interno extra por si el dock mide más en algún viewport */
-  padding-bottom: 8px !important;
 }
 
 .desktop-layout {
@@ -1123,46 +1120,21 @@ watch(
   min-height: 0;
   height: 100%;
   overflow: hidden;
-  display: flex;
-  flex-direction: column;
-}
-
-.header-row {
-  flex-shrink: 0;
 }
 
 /* MOBILE SPECIFIC */
 @media (max-width: 600px) {
   .dashboard-page {
     height: 100%;
-    overflow-y: auto;
-    -webkit-overflow-scrolling: touch;
+    overflow: hidden;
   }
   .mobile-layout {
-    min-height: 100%;
-    display: flex;
-    flex-direction: column;
+    height: 100%;
+    min-height: 0;
   }
   .map-area-mobile {
-    min-height: 220px;
+    min-height: 280px;
     flex: 1 1 auto;
-  }
-}
-
-@media (max-height: 700px) {
-  .dashboard-page {
-    height: auto;
-    max-height: none;
-    min-height: 100%;
-    overflow: visible;
-  }
-  .desktop-layout {
-    height: auto;
-    min-height: 560px;
-    overflow: visible;
-  }
-  .main-frame {
-    min-height: 480px;
   }
 }
 
@@ -1211,7 +1183,7 @@ watch(
   border-radius: 20px;
   background: rgba(20, 20, 20, 0.5) !important;
   backdrop-filter: blur(8px);
-  margin-bottom: 0;
+  margin-bottom: 10px;
   display: flex;
   flex-direction: column;
   flex: 1 1 auto;
@@ -1220,7 +1192,7 @@ watch(
 }
 .map-area-rounded {
   flex: 1 1 auto;
-  min-height: 120px;
+  min-height: 0;
   position: relative;
 }
 .map-leaflet-host {
@@ -1235,13 +1207,11 @@ watch(
   z-index: 0;
 }
 .corral-panel {
-  height: 160px;
-  min-height: 160px;
+  height: 150px;
   flex-shrink: 0;
-  z-index: 60;
-  background: rgba(10, 10, 12, 0.95);
+  z-index: 50;
+  background: rgba(10, 10, 12, 0.8);
   border-top: 1px solid rgb(255, 255, 255);
-  position: relative;
 }
 .bg-black-transparent {
   background: rgba(81, 82, 83, 0.333);

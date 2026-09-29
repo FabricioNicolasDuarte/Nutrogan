@@ -817,11 +817,9 @@ function handlePan(details) {
 }
 
 .page-padding-fix {
-  --nutrogan-dock-h: 210px;
   padding-top: 0 !important;
   padding-bottom: 0 !important;
   height: 100vh;
-  height: 100dvh;
   width: 100vw;
   overflow-x: hidden;
   overflow-y: auto;
@@ -832,35 +830,17 @@ function handlePan(details) {
   height: auto !important;
   max-height: none !important;
   overflow: visible !important;
-  padding-bottom: var(--nutrogan-dock-h);
+  padding-bottom: 200px;
 }
-/* Dashboard / mapas: altura útil por encima del dock (no debajo) */
 .page-padding-fix.is-map-page {
-  height: calc(100vh - var(--nutrogan-dock-h)) !important;
-  height: calc(100dvh - var(--nutrogan-dock-h)) !important;
-  max-height: calc(100vh - var(--nutrogan-dock-h)) !important;
-  max-height: calc(100dvh - var(--nutrogan-dock-h)) !important;
-  overflow-x: hidden;
-  overflow-y: auto;
-  -webkit-overflow-scrolling: touch;
+  overflow: hidden;
 }
 .page-padding-fix.is-map-page :deep(.q-page) {
   height: 100% !important;
-  min-height: 100% !important;
-  max-height: none !important;
+  max-height: 100% !important;
+  min-height: 0 !important;
   overflow: hidden !important;
-  padding-bottom: 0 !important;
-  box-sizing: border-box !important;
-}
-@media (max-height: 700px) {
-  .page-padding-fix {
-    --nutrogan-dock-h: 190px;
-  }
-  .page-padding-fix.is-map-page :deep(.q-page) {
-    height: auto !important;
-    min-height: calc(100dvh - var(--nutrogan-dock-h)) !important;
-    overflow: visible !important;
-  }
+  padding-bottom: 0;
 }
 
 .footer-wrapper {
