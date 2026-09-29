@@ -5,15 +5,11 @@
     </div>
 
     <div class="row justify-between items-center q-mb-sm">
-      <div class="text-subtitle1 text-white">Curvas de Crecimiento & Humedad</div>
+      <div class="text-subtitle1 text-white">Vigor de pastura (NDVI)</div>
       <div class="row q-gutter-x-md text-caption">
         <div class="row items-center">
           <div class="legend-dot bg-green-13"></div>
-          Vigor (NDVI)
-        </div>
-        <div class="row items-center">
-          <div class="legend-dot bg-cyan-4"></div>
-          Humedad (NDMI)
+          NDVI Sentinel-2
         </div>
       </div>
     </div>
@@ -35,7 +31,6 @@ import {
 } from 'echarts/components'
 import VChart from 'vue-echarts'
 
-// Registramos componentes necesarios
 use([
   CanvasRenderer,
   LineChart,
@@ -50,7 +45,6 @@ const props = defineProps({
   loading: Boolean,
 })
 
-// Helper seguro para formatear números que pueden venir como strings o nulos
 function safeFormat(value) {
   if (value === null || value === undefined) return null
   const num = Number(value)
@@ -59,7 +53,6 @@ function safeFormat(value) {
 }
 
 const chartOption = computed(() => {
-  // Aseguramos que historial sea un array
   const datos = Array.isArray(props.historial) ? props.historial : []
 
   const dates = datos.map((h) => {
@@ -67,9 +60,7 @@ const chartOption = computed(() => {
     return new Date(h.date).toLocaleDateString('es-AR', { day: '2-digit', month: 'short' })
   })
 
-  // Usamos el helper para evitar el crash de 'toFixed'
   const ndviData = datos.map((h) => safeFormat(h.ndvi))
-  const ndmiData = datos.map((h) => safeFormat(h.ndmi))
 
   return {
     backgroundColor: 'transparent',
@@ -80,8 +71,6 @@ const chartOption = computed(() => {
       textStyle: { color: '#fff' },
       axisPointer: { type: 'cross' },
     },
-    // Ajustamos el grid para evitar el warning de 'containLabel' si es posible,
-    // o lo dejamos porque es una advertencia menor, pero el crash principal ya está resuelto.
     grid: {
       left: '3%',
       right: '3%',
@@ -94,38 +83,26 @@ const chartOption = computed(() => {
       axisLabel: { color: '#aaa' },
       axisLine: { lineStyle: { color: '#555' } },
     },
-    yAxis: [
-      {
-        type: 'value',
-        name: 'NDVI',
-        min: 0,
-        max: 1,
-        position: 'left',
-        axisLabel: { color: '#39ff14' },
-        splitLine: { lineStyle: { color: 'rgba(255,255,255,0.1)' } },
-      },
-      {
-        type: 'value',
-        name: 'NDMI',
-        min: -0.5,
-        max: 0.8,
-        position: 'right',
-        axisLabel: { color: '#00e5ff' },
-        splitLine: { show: false },
-      },
-    ],
+    yAxis: {
+      type: 'value',
+      name: 'NDVI',
+      min: 0,
+      max: 1,
+      axisLabel: { color: '#39ff14' },
+      splitLine: { lineStyle: { color: 'rgba(255,255,255,0.1)' } },
+    },
     dataZoom: [
       { type: 'inside', start: 0, end: 100 },
       { type: 'slider', bottom: 0, borderColor: '#555', fillerColor: 'rgba(255,255,255,0.1)' },
     ],
     series: [
       {
-        name: 'Vigor (NDVI)',
+        name: 'NDVI',
         type: 'line',
         smooth: true,
         data: ndviData,
-        yAxisIndex: 0,
-        showSymbol: false,
+        showSymbol: true,
+        symbolSize: 6,
         lineStyle: { width: 3, color: '#39ff14' },
         areaStyle: {
           color: {
@@ -140,15 +117,6 @@ const chartOption = computed(() => {
             ],
           },
         },
-      },
-      {
-        name: 'Humedad (NDMI)',
-        type: 'line',
-        smooth: true,
-        data: ndmiData,
-        yAxisIndex: 1,
-        showSymbol: false,
-        lineStyle: { width: 2, type: 'dashed', color: '#00e5ff' },
       },
     ],
   }

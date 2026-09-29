@@ -17,9 +17,6 @@
           <div class="text-h6 ellipsis">{{ fuente.nombre }}</div>
           <div class="text-caption text-grey-5 font-mono row items-center">
             {{ fuente.tipo }}
-            <span v-if="fuente.es_inteligente" class="text-secondary q-ml-sm row items-center">
-              <q-icon name="wifi" size="xs" class="q-mr-xs" /> IoT
-            </span>
           </div>
         </div>
 
@@ -76,11 +73,7 @@
       </div>
 
       <div v-else class="text-center text-grey-6 q-py-md">
-        <div v-if="loadingSensor">
-          <q-spinner-dots color="secondary" size="2em" />
-          <div class="text-caption q-mt-sm font-mono text-secondary">Sincronizando...</div>
-        </div>
-        <div v-else class="q-mt-xs">
+        <div class="q-mt-xs">
           <q-chip
             color="grey-9"
             text-color="grey-5"
@@ -88,6 +81,7 @@
             label="Sin Datos"
             size="sm"
           />
+          <div class="text-caption text-grey-7 q-mt-sm">Cargá un análisis de laboratorio o campo</div>
         </div>
       </div>
     </q-card-section>
@@ -100,34 +94,6 @@
         </span>
 
         <div class="row q-gutter-x-xs">
-          <q-btn
-            v-if="fuente.es_inteligente"
-            flat
-            dense
-            round
-            size="sm"
-            color="secondary"
-            icon="sensors"
-            :loading="loadingSensor"
-            @click="simularSensor"
-          >
-            <q-tooltip class="bg-dark border-neon">Leer Sensor</q-tooltip>
-          </q-btn>
-
-          <q-btn
-            v-if="fuente.tipo === 'Represa'"
-            flat
-            dense
-            round
-            size="sm"
-            color="teal-4"
-            icon="satellite_alt"
-            :loading="loadingSentinel"
-            @click="simularSentinel"
-          >
-            <q-tooltip class="bg-dark border-neon">Satélite</q-tooltip>
-          </q-btn>
-
           <q-btn
             flat
             dense
@@ -158,31 +124,22 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
-import { useDataStore } from 'stores/data-store'
-import { useQuasar, date } from 'quasar'
+import { computed } from 'vue'
+import { date } from 'quasar'
 
 const props = defineProps({
   fuente: { type: Object, required: true },
 })
 const emit = defineEmits(['editar', 'eliminar', 'nuevoAnalisis', 'verHistorial'])
 
-const dataStore = useDataStore()
-const $q = useQuasar()
-const loadingSensor = ref(false)
-const loadingSentinel = ref(false)
-
 // --- CONFIGURACIÓN ---
 const ESTADO_CONFIG = {
-  Peligro: { label: 'PELIGRO', color: '#ff1744' }, // Rojo
-  Precaución: { label: 'ALERTA', color: '#ffea00' }, // Amarillo
-  Óptimo: { label: 'ÓPTIMO', color: '#39ff14' }, // Verde Neón
+  Peligro: { label: 'PELIGRO', color: '#ff1744' },
+  Precaución: { label: 'ALERTA', color: '#ffea00' },
+  Óptimo: { label: 'ÓPTIMO', color: '#39ff14' },
 }
-const ESTADO_DEFAULT = { label: 'S/D', color: '#555555' } // Gris
+const ESTADO_DEFAULT = { label: 'S/D', color: '#555555' }
 
-// --- COMPUTED PROPERTIES ---
-
-// 1. Icono SVG Personalizado
 const iconPath = computed(() => {
   const tipo = props.fuente.tipo ? props.fuente.tipo.toLowerCase() : 'otros'
   let filename = 'otros.svg'
@@ -195,11 +152,9 @@ const iconPath = computed(() => {
   return `/icons/water-icons/${filename}`
 })
 
-// 2. Estado y Color
 const estado = computed(() => ESTADO_CONFIG[props.fuente.ultimo_estado] || ESTADO_DEFAULT)
 const statusColor = computed(() => estado.value.color)
 
-// 3. Borde Izquierdo Dinámico
 const borderClass = computed(() => {
   const est = props.fuente.ultimo_estado
   if (est === 'Óptimo') return 'border-neon-card'
@@ -224,51 +179,6 @@ function getPhColor(ph) {
   if (val < 6.8 || val > 8.0) return 'text-yellow-4'
   return 'text-green-4'
 }
-
-// --- SIMULACIONES ---
-async function simularSensor() {
-  loadingSensor.value = true
-  setTimeout(async () => {
-    try {
-      const ph = (7.0 + Math.random() * 0.8).toFixed(1)
-      const tds = Math.floor(800 + Math.random() * 400)
-
-      const data = {
-        fuente_id: props.fuente.id,
-        fecha_analisis: new Date().toISOString(),
-        metodo: 'Sensor IoT',
-        ph: ph,
-        solidos_totales: tds,
-        nitratos: Math.floor(Math.random() * 5),
-        arsenico: 0,
-        observaciones: 'Lectura automática',
-      }
-      await dataStore.agregarAnalisisDeAgua(data)
-      $q.notify({
-        type: 'positive',
-        message: 'Datos IoT Recibidos',
-        caption: `pH: ${ph} | TDS: ${tds}`,
-      })
-    } catch {
-      $q.notify({ type: 'negative', message: 'Error de conexión' })
-    } finally {
-      loadingSensor.value = false
-    }
-  }, 2000)
-}
-
-function simularSentinel() {
-  loadingSentinel.value = true
-  $q.notify({ type: 'info', message: 'Solicitando imagen satelital...' })
-  setTimeout(() => {
-    loadingSentinel.value = false
-    $q.notify({ type: 'positive', message: 'Análisis finalizado', caption: 'Sup. Agua: 3.2 ha' })
-  }, 3000)
-}
-
-onMounted(() => {
-  if (props.fuente.es_inteligente && !ultimoAnalisis.value) simularSensor()
-})
 </script>
 
 <style lang="scss" scoped>

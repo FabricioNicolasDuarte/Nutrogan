@@ -279,21 +279,14 @@
           <SatelliteHistoryChart :historial="historialData" :loading="loadingHistorial" />
 
           <div class="row q-mt-lg q-col-gutter-md">
-            <div class="col-12 col-md-6">
+            <div class="col-12">
               <q-banner rounded class="bg-dark-soft text-white border-left-green">
                 <div class="text-weight-bold text-primary">VIGOR (NDVI)</div>
                 <div class="text-caption text-grey-4">
-                  Biomasa fotosintéticamente activa. Valores altos indican pastura densa y
-                  saludable.
-                </div>
-              </q-banner>
-            </div>
-            <div class="col-12 col-md-6">
-              <q-banner rounded class="bg-dark-soft text-white border-left-cyan">
-                <div class="text-weight-bold text-cyan-4">HUMEDAD (NDMI)</div>
-                <div class="text-caption text-grey-4">
-                  Estrés hídrico en vegetación. Anticipa sequías antes de ser visibles al ojo
-                  humano.
+                  Índice de vegetación Sentinel-2 (NIR−Red)/(NIR+Red). Indica vigor relativo de la
+                  pastura, no kilogramos de forraje. Bandas EXCELENTE/BUENO son heurística de campo;
+                  dependen de estación, especie y nubes. NDMI (humedad) no está disponible hasta
+                  calcular SWIR.
                 </div>
               </q-banner>
             </div>

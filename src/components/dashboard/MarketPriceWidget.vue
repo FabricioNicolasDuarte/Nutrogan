@@ -38,18 +38,10 @@
                 Origen del Dato:
               </div>
               <div class="text-body2 text-white font-weight-bold">
-                {{
-                  dataStore.marketPrice.mode === 'auto'
-                    ? 'Mercado Agroganadero (API)'
-                    : 'Estimación Propia (Manual)'
-                }}
+                {{ origenLabel }}
               </div>
               <div class="text-caption text-grey-5" style="font-size: 0.7rem">
-                {{
-                  dataStore.marketPrice.mode === 'auto'
-                    ? 'Sincronizado en tiempo real.'
-                    : 'Valor fijado por el usuario.'
-                }}
+                {{ origenHint }}
               </div>
             </div>
 
@@ -115,13 +107,13 @@
 
       <div class="row justify-center q-mt-xs">
         <q-badge
-          :color="isLive ? 'green-13' : 'blue-grey-8'"
-          text-color="black"
+          :color="badgeMeta.color"
+          :text-color="badgeMeta.textColor"
           class="font-mono text-weight-bold q-px-sm"
           rounded
         >
-          <q-icon :name="isLive ? 'wifi' : 'lock'" size="10px" class="q-mr-xs" />
-          {{ isLive ? 'LIVE' : 'FIJO' }}
+          <q-icon :name="badgeMeta.icon" size="10px" class="q-mr-xs" />
+          {{ badgeMeta.label }}
         </q-badge>
       </div>
     </div>
@@ -188,7 +180,31 @@ const loading = ref(false)
 const showEditDialog = ref(false)
 const tempPrice = ref(0)
 
-const isLive = computed(() => dataStore.marketPrice.mode === 'auto')
+const badgeMeta = computed(() => {
+  if (dataStore.marketPrice.mode === 'manual') {
+    return { label: 'MANUAL', color: 'blue-grey-8', textColor: 'white', icon: 'lock' }
+  }
+  if (dataStore.marketPrice.esEstimado || dataStore.marketPrice.value == null) {
+    return { label: 'SIN DATO MAG', color: 'orange-8', textColor: 'white', icon: 'warning' }
+  }
+  return { label: 'MAG', color: 'green-13', textColor: 'black', icon: 'cloud_done' }
+})
+
+const origenLabel = computed(() => {
+  if (dataStore.marketPrice.mode === 'manual') return 'Fijado por el usuario'
+  if (dataStore.marketPrice.esEstimado || !dataStore.marketPrice.value) {
+    return dataStore.marketPrice.source || 'Sin dato de mercado'
+  }
+  return dataStore.marketPrice.source || 'Mercado Agroganadero'
+})
+
+const origenHint = computed(() => {
+  if (dataStore.marketPrice.mode === 'manual') return 'Valor de referencia manual.'
+  if (dataStore.marketPrice.esEstimado || !dataStore.marketPrice.value) {
+    return 'No se inventa precio. Usá modo manual si MAG no responde.'
+  }
+  return 'Scraping MAG (verificar categoría de hacienda).'
+})
 
 const lastUpdate = computed(() => {
   if (!dataStore.marketPrice.lastUpdated) return '--:--'

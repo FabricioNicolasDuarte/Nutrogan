@@ -10,6 +10,7 @@ export function createEstablecimientoModule({ supabase, authStore }) {
     mode: 'manual',
     lastUpdated: null,
     source: 'Sin definir',
+    esEstimado: false,
   })
 
   async function fetchEstablecimiento() {
@@ -34,6 +35,7 @@ export function createEstablecimientoModule({ supabase, authStore }) {
       mode: 'manual',
       lastUpdated: new Date().toISOString(),
       source: 'Usuario',
+      esEstimado: false,
     }
   }
 
@@ -42,13 +44,23 @@ export function createEstablecimientoModule({ supabase, authStore }) {
       const { data, error } = await supabase.functions.invoke('get-market-price')
       if (error) throw error
 
-      if (data && data.success) {
+      if (data && data.success && data.precio != null && Number(data.precio) > 0) {
         marketPrice.value = {
           ...marketPrice.value,
           value: parseFloat(data.precio),
           mode: 'auto',
           lastUpdated: data.fecha,
-          source: data.fuente,
+          source: data.fuente || 'Mercado',
+          esEstimado: !!data.es_estimado,
+        }
+      } else {
+        // Sin inventar número: dejar valor previo / pedir manual
+        marketPrice.value = {
+          ...marketPrice.value,
+          mode: marketPrice.value.value ? marketPrice.value.mode : 'manual',
+          source: data?.fuente || 'Sin dato MAG — fijá precio manual',
+          esEstimado: true,
+          lastUpdated: data?.fecha || new Date().toISOString(),
         }
       }
     } catch (e) {

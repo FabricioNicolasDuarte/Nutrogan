@@ -14,7 +14,6 @@ serve(async (req) => {
   // Variables para el resultado final
   let precioFinal = null
   let fuenteDato = 'Mercado Agroganadero (MAG)'
-  let esEstimado = false
 
   try {
     console.log('Intentando conectar con MAG...')
@@ -64,20 +63,27 @@ serve(async (req) => {
     // No lanzamos error fatal, dejamos que fluya hacia el respaldo
   }
 
-  // 2. SISTEMA DE RESPALDO (Fallback)
-  // Si falló la conexión o el scraping no encontró números lógicos
+  // 2. Sin inventar precio: si MAG no responde, devolver null y que la UI pida manual
   if (!precioFinal) {
-    console.log('Usando estimación estadística de mercado.')
-    const base = 2150
-    // Variación aleatoria del día para simular fluctuación real
-    const variacion = Math.floor(Math.random() * 120) - 40
-    precioFinal = base + variacion
-    fuenteDato = 'Ref. Mercado (Estimado)'
-    esEstimado = true
+    console.log('MAG sin precio usable — no se inventa valor.')
+    return new Response(
+      JSON.stringify({
+        success: true,
+        precio: null,
+        moneda: 'ARS',
+        unidad: 'kg',
+        fuente: 'Sin dato MAG — fijá precio manual',
+        es_estimado: true,
+        fecha: new Date().toISOString(),
+      }),
+      {
+        headers: { ...CORS_HEADERS, 'Content-Type': 'application/json' },
+        status: 200,
+      },
+    )
   }
 
-  // 3. Devolver respuesta SIEMPRE EXITOSA (200 OK)
-  // Así tu app nunca muestra error rojo, sino el dato disponible
+  // 3. Precio scrapeado (puede no ser la categoría exacta — etiquetar con honestidad)
   return new Response(
     JSON.stringify({
       success: true,
@@ -85,8 +91,9 @@ serve(async (req) => {
       moneda: 'ARS',
       unidad: 'kg',
       fuente: fuenteDato,
-      es_estimado: esEstimado,
+      es_estimado: false,
       fecha: new Date().toISOString(),
+      nota: 'Primer valor $ detectado en MAG; verificar categoría (novillo/vaca/etc.).',
     }),
     {
       headers: { ...CORS_HEADERS, 'Content-Type': 'application/json' },

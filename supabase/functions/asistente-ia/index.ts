@@ -58,7 +58,18 @@ serve(async (req) => {
 
     // Recortar contexto si es muy grande para evitar errores de payload
     const contextStr = dataContext ? JSON.stringify(dataContext).substring(0, 40000) : ''
-    const fullPrompt = `Contexto de datos agrícolas: ${contextStr}\n\nInstrucción: ${prompt}\n\nRespuesta:`
+    const fullPrompt = `Sos el asistente de Nutrogan, app de gestión ganadera.
+Reglas obligatorias:
+- No diagnosticás enfermedades ni reemplazás al veterinario, al encargado o al laboratorio.
+- No inventés GDPV, pesos, precios, NDVI ni stocks que no estén en el contexto.
+- Si faltan datos, decilo explícitamente.
+- Usá solo el contexto cargado para responder; unidades claras (kg, cabezas, ppm).
+
+Contexto de datos del establecimiento: ${contextStr}
+
+Pregunta del usuario: ${prompt}
+
+Respuesta (español, concreta):`
 
     // 1. Intento con Modelo Primario (2.0 Flash)
     let result = await generateResponse(PRIMARY_MODEL, fullPrompt)

@@ -38,16 +38,16 @@
           filled
           dark
           color="white"
-          hint="Peligro > 3000 ppm"
+          hint="Peligro > 5000 ppm · Precaución > 3000 (ganado)"
         />
         <q-input
           v-model.number="form.nitratos"
           type="number"
-          label="Nitratos (ppm)"
+          label="Nitratos NO₃ (ppm)"
           filled
           dark
           color="white"
-          hint="Peligro > 45 ppm"
+          hint="Peligro > 100 · Precaución > 45 (NO₃, no NO₃-N)"
         />
         <q-input
           v-model.number="form.arsenico"
@@ -57,7 +57,7 @@
           filled
           dark
           color="white"
-          hint="Peligro > 0.1 ppm"
+          hint="Peligro > 0.2 · Precaución > 0.05"
         />
 
         <div class="text-caption text-grey-4 q-mt-md">Parámetros Secundarios (Opcional)</div>

@@ -1,4 +1,5 @@
 import { ref } from 'vue'
+import { calcularCalidadAgua } from '../../utils/waterQuality'
 
 export function createAguaModule({ supabase, authStore, crud }) {
   const fuentesAgua = ref([])
@@ -23,37 +24,21 @@ export function createAguaModule({ supabase, authStore, crud }) {
     }
   }
 
-  function calcularCalidadAgua(datos) {
-    const ph = parseFloat(datos.ph)
-    const tds = parseFloat(datos.solidos_totales)
-    const nitratos = parseFloat(datos.nitratos || 0)
-
-    if (ph < 5.5 || ph > 9.0) return 'Peligro'
-    if (tds > 4000) return 'Peligro'
-    if (nitratos > 100) return 'Peligro'
-
-    if (ph < 6.5 || ph > 8.5) return 'Precaución'
-    if (tds > 2000) return 'Precaución'
-    if (nitratos > 45) return 'Precaución'
-
-    return 'Óptimo'
-  }
-
   async function agregarAnalisisDeAgua(data) {
     const nuevoAnalisis = await crud.createRegistro('analisis_de_agua', data)
-    const nuevoEstado = calcularCalidadAgua(data)
+    const { estado, peligros } = calcularCalidadAgua(data)
 
     await crud.updateRegistro('fuentes_de_agua', data.fuente_id, {
-      ultimo_estado: nuevoEstado,
+      ultimo_estado: estado,
     })
 
     const fuente = fuentesAgua.value.find((f) => f.id === data.fuente_id)
     if (fuente) {
       if (!fuente.analisis_de_agua) fuente.analisis_de_agua = []
       fuente.analisis_de_agua.unshift(nuevoAnalisis)
-      fuente.ultimo_estado = nuevoEstado
+      fuente.ultimo_estado = estado
     }
-    return { estado: nuevoEstado, peligros: [] }
+    return { estado, peligros }
   }
 
   async function createFuenteAgua(data) {

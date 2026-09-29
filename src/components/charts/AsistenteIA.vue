@@ -2,6 +2,9 @@
   <q-card flat class="kpi-card-ia">
     <q-card-section>
       <div class="text-h6 text-weight-bold text-white">Asistente Nutrogan IA</div>
+      <div class="text-caption text-grey-5 q-mt-xs">
+        Apoyo con datos cargados. No diagnostica ni reemplaza criterio veterinario o de campo.
+      </div>
     </q-card-section>
 
     <q-card-section class="q-pt-none">
@@ -98,7 +101,7 @@ const userTypedMessage = ref('')
 const messages = ref([
   {
     sent: false,
-    text: '¡Hola! Soy el Asistente de IA de Nutrogan. Estoy conectado a tus datos y a la API de Google Gemini. ¿En qué te puedo ayudar hoy?',
+    text: 'Hola. Puedo ayudarte a leer los datos cargados en Nutrogan (lotes, stock, NDVI). No hago diagnóstico veterinario ni invento cifras que no estén en tu establecimiento.',
   },
 ])
 
