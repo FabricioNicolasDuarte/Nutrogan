@@ -55,7 +55,10 @@
               <span class="text-nano text-grey-5 font-mono">
                 EN PASTO
                 <q-tooltip anchor="top middle" self="bottom middle">
-                  Cabezas en potrero / hacienda total. El resto está en Mi Corral.
+                  Cabezas con potrero asignado / hacienda total ({{ kpis.enPasto }}/{{
+                    kpis.totalAnimales
+                  }}). El resto está en Mi Corral
+                  ({{ kpis.lotesSinAsignar }} lotes). Arrastrá o asigná desde el mapa.
                 </q-tooltip>
               </span>
               <span class="text-subtitle2 text-cyan-4 leading-none text-weight-bold"
@@ -547,6 +550,7 @@ import 'leaflet/dist/leaflet.css'
 import { LMap, LTileLayer, LGeoJson } from '@vue-leaflet/vue-leaflet'
 import ProDetailCard from 'components/dashboard/ProDetailCard.vue'
 import { useSound } from 'src/composables/useSound'
+import { cabezasEnPasto, cabezasTotales, lotesSinPotrero, pctEnPasto } from 'src/utils/livestockKpis'
 
 const dataStore = useDataStore()
 const $q = useQuasar()
@@ -595,12 +599,15 @@ const currentTileLayer = computed(() =>
 )
 
 const kpis = computed(() => {
-  const total = dataStore.lotes.reduce((acc, l) => acc + (l.cantidad_animales || 0), 0)
-  const enPasto = dataStore.lotes
-    .filter((l) => l.potrero_actual_id)
-    .reduce((acc, l) => acc + (l.cantidad_animales || 0), 0)
-  const pct = total ? Math.round((enPasto / total) * 100) : 0
-  return { totalAnimales: total, ocupacion: pct, enPasto, enCorral: total - enPasto }
+  const total = cabezasTotales(dataStore.lotes)
+  const enPasto = cabezasEnPasto(dataStore.lotes)
+  return {
+    totalAnimales: total,
+    ocupacion: pctEnPasto(dataStore.lotes),
+    enPasto,
+    enCorral: total - enPasto,
+    lotesSinAsignar: lotesSinPotrero(dataStore.lotes).length,
+  }
 })
 
 const searchOptions = computed(() => {

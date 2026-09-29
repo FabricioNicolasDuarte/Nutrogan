@@ -1,0 +1,38 @@
+{
+  "generated_at": "2026-09-29T18:00:00.000Z",
+  "source": "static inventory from src/*.js|vue (RLS lives in Supabase project; no migrations folder yet)",
+  "tables": [
+    "analisis_de_agua",
+    "consumos_de_dieta",
+    "dietas",
+    "establecimientos",
+    "evaluaciones",
+    "eventos_reproductivos",
+    "eventos_sanitarios",
+    "fuentes_de_agua",
+    "inventario_items",
+    "inventario_movimientos",
+    "invitaciones_equipo",
+    "lotes",
+    "miembros_establecimiento",
+    "movimientos_de_lotes",
+    "notificaciones_programadas",
+    "perfiles_usuarios",
+    "potreros",
+    "registros_lluvia"
+  ],
+  "storage_buckets": ["avatars"],
+  "edge_functions": [
+    "analizar-ndvi",
+    "asistente-ia",
+    "delete-polygon-agromonitoring",
+    "generar-snapshot-potrero",
+    "get-market-price",
+    "invite-user",
+    "send-alert"
+  ],
+  "notes": [
+    "Dump OpenAPI vía REST devolvió paths vacíos con anon key; este inventario es la fuente versionada mínima.",
+    "Secrets de Gemini: solo Deno.env GOOGLE_API_KEY en asistente-ia (nunca VITE_*)."
+  ]
+}

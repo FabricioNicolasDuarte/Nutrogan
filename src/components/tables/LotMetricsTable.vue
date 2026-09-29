@@ -113,6 +113,7 @@
 <script setup>
 import { ref, computed } from 'vue'
 import { useDataStore } from 'stores/data-store'
+import { formatGdpv } from 'src/utils/gdpv'
 
 const dataStore = useDataStore()
 const filter = ref('')
@@ -142,7 +143,6 @@ const rows = computed(() => {
 
     const ultimaEv = evsConPeso[0] || evs[0]
     let pesoMostrar = '-'
-    let gdpvCalc = '-'
 
     if (evsConPeso[0]) {
       pesoMostrar = parseFloat(evsConPeso[0].peso_promedio_kg).toFixed(1)
@@ -150,19 +150,8 @@ const rows = computed(() => {
       pesoMostrar = parseFloat(lote.peso_ingreso_kg).toFixed(1)
     }
 
-    if (evsConPeso.length >= 2) {
-      gdpvCalc = calcularGDPVManual(evsConPeso[1], evsConPeso[0])
-    } else if (evsConPeso.length === 1 && lote.peso_ingreso_kg > 0) {
-      const fechaIngreso = new Date(lote.created_at)
-      const fechaEval = new Date(evsConPeso[0].fecha_evaluacion)
-      if (fechaEval > fechaIngreso) {
-        const fakePrevEv = {
-          peso_promedio_kg: lote.peso_ingreso_kg,
-          fecha_evaluacion: lote.created_at,
-        }
-        gdpvCalc = calcularGDPVManual(fakePrevEv, evsConPeso[0])
-      }
-    }
+    const gdpvFmt = formatGdpv(evs)
+    const gdpvCalc = gdpvFmt === 'N/A' ? '-' : gdpvFmt
 
     return {
       id: lote.id,
@@ -175,24 +164,6 @@ const rows = computed(() => {
     }
   })
 })
-
-function calcularGDPVManual(evAnterior, evActual) {
-  const p1 = parseFloat(evAnterior.peso_promedio_kg)
-  const p2 = parseFloat(evActual.peso_promedio_kg)
-  if (isNaN(p1) || isNaN(p2)) return '-'
-
-  const d1 = new Date(evAnterior.fecha_evaluacion)
-  const d2 = new Date(evActual.fecha_evaluacion)
-  const diffTime = d2 - d1
-  const diffDays = diffTime / (1000 * 60 * 60 * 24)
-  if (diffDays <= 0.5) return '-'
-
-  const ganancia = p2 - p1
-  const resultado = ganancia / diffDays
-
-  if (resultado > 2.5 || resultado < -1.5) return '-'
-  return resultado.toFixed(3)
-}
 
 function formatearFecha(fechaISO) {
   if (!fechaISO) return '-'

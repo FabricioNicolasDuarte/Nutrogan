@@ -13,7 +13,7 @@
         </div>
       </div>
       <div class="text-caption" :class="isPrintMode ? 'text-grey-8' : 'text-grey-5'">
-        Ref: ${{ precioMercado }}/kg | Producción Est: {{ totalKilosGanadosMes }} kg/mes
+        Ref: ${{ precioMercadoLabel }}/kg | Prod. mes (GDPV): {{ totalKilosGanadosMes }} kg
       </div>
     </div>
 
@@ -37,8 +37,9 @@
         <span class="text-weight-bold text-white text-caption">Análisis Financiero</span>
       </div>
       <p class="text-caption text-grey-4 q-mb-none">
-        Comparativa: <strong>Costo Operativo Real</strong> (Barras Blancas) vs
-        <strong>Capacidad Productiva Actual</strong> (Barras Verdes).
+        <strong>Costo</strong>: movimientos de inventario tipo «uso» por mes.
+        <strong>Valor producido</strong>: solo el mes actual, si hay GDPV medido × cabezas × $/kg.
+        Sin GDPV o sin precio, el valor queda en 0 (no se inventa).
       </p>
     </div>
   </div>
@@ -52,28 +53,31 @@ import { CanvasRenderer } from 'echarts/renderers'
 import { BarChart } from 'echarts/charts'
 import { GridComponent, TooltipComponent, LegendComponent } from 'echarts/components'
 import VChart from 'vue-echarts'
+import { calcGdpv } from 'src/utils/gdpv'
 
 use([CanvasRenderer, BarChart, GridComponent, TooltipComponent, LegendComponent])
 
-const props = defineProps({ precioMercado: { type: Number, default: 2200 } })
+const props = defineProps({ precioMercado: { type: Number, default: null } })
 const dataStore = useDataStore()
 const vchartRef = ref(null)
 const isPrintMode = ref(false)
 defineExpose({ vchartRef, isPrintMode })
 
+const precioMercadoLabel = computed(() => {
+  const p = Number(props.precioMercado)
+  return Number.isFinite(p) && p > 0 ? p.toLocaleString('es-AR') : '—'
+})
+
 const totalKilosGanadosMes = computed(() => {
   let gananciaDiariaTotal = 0
   let lotesConGdpv = 0
   dataStore.lotes.forEach((lote) => {
-    const evalsLote = dataStore.evaluaciones.filter((e) => e.lote_id === lote.id)
-    if (!dataStore.getGDPV || evalsLote.length < 2) return
-    const calc = parseFloat(dataStore.getGDPV(evalsLote))
-    if (isNaN(calc) || calc <= -0.5 || calc >= 3) return
+    const gdpv = calcGdpv(dataStore.evaluaciones.filter((e) => e.lote_id === lote.id))
+    if (gdpv === null) return
     const cabezas = Number(lote.cantidad_animales) || 0
-    gananciaDiariaTotal += cabezas * calc
+    gananciaDiariaTotal += cabezas * gdpv
     lotesConGdpv++
   })
-  // Sin GDPV real no inventamos 0.5 kg/día
   if (lotesConGdpv === 0) return '0'
   return (gananciaDiariaTotal * 30).toFixed(0)
 })
@@ -102,14 +106,20 @@ const option = computed(() => {
     }
   })
 
-  const valorMes = parseFloat(totalKilosGanadosMes.value) * props.precioMercado
+  const price = Number(props.precioMercado)
+  const kilosMes = parseFloat(totalKilosGanadosMes.value) || 0
+  const valorMes =
+    Number.isFinite(price) && price > 0 && kilosMes > 0 ? kilosMes * price : 0
+
   const today = new Date()
+  const currentKey = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}`
 
   for (let i = 5; i >= 0; i--) {
     const d = new Date(today.getFullYear(), today.getMonth() - i, 1)
     const k = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`
     if (!monthlyStats[k]) monthlyStats[k] = { costo: 0, valor: 0 }
-    monthlyStats[k].valor = valorMes
+    // Solo el mes corriente lleva valor estimado (no se copia a meses pasados)
+    monthlyStats[k].valor = k === currentKey ? valorMes : 0
   }
 
   const sortedKeys = Object.keys(monthlyStats).sort().slice(-6)

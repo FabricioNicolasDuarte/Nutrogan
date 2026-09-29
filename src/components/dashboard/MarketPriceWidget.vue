@@ -196,9 +196,9 @@ const lastUpdate = computed(() => {
 })
 
 function formatPrice(val) {
-  return val
-    ? val.toLocaleString('es-AR', { minimumFractionDigits: 0, maximumFractionDigits: 0 })
-    : '0'
+  const n = Number(val)
+  if (!Number.isFinite(n) || n <= 0) return '—'
+  return n.toLocaleString('es-AR', { minimumFractionDigits: 0, maximumFractionDigits: 0 })
 }
 
 function activarManual() {

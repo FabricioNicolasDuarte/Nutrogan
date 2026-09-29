@@ -50,6 +50,8 @@
 import { ref, onMounted, computed } from 'vue'
 import { useDataStore } from 'stores/data-store'
 import { supabase } from 'boot/supabase'
+import { formatGdpv } from 'src/utils/gdpv'
+import { cabezasTotales } from 'src/utils/livestockKpis'
 
 const dataStore = useDataStore()
 const loading = ref(false)
@@ -96,28 +98,30 @@ function parseHtmlToStructuredData(htmlString) {
 // --- CONTEXTO DE DATOS ---
 const globalContext = computed(() => {
   const lotesMetrics = dataStore.lotes.map((l) => {
-    const evs = dataStore.evaluaciones
-      .filter((e) => e.lote_id === l.id)
-      .sort((a, b) => new Date(b.fecha_evaluacion) - new Date(a.fecha_evaluacion))
-    const gdpv =
-      evs.length >= 2
-        ? (
-            (evs[0].peso_promedio_kg - evs[1].peso_promedio_kg) /
-            ((new Date(evs[0].fecha_evaluacion) - new Date(evs[1].fecha_evaluacion)) /
-              (1000 * 60 * 60 * 24))
-          ).toFixed(3)
-        : 'N/A'
-    return { id: l.identificacion, obj: l.objetivo, peso: evs[0]?.peso_promedio_kg || 'N/A', gdpv }
+    const evs = dataStore.evaluaciones.filter((e) => e.lote_id === l.id)
+    const gdpv = formatGdpv(evs)
+    const lastWeight = [...evs]
+      .filter((e) => Number(e.peso_promedio_kg) > 0)
+      .sort((a, b) => new Date(b.fecha_evaluacion) - new Date(a.fecha_evaluacion))[0]
+    return {
+      id: l.identificacion,
+      obj: l.objetivo,
+      cabezas: Number(l.cantidad_animales) || 0,
+      en_potrero: !!l.potrero_actual_id,
+      peso: lastWeight?.peso_promedio_kg ?? 'N/A',
+      gdpv,
+    }
   })
 
   return JSON.stringify({
-    total_cabezas: dataStore.lotes.reduce((a, b) => a + (Number(b.cantidad_animales) || 0), 0),
+    total_cabezas: cabezasTotales(dataStore.lotes),
     lotes: lotesMetrics,
     clima: dataStore.clima?.current || 'N/A',
     pronostico: dataStore.clima?.forecast?.slice(0, 3) || [],
     insumos_criticos: dataStore.inventarioItems
       .filter((i) => Number(i.stock_actual) <= Number(i.stock_minimo_alerta))
       .map((i) => i.nombre),
+    nota: 'Usá solo cifras del JSON. Si gdpv es N/A, no inventes ganancia diaria.',
   })
 })
 
@@ -128,26 +132,24 @@ async function generarReporte() {
   try {
     const prompt = `
       Actúa como Consultor Senior en Agronegocios para "Nutrogan".
-      Analiza: ${globalContext.value}
+      Analiza SOLO estos datos (JSON). Si un campo es N/A o falta, decilo explícitamente; no inventes GDPV, márgenes ni precios:
+      ${globalContext.value}
 
-      Escribe un INFORME TÉCNICO DETALLADO y PROFESIONAL (mínimo 400 palabras).
-      Usa lenguaje técnico agronómico y financiero. Sé crítico con los desvíos.
+      Escribe un INFORME TÉCNICO corto y profesional (máx. 350 palabras).
 
       ESTRUCTURA HTML OBLIGATORIA (Sin Markdown):
       <h4 style="color:${C_SEC1}">1. DIAGNÓSTICO SITUACIONAL</h4>
-      <p>Evalúa la carga animal, el clima actual y su impacto en el bienestar animal. Menciona cifras.</p>
+      <p>Carga animal, lotes en potrero vs corral, clima si hay dato.</p>
 
       <h4 style="color:${C_SEC2}">2. ANÁLISIS ZOOTÉCNICO</h4>
-      <p>Analiza el G.D.P.V. de los lotes. Identifica ineficiencias de conversión. Compara categorías.</p>
+      <p>GDPV solo donde exista número; listá lotes sin peso/GDPV como carencia de dato.</p>
 
       <h4 style="color:${C_SEC3}">3. MATRIZ DE RIESGOS</h4>
-      <p>Cruza pronóstico climático con insumos críticos. ¿Riesgo de barro? ¿Estrés térmico? ¿Falta de stock?</p>
+      <p>Insumos críticos y clima. Si no hay dato, no especules.</p>
 
-      <h4 style="color:${C_SEC4}">4. PLAN DE ACCIÓN RECOMENDADO</h4>
+      <h4 style="color:${C_SEC4}">4. PLAN DE ACCIÓN</h4>
       <ul>
-        <li>Acción correctiva inmediata 1...</li>
-        <li>Estrategia nutricional sugerida...</li>
-        <li>Proyección económica si se aplica...</li>
+        <li>Acciones concretas y medibles con los datos disponibles...</li>
       </ul>
     `
 

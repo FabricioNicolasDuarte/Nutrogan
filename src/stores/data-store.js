@@ -2,6 +2,7 @@ import { defineStore } from 'pinia'
 import { supabase } from 'boot/supabase'
 import { ref } from 'vue'
 import { useAuthStore } from './auth-store'
+import { formatGdpv } from 'src/utils/gdpv'
 
 export const useDataStore = defineStore(
   'data',
@@ -34,14 +35,14 @@ export const useDataStore = defineStore(
     const eventosReproductivos = ref([])
     const consumos = ref([])
 
-    // --- PRECIO DE MERCADO ---
+    // --- PRECIO DE MERCADO (null hasta que el usuario o auto lo fijen) ---
     const marketPrice = ref({
-      value: 2200,
+      value: null,
       currency: 'ARS',
       unit: 'kg',
       mode: 'manual',
-      lastUpdated: new Date().toISOString(),
-      source: 'Referencia Manual',
+      lastUpdated: null,
+      source: 'Sin definir',
     })
 
     // --- GETTERS ---
@@ -685,29 +686,7 @@ export const useDataStore = defineStore(
 
     // --- HELPERS ---
     function getGDPV(evaluacionesDelLote) {
-      if (!evaluacionesDelLote || evaluacionesDelLote.length < 2) return 'N/A'
-      const evs = [...evaluacionesDelLote]
-        .filter((e) => {
-          const p = parseFloat(e.peso_promedio_kg)
-          return Number.isFinite(p) && p > 0
-        })
-        .sort((a, b) => new Date(a.fecha_evaluacion) - new Date(b.fecha_evaluacion))
-      if (evs.length < 2) return 'N/A'
-      const p1 = parseFloat(evs[0].peso_promedio_kg)
-      const p2 = parseFloat(evs[evs.length - 1].peso_promedio_kg)
-      const diff = Math.ceil(
-        Math.abs(
-          new Date(evs[evs.length - 1].fecha_evaluacion) - new Date(evs[0].fecha_evaluacion),
-        ) / 86400000,
-      )
-      if (diff <= 0) return 'N/A'
-      return ((p2 - p1) / diff).toFixed(3)
-    }
-    function getCostoKgGanado() {
-      return 0
-    }
-    function getTasaPrenez() {
-      return 0
+      return formatGdpv(evaluacionesDelLote)
     }
     function listenToPotreroChanges() {
       const estId = authStore.profile?.establecimiento_id
@@ -911,8 +890,6 @@ export const useDataStore = defineStore(
       moverLote,
       moverLoteACorral,
       getGDPV,
-      getCostoKgGanado,
-      getTasaPrenez,
       agregarAnalisisDeAgua,
       createFuenteAgua,
       updateFuenteAgua,

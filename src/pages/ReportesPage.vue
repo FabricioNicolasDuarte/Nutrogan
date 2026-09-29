@@ -46,10 +46,16 @@
           <q-card flat class="kpi-card relative-position overflow-hidden border-neon-left">
             <q-card-section>
               <div class="text-caption text-grey-4 text-uppercase font-mono tracking-wide">
-                Valuación
+                Insumos (stock × $)
               </div>
               <div class="text-h4 text-weight-bold text-primary font-numeric text-glow">
-                ${{ formatCurrencyShort(kpiData.valuacion) }}
+                ${{ formatCurrencyShort(kpiData.valuacionInsumos) }}
+              </div>
+              <div class="text-caption text-grey-5 q-mt-xs" v-if="kpiData.valuacionHacienda != null">
+                Hacienda est.: ${{ formatCurrencyShort(kpiData.valuacionHacienda) }}
+              </div>
+              <div class="text-caption text-grey-6 q-mt-xs" v-else>
+                Hacienda: sin peso/precio suficientes
               </div>
             </q-card-section>
           </q-card>
@@ -159,6 +165,11 @@ import ChartRentabilidad from 'components/charts/ChartRentabilidad.vue'
 import ChartPrediccionStock from 'components/charts/ChartPrediccionStock.vue'
 import LotMetricsTable from 'components/tables/LotMetricsTable.vue'
 import MarketPriceWidget from 'components/dashboard/MarketPriceWidget.vue'
+import {
+  cabezasTotales,
+  valuacionHaciendaEstimada,
+  valuacionInventario,
+} from 'src/utils/livestockKpis'
 
 const dataStore = useDataStore()
 const $q = useQuasar()
@@ -183,21 +194,23 @@ const fechaActual = new Date().toLocaleDateString('es-AR', {
 const kpiData = computed(() => {
   const items = dataStore.inventarioItems || []
   const lotes = dataStore.lotes || []
-
-  // Valuación
-  const valuacion = items.reduce((acc, item) => {
-    return acc + (Number(item.stock_actual) || 0) * (Number(item.precio_unitario) || 0)
-  }, 0)
-
-  // Cabezas
-  const cabezas = lotes.reduce((acc, l) => acc + (Number(l.cantidad_animales) || 0), 0)
-
-  // Alertas (Usando Number para comparación segura)
+  const valuacionInsumos = valuacionInventario(items)
+  const hacienda = valuacionHaciendaEstimada(
+    lotes,
+    dataStore.evaluaciones || [],
+    dataStore.marketPrice?.value,
+  )
+  const cabezas = cabezasTotales(lotes)
   const alertas = items.filter(
     (i) => (Number(i.stock_actual) || 0) <= (Number(i.stock_minimo_alerta) || 0),
   ).length
 
-  return { valuacion, cabezas, alertas }
+  return {
+    valuacionInsumos,
+    valuacionHacienda: hacienda ? hacienda.valor : null,
+    cabezas,
+    alertas,
+  }
 })
 
 onMounted(async () => {
@@ -210,9 +223,11 @@ onMounted(async () => {
 
 // --- HELPERS ---
 function formatCurrencyShort(val) {
-  if (val >= 1000000) return (val / 1000000).toFixed(1) + 'M'
-  if (val >= 1000) return (val / 1000).toFixed(0) + 'k'
-  return val.toFixed(0)
+  const n = Number(val)
+  if (!Number.isFinite(n)) return '—'
+  if (n >= 1000000) return (n / 1000000).toFixed(1) + 'M'
+  if (n >= 1000) return (n / 1000).toFixed(0) + 'k'
+  return n.toFixed(0)
 }
 
 function capitalize(str) {
@@ -243,29 +258,27 @@ function getUltimoPeso(lote) {
 
 function generarPlanAccionDetallado() {
   const secciones = []
-  // Insumos
   const itemsCriticos = dataStore.inventarioItems.filter(
     (i) => (Number(i.stock_actual) || 0) <= (Number(i.stock_minimo_alerta) || 0),
   )
-  let textItems =
-    'El inventario actual se encuentra en niveles saludables y no requiere reposición inmediata.'
+  let textItems = 'Ningún ítem de inventario está en o bajo el mínimo de alerta configurado.'
   if (itemsCriticos.length > 0) {
     const nombres = itemsCriticos
       .map((i) => `${i.nombre} (${i.stock_actual} ${i.unidad})`)
       .join(', ')
-    textItems = `Se detectó un quiebre de stock inminente en los siguientes ítems: ${nombres}. Se recomienda proceder con la compra inmediata para evitar la interrupción del plan nutricional y sanitario.`
+    textItems = `Ítems en o bajo mínimo de alerta: ${nombres}. Revisar reposición según plan de dieta y sanidad.`
   }
   secciones.push({ titulo: 'Gestión de Insumos', cuerpo: textItems })
 
-  // Resumen Ejecutivo
-  const cabezasTotal = dataStore.lotes.reduce((acc, l) => acc + (l.cantidad_animales || 0), 0)
+  const cabezasTotal = cabezasTotales(dataStore.lotes)
+  const sinPotrero = (dataStore.lotes || []).filter((l) => !l.potrero_actual_id).length
   const precioRef = dataStore.marketPrice.value
     ? dataStore.marketPrice.value.toLocaleString('es-AR')
-    : '-'
+    : 'sin definir'
 
   secciones.push({
-    titulo: 'Resumen Ejecutivo',
-    cuerpo: `Con un stock total de ${cabezasTotal} cabezas y un precio de referencia de mercado de $${precioRef}/kg, el establecimiento presenta una base productiva activa. Se sugiere monitorear la eficiencia de conversión en los lotes de terminación.`,
+    titulo: 'Resumen operativo',
+    cuerpo: `Stock vivo: ${cabezasTotal} cabezas. Lotes sin potrero asignado: ${sinPotrero}. Precio de referencia: $${precioRef}/kg. Este resumen usa solo datos cargados; no proyecta márgenes ni eficiencia sin GDPV medido.`,
   })
 
   return secciones
