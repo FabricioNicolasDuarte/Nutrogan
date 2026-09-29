@@ -67,18 +67,24 @@ async function main() {
     ok('analizar-ndvi', false, 'sin potrero con geometría')
     fails++
   } else {
+    const estRow = await (
+      await fetch(`${url}/rest/v1/lotes?select=establecimiento_id&limit=1`, { headers: h })
+    ).json()
+    const estId = estRow?.[0]?.establecimiento_id
     r = await fetch(`${url}/functions/v1/analizar-ndvi`, {
       method: 'POST',
       headers: h,
-      body: JSON.stringify({ potrero_id: withGeo.id }),
+      body: JSON.stringify({ establecimiento_id: estId, potrero_ids: [withGeo.id] }),
     })
     t = await r.text()
-    // Credenciales Sentinel en secrets — si fallan, reportar como infra no código
-    const pass = r.ok
-    if (!ok('analizar-ndvi', pass, `${r.status} ${t.slice(0, 200)}`)) {
-      if (/invalid_client|credentials|SENTINEL|AGRO/i.test(t)) {
+    const pass =
+      r.ok &&
+      (/exitoso|"ndvi"|sentinel2-pc|planetary/i.test(t) || t.includes('Actualización')) &&
+      !/invalid_client|getSentinelToken/i.test(t)
+    if (!ok('analizar-ndvi', pass, `${r.status} ${t.slice(0, 220)}`)) {
+      if (/invalid_client|getSentinelToken|Sentinel Hub/i.test(t)) {
         console.log(
-          'NOTE  NDVI: actualizar secrets Sentinel Hub / Agromonitoring en Supabase Edge Functions.',
+          'NOTE  Redeploy edge analizar-ndvi desde el repo (Planetary Computer). Dashboard Supabase → Edge Functions.',
         )
       }
       fails++

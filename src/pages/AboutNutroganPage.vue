@@ -240,22 +240,22 @@
                       </q-img>
                     </div>
 
-                    <div class="text-h6 text-weight-bold q-mb-sm text-white">Sentinel Hub</div>
-
-                    <p class="text-grey-4 text-body2 q-mb-md text-justify" style="min-height: 60px">
-                      Procesamiento de imágenes satelitales multiespectrales. Cálculo histórico de
-                      índices verdes (NDVI) y humedad (NDMI).
+                    <div class="text-h6 text-weight-bold q-mb-sm text-white">Sentinel-2 · PC</div>
+                    <p class="text-body2 text-grey-4 leading-relaxed q-mb-md">
+                      NDVI vía Microsoft Planetary Computer (Sentinel-2 L2A), misma estrategia que
+                      SIGAG. AgroMonitoring opcional. Sin Sentinel Hub.
                     </p>
 
                     <div class="q-mt-auto full-width">
                       <div class="row justify-center q-gutter-sm q-mb-sm">
                         <q-chip outline color="green-13" size="sm" icon="grass" label="NDVI" />
-                        <q-chip outline color="cyan-13" size="sm" icon="water_drop" label="NDMI" />
-                      </div>
-                      <div
-                        class="text-caption text-green-13 font-mono row flex-center justify-center"
-                      >
-                        VISITAR SITIO <q-icon name="arrow_outward" class="q-ml-xs" />
+                        <q-chip
+                          outline
+                          color="cyan-13"
+                          size="sm"
+                          icon="cloud"
+                          label="Planetary Computer"
+                        />
                       </div>
                     </div>
                   </div>

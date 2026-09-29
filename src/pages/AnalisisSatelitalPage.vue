@@ -470,7 +470,7 @@ async function ejecutarAnalisisNDVI() {
   erroresAnalisis.value = []
   const notif = $q.notify({
     type: 'ongoing',
-    message: 'Solicitando imágenes Sentinel-2...',
+    message: 'Solicitando Sentinel-2 (Planetary Computer)...',
     color: 'dark',
     textColor: 'primary',
     timeout: 0,
