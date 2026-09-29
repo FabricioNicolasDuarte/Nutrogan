@@ -1114,6 +1114,8 @@ watch(
   flex-direction: column;
   overflow: hidden;
   box-sizing: border-box;
+  /* Espacio interno extra por si el dock mide más en algún viewport */
+  padding-bottom: 8px !important;
 }
 
 .desktop-layout {
@@ -1125,26 +1127,29 @@ watch(
   flex-direction: column;
 }
 
+.header-row {
+  flex-shrink: 0;
+}
+
 /* MOBILE SPECIFIC */
 @media (max-width: 600px) {
   .dashboard-page {
     height: 100%;
-    overflow: hidden;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
   }
   .mobile-layout {
-    height: 100%;
-    min-height: 0;
+    min-height: 100%;
     display: flex;
     flex-direction: column;
   }
   .map-area-mobile {
-    min-height: 200px;
+    min-height: 220px;
     flex: 1 1 auto;
   }
 }
 
-/* Pantallas bajas: permitir scrollear hasta el corral */
-@media (max-height: 720px) {
+@media (max-height: 700px) {
   .dashboard-page {
     height: auto;
     max-height: none;
@@ -1153,11 +1158,11 @@ watch(
   }
   .desktop-layout {
     height: auto;
-    min-height: calc(100vh - 200px);
+    min-height: 560px;
     overflow: visible;
   }
   .main-frame {
-    min-height: 520px;
+    min-height: 480px;
   }
 }
 
@@ -1230,12 +1235,13 @@ watch(
   z-index: 0;
 }
 .corral-panel {
-  height: 150px;
-  min-height: 150px;
+  height: 160px;
+  min-height: 160px;
   flex-shrink: 0;
-  z-index: 50;
-  background: rgba(10, 10, 12, 0.92);
+  z-index: 60;
+  background: rgba(10, 10, 12, 0.95);
   border-top: 1px solid rgb(255, 255, 255);
+  position: relative;
 }
 .bg-black-transparent {
   background: rgba(81, 82, 83, 0.333);
