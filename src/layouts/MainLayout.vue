@@ -98,7 +98,7 @@
           />
         </div>
 
-        <div class="col scroll q-px-lg relative-position">
+        <div class="col scroll q-px-lg relative-position drawer-scroll">
           <div class="glass-card q-mb-xl q-pa-md relative-position overflow-hidden">
             <div class="row items-center justify-between q-mb-sm">
               <div class="text-overline text-grey-4 opacity-70" style="line-height: 1">
@@ -166,15 +166,36 @@
             <div class="glow-blob"></div>
           </div>
 
-          <div class="glass-card q-mb-lg q-pa-md relative-position overflow-hidden">
-            <OperationalAlertsPanel variant="drawer" />
-          </div>
-
           <div class="text-caption text-grey-5 q-mb-sm font-mono tracking-wider opacity-60 q-pl-xs">
             NAVEGACIÓN
           </div>
 
           <q-list class="nav-clean-list q-gutter-y-sm">
+            <q-item
+              clickable
+              v-ripple
+              to="/alertas"
+              active-class="nav-active"
+              @click="rightDrawerOpen = false"
+            >
+              <q-item-section avatar>
+                <q-icon name="notification_important" size="22px" />
+              </q-item-section>
+              <q-item-section class="text-body2">
+                Alertas
+                <q-badge
+                  v-if="alertCount > 0"
+                  color="orange-9"
+                  text-color="white"
+                  :label="String(alertCount)"
+                  class="q-ml-sm"
+                />
+              </q-item-section>
+              <q-item-section side>
+                <q-icon name="chevron_right" size="xs" color="grey-8" />
+              </q-item-section>
+            </q-item>
+
             <q-item clickable v-ripple to="/profile" active-class="nav-active">
               <q-item-section avatar><q-icon name="person_outline" size="22px" /></q-item-section>
               <q-item-section class="text-body2">Mi Perfil</q-item-section>
@@ -249,11 +270,16 @@
         color="orange-9"
         text-color="white"
         :label="alertCount > 9 ? '9+' : String(alertCount)"
-        class="alerts-notch-badge"
+        class="alerts-notch-badge cursor-pointer"
+        @click.stop="goAlertas"
       />
     </div>
 
-    <q-page-container class="page-padding-fix" v-touch-swipe.left="openDrawer">
+    <q-page-container
+      class="page-padding-fix"
+      :class="{ 'is-map-page': isMapPage }"
+      v-touch-swipe.left="openDrawer"
+    >
       <router-view />
     </q-page-container>
 
@@ -319,10 +345,9 @@
 import { ref, computed, watch } from 'vue'
 import { useAuthStore } from 'stores/auth-store'
 import { useDataStore } from 'stores/data-store'
-import { useRouter } from 'vue-router'
+import { useRouter, useRoute } from 'vue-router'
 import { useQuasar } from 'quasar'
 import LivingLogo from 'components/ui/LivingLogo.vue'
-import OperationalAlertsPanel from 'components/dashboard/OperationalAlertsPanel.vue'
 import { evaluateOperationalAlerts } from 'src/utils/operationalAlerts'
 
 const tab = ref('inicio')
@@ -331,7 +356,10 @@ const rightDrawerOpen = ref(false)
 const authStore = useAuthStore()
 const dataStore = useDataStore()
 const router = useRouter()
+const route = useRoute()
 const $q = useQuasar()
+
+const isMapPage = computed(() => !!route.meta.mapPage)
 
 const alertCount = computed(
   () =>
@@ -343,6 +371,11 @@ const alertCount = computed(
       evaluaciones: dataStore.evaluaciones || [],
     }).length,
 )
+
+function goAlertas() {
+  rightDrawerOpen.value = false
+  router.push('/alertas')
+}
 
 // --- DATOS USUARIO ---
 const userAvatar = computed(
@@ -472,6 +505,14 @@ function handlePan(details) {
 .drawer-content {
   background: linear-gradient(180deg, rgba(0, 0, 0, 0.832) 0%, rgba(0, 0, 0, 0.6) 100%);
   height: 100%;
+  min-height: 0;
+  overflow: hidden;
+}
+.drawer-scroll {
+  min-height: 0;
+  overflow-y: auto !important;
+  -webkit-overflow-scrolling: touch;
+  padding-bottom: 24px;
 }
 
 /* --- BLUR EFFECT --- */
@@ -761,13 +802,26 @@ function handlePan(details) {
   padding-bottom: 0 !important;
   height: 100vh;
   width: 100vw;
-  overflow: hidden;
+  overflow-x: hidden;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
 }
 .page-padding-fix :deep(.q-page) {
-  height: 100%;
-  max-height: 100%;
-  min-height: 0 !important;
+  min-height: 100%;
+  height: auto !important;
+  max-height: none !important;
+  overflow: visible !important;
+  padding-bottom: 200px;
+}
+.page-padding-fix.is-map-page {
   overflow: hidden;
+}
+.page-padding-fix.is-map-page :deep(.q-page) {
+  height: 100% !important;
+  max-height: 100% !important;
+  min-height: 0 !important;
+  overflow: hidden !important;
+  padding-bottom: 0;
 }
 
 .footer-wrapper {

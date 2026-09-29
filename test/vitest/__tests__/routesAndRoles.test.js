@@ -74,6 +74,7 @@ describe('router — inventario de funcionalidades', () => {
       '/recursos/lluvias',
       '/recursos/satelital',
       '/reportes',
+      '/alertas',
       '/profile',
       '/support',
       '/about',

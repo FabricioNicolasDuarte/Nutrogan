@@ -1,6 +1,6 @@
 <template>
-  <div class="alerts-hub column text-white" :class="{ 'alerts-hub--drawer': variant === 'drawer' }">
-    <div class="row items-center justify-between q-mb-sm">
+  <div class="alerts-hub column text-white" :class="{ 'alerts-hub--page': variant === 'page' }">
+    <div class="row items-center justify-between q-mb-sm" v-if="variant !== 'page'">
       <div class="row items-center">
         <q-icon name="notification_important" color="orange-8" size="sm" class="q-mr-sm" />
         <div>
@@ -22,6 +22,21 @@
       />
     </div>
 
+    <div v-else class="row items-center justify-between q-mb-md">
+      <div class="text-caption text-grey-5">
+        {{ alerts.length }} activas · umbrales de campo (sin inventar datos)
+      </div>
+      <q-btn
+        flat
+        dense
+        icon="refresh"
+        label="Recalcular"
+        color="grey-5"
+        :loading="refreshing"
+        @click="refresh"
+      />
+    </div>
+
     <q-tabs
       v-model="tab"
       dense
@@ -36,7 +51,12 @@
       <q-tab name="enviar" label="Enviar" />
     </q-tabs>
 
-    <q-tab-panels v-model="tab" animated class="bg-transparent col alerts-panels">
+    <q-tab-panels
+      v-model="tab"
+      animated
+      class="bg-transparent col alerts-panels"
+      :class="{ 'alerts-panels--page': variant === 'page' }"
+    >
       <q-tab-panel name="activas" class="q-pa-none">
         <div v-if="!alerts.length" class="text-center text-grey-6 q-py-md text-caption">
           Sin alertas con los datos cargados.
@@ -164,7 +184,7 @@ import { useDataStore } from 'stores/data-store'
 import { evaluateOperationalAlerts } from 'src/utils/operationalAlerts'
 
 defineProps({
-  variant: { type: String, default: 'drawer' }, // drawer | card
+  variant: { type: String, default: 'page' }, // page | drawer
 })
 
 const dataStore = useDataStore()
@@ -363,12 +383,17 @@ defineExpose({ alerts, recompute, refresh })
 </script>
 
 <style scoped>
-.alerts-hub--drawer {
-  min-height: 220px;
+.alerts-hub--page {
+  min-height: 420px;
 }
 .alerts-panels {
-  max-height: 320px;
+  max-height: 280px;
   overflow: auto;
+}
+.alerts-panels--page {
+  max-height: none;
+  overflow: visible;
+  min-height: 360px;
 }
 .alerts-panels :deep(.q-tab-panel) {
   background: transparent;

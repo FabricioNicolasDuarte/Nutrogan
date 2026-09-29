@@ -37,10 +37,14 @@ const routes = [
         component: () => import('pages/AnalisisSatelitalPage.vue'),
         meta: { mapPage: true, requiresRole: ['admin', 'tecnico'] },
       },
-      {
-        path: 'reportes',
+      { path: 'reportes',
         component: () => import('pages/ReportesPage.vue'),
         meta: { requiresRole: ['admin', 'tecnico'] },
+      },
+      {
+        path: 'alertas',
+        component: () => import('pages/AlertasPage.vue'),
+        meta: { requiresAuth: true },
       },
 
       // Equipo real = Profile TeamManager
