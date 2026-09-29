@@ -13,27 +13,27 @@ Cubre: GDPV, KPIs de hacienda, CC INTA, matriz de roles, inventario de rutas del
 ## 2. Smoke funcional API (Supabase live)
 
 ```bash
-npm run test:smoke
+npm run test:smoke          # lectura + edges
+npm run test:smoke:write    # CREATE / MOVE / DELETE / NDVI / mail real
 ```
 
-Autentica con `.env` + `NUTROGAN_SMOKE_EMAIL` / `NUTROGAN_SMOKE_PASSWORD` (opcionales; hay defaults de demo).
+`test:smoke:write` hace escrituras reales con tag `SMOKE-E2E-*` y limpia al final:
 
-Prueba lectura de:
+| Acción | Qué valida |
+|--------|------------|
+| Crear lote | insert + constraint objetivo |
+| Mover lote smoke | A→B y vuelta + `movimientos_de_lotes` |
+| Mover lote real | temp + restore inmediato |
+| Evaluación / evento sanitario | create + delete |
+| Lluvia | create |
+| Inventario | create + update stock + deactivate |
+| Agua | análisis + update estado |
+| NDVI | edge Planetary Computer + persistido en potrero |
+| Market / IA | edges |
+| Alerta email | `send-alert` → Resend `success` + id (revisar bandeja) |
+| Historial | `notificaciones_programadas` |
 
-| Dominio | Qué valida |
-|---------|------------|
-| Auth | login password |
-| Perfil / rol / establecimiento | membresía |
-| Lotes | EN PASTO 100% cabezas con potrero |
-| Potreros | geometría GIS |
-| Evaluaciones | lectura + GDPV sample |
-| Inventario | `inventario_items` |
-| Agua | `fuentes_de_agua` |
-| Lluvias | `registros_lluvia` |
-| Notificaciones | `notificaciones_programadas` |
-| Edges | market price, asistente-ia, analizar-ndvi, send-alert vacío, invite reachable |
-
-Reporte: `docs/SMOKE_APP_RESULT.json`
+Reporte: `docs/SMOKE_WRITE_RESULT.json`
 
 Solo edges (más corto):
 
@@ -66,7 +66,7 @@ npx cypress run --env NUTROGAN_SMOKE_EMAIL=...,NUTROGAN_SMOKE_PASSWORD=...
 npm run test:all
 ```
 
-= unitarios + smoke API. Cypress va aparte (`test:e2e`) porque abre browser.
+= unitarios + smoke lectura + smoke escritura. Cypress va aparte (`test:e2e`).
 
 ## Notas
 

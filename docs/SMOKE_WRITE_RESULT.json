@@ -1,0 +1,152 @@
+{
+  "ran_at": "2026-09-29T20:12:41.073Z",
+  "tag": "SMOKE-E2E-1790712753156",
+  "fails": 0,
+  "results": [
+    {
+      "name": "auth.login",
+      "pass": true,
+      "detail": "fabricioduarteoficial@gmail.com"
+    },
+    {
+      "name": "ctx.establecimiento",
+      "pass": true,
+      "detail": "6697a6fe-33d6-4003-88e8-af547caca4e6"
+    },
+    {
+      "name": "ctx.potreros",
+      "pass": true,
+      "detail": "n=9"
+    },
+    {
+      "name": "ctx.lote_real",
+      "pass": true,
+      "detail": "LT-002"
+    },
+    {
+      "name": "write.lote.create",
+      "pass": true,
+      "detail": "201 [{\"id\":\"52cd3035-6fe5-405f-bea4-f927c2058c33\",\"establecimiento_id\":\"6697a6fe-33d6-4003-88e8-af547caca4e6\",\"identificacio"
+    },
+    {
+      "name": "write.lote.move_A_to_B",
+      "pass": true,
+      "detail": "P1 → P5"
+    },
+    {
+      "name": "write.lote.move_back",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "write.lote_real.move_temp",
+      "pass": true,
+      "detail": "LT-002 → P5"
+    },
+    {
+      "name": "write.lote_real.restore",
+      "pass": true,
+      "detail": "8bb5fab4-d1b9-4900-9457-05eb972cd4c8"
+    },
+    {
+      "name": "write.evaluacion.create",
+      "pass": true,
+      "detail": "201 [{\"id\":\"163570cd-4b92-4295-ad19-9049581b2a73\",\"fecha_evaluacion\":\"2026-09-29\",\"peso_promedio_kg\":255"
+    },
+    {
+      "name": "write.evaluacion.readback",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "write.evento_sanitario.create",
+      "pass": true,
+      "detail": "201"
+    },
+    {
+      "name": "write.lluvia.create",
+      "pass": true,
+      "detail": "201 [{\"id\":\"bfcd39ae-a9ce-4d34-bff0-c32c59767494\",\"establecimiento_id\":\"6697a6fe-33d"
+    },
+    {
+      "name": "write.inventario.create",
+      "pass": true,
+      "detail": "201"
+    },
+    {
+      "name": "write.inventario.update_stock",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "write.agua.analisis",
+      "pass": true,
+      "detail": "201"
+    },
+    {
+      "name": "write.agua.update_estado",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "edge.ndvi",
+      "pass": true,
+      "detail": "200 {\"message\":\"Actualización completada (Planetary Computer / Agro opcional)\",\"resultados\":[{\"id\":\"960dca8c-3668-4867-9887-0b9b0d88ed2e\",\"estado\":\"exitoso\",\"ndvi\":"
+    },
+    {
+      "name": "edge.ndvi.persisted",
+      "pass": true,
+      "detail": "ndvi=0.378"
+    },
+    {
+      "name": "edge.market",
+      "pass": true,
+      "detail": "2222"
+    },
+    {
+      "name": "edge.asistente",
+      "pass": true,
+      "detail": "{\"response\":\"OK.\"}"
+    },
+    {
+      "name": "edge.send-alert.mail",
+      "pass": true,
+      "detail": "200 {\"success\":true,\"data\":{\"id\":\"01a0eecc-45d0-7309-a7cd-58aea2fc8c9b\"}}"
+    },
+    {
+      "name": "write.notificacion.historial",
+      "pass": true,
+      "detail": "201"
+    },
+    {
+      "name": "write.evaluacion.delete",
+      "pass": true,
+      "detail": "200"
+    },
+    {
+      "name": "write.evento_sanitario.delete",
+      "pass": true,
+      "detail": "200"
+    },
+    {
+      "name": "write.inventario.deactivate",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "write.lote.deactivate",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "write.lote.hard_delete",
+      "pass": true,
+      "detail": "200"
+    },
+    {
+      "name": "write.lote.gone_or_inactive",
+      "pass": true,
+      "detail": "[]"
+    }
+  ]
+}
