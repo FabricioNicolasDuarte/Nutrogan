@@ -1113,6 +1113,7 @@ watch(
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  box-sizing: border-box;
 }
 
 .desktop-layout {
@@ -1120,6 +1121,8 @@ watch(
   min-height: 0;
   height: 100%;
   overflow: hidden;
+  display: flex;
+  flex-direction: column;
 }
 
 /* MOBILE SPECIFIC */
@@ -1131,10 +1134,30 @@ watch(
   .mobile-layout {
     height: 100%;
     min-height: 0;
+    display: flex;
+    flex-direction: column;
   }
   .map-area-mobile {
-    min-height: 280px;
+    min-height: 200px;
     flex: 1 1 auto;
+  }
+}
+
+/* Pantallas bajas: permitir scrollear hasta el corral */
+@media (max-height: 720px) {
+  .dashboard-page {
+    height: auto;
+    max-height: none;
+    min-height: 100%;
+    overflow: visible;
+  }
+  .desktop-layout {
+    height: auto;
+    min-height: calc(100vh - 200px);
+    overflow: visible;
+  }
+  .main-frame {
+    min-height: 520px;
   }
 }
 
@@ -1183,7 +1206,7 @@ watch(
   border-radius: 20px;
   background: rgba(20, 20, 20, 0.5) !important;
   backdrop-filter: blur(8px);
-  margin-bottom: 10px;
+  margin-bottom: 0;
   display: flex;
   flex-direction: column;
   flex: 1 1 auto;
@@ -1192,7 +1215,7 @@ watch(
 }
 .map-area-rounded {
   flex: 1 1 auto;
-  min-height: 0;
+  min-height: 120px;
   position: relative;
 }
 .map-leaflet-host {
@@ -1208,9 +1231,10 @@ watch(
 }
 .corral-panel {
   height: 150px;
+  min-height: 150px;
   flex-shrink: 0;
   z-index: 50;
-  background: rgba(10, 10, 12, 0.8);
+  background: rgba(10, 10, 12, 0.92);
   border-top: 1px solid rgb(255, 255, 255);
 }
 .bg-black-transparent {

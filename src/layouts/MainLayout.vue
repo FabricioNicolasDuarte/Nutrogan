@@ -839,8 +839,22 @@ function handlePan(details) {
   height: 100% !important;
   max-height: 100% !important;
   min-height: 0 !important;
+  /* Deja hueco para el footer flotante (tabs + modo campo) */
   overflow: hidden !important;
-  padding-bottom: 0;
+  padding-bottom: 160px !important;
+  box-sizing: border-box !important;
+}
+@media (max-height: 720px) {
+  .page-padding-fix.is-map-page {
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  .page-padding-fix.is-map-page :deep(.q-page) {
+    height: auto !important;
+    max-height: none !important;
+    overflow: visible !important;
+    padding-bottom: 180px !important;
+  }
 }
 
 .footer-wrapper {
