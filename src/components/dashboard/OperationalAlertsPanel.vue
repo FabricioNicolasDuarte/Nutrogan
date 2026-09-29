@@ -54,7 +54,9 @@
 
     <q-tab-panels
       v-model="tab"
-      animated
+      keep-alive
+      transition-prev="fade"
+      transition-next="fade"
       class="bg-transparent col alerts-panels"
       :class="{ 'alerts-panels--page': variant === 'page' }"
     >
