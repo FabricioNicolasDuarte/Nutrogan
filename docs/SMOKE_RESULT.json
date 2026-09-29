@@ -5,7 +5,7 @@
     "auth": "PASS",
     "get-market-price": "PASS",
     "asistente-ia": "PASS (Gemini via GOOGLE_API_KEY OK)",
-    "analizar-ndvi": "FAIL — Sentinel Hub invalid_client (actualizar secrets en Supabase)",
+    "analizar-ndvi": "PASS — Planetary Computer (NDVI ~0.38)",
     "en_pasto_data": "PASS 140/140"
   },
   "ui_smoke_local": {
@@ -13,7 +13,7 @@
     "hacienda_140": true,
     "modo_campo_slider": true,
     "potreros_labels": 9,
-    "note": "nutrogan.com no resolvió en el browser automation (chrome-error); smoke UI en local"
+    "note": "Producción en https://www.nutrogan.site; smoke UI también validado en local"
   },
   "schema_dump": {
     "inferred_sql": "supabase/schema/inferred_from_live.sql",
