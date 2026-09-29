@@ -6,7 +6,7 @@
         <div>
           <div class="text-subtitle2 text-weight-bold">Alertas operativas</div>
           <div class="text-caption text-grey-5">
-            {{ alerts.length }} activas
+            {{ activeAlerts.length }} activas
           </div>
         </div>
       </div>
@@ -24,7 +24,7 @@
 
     <div v-else class="row items-center justify-between q-mb-md">
       <div class="text-caption text-grey-5">
-        {{ alerts.length }} activas · semáforo rojo / amarillo / verde
+        {{ activeAlerts.length }} activas · {{ archivedList.length }} archivadas · semáforo R/A/V
       </div>
       <q-btn
         flat
@@ -46,8 +46,9 @@
       indicator-color="primary"
       align="justify"
     >
-      <q-tab name="activas" label="Activas" />
-      <q-tab name="historial" label="Historial" />
+      <q-tab name="activas" :label="`Activas (${activeAlerts.length})`" />
+      <q-tab name="archivadas" :label="`Archivadas (${archivedList.length})`" />
+      <q-tab name="historial" label="Enviados" />
       <q-tab name="enviar" label="Enviar" />
     </q-tabs>
 
@@ -58,13 +59,17 @@
       :class="{ 'alerts-panels--page': variant === 'page' }"
     >
       <q-tab-panel name="activas" class="q-pa-none">
-        <div v-if="!alerts.length" class="text-center text-grey-6 q-py-md text-caption">
-          Sin alertas — estado verde.
+        <div v-if="!activeAlerts.length" class="text-center text-grey-6 q-py-md text-caption">
+          Sin alertas activas — estado verde.
         </div>
         <q-list v-else dense separator class="rounded-borders overflow-hidden">
-          <q-item v-for="a in alerts" :key="a.id" class="q-px-none">
+          <q-item v-for="a in activeAlerts" :key="a.id" class="q-px-none">
             <q-item-section avatar>
-              <q-avatar size="28px" :color="traffic(a.severity).color" :text-color="traffic(a.severity).textColor || 'white'">
+              <q-avatar
+                size="28px"
+                :color="traffic(a.severity).color"
+                :text-color="traffic(a.severity).textColor || 'white'"
+              >
                 <q-icon :name="traffic(a.severity).icon" size="16px" />
               </q-avatar>
             </q-item-section>
@@ -83,19 +88,86 @@
                 {{ a.message }}
               </q-item-label>
             </q-item-section>
+            <q-item-section side>
+              <q-btn
+                flat
+                dense
+                round
+                icon="archive"
+                color="grey-5"
+                size="sm"
+                @click="archivarUna(a)"
+              >
+                <q-tooltip>Archivar</q-tooltip>
+              </q-btn>
+            </q-item-section>
+          </q-item>
+        </q-list>
+        <div v-if="activeAlerts.length" class="row q-gutter-sm q-mt-md">
+          <q-btn
+            outline
+            dense
+            color="grey-5"
+            icon="inventory_2"
+            label="Archivar todas"
+            class="col"
+            @click="archivarTodas"
+          />
+          <q-btn
+            v-if="critical.length"
+            unelevated
+            dense
+            class="col"
+            color="red-8"
+            text-color="white"
+            icon="mail"
+            label="Avisar críticas"
+            :loading="notifying"
+            @click="notifyTeam"
+          />
+        </div>
+      </q-tab-panel>
+
+      <q-tab-panel name="archivadas" class="q-pa-none">
+        <div v-if="!archivedList.length" class="text-center text-grey-6 q-py-md text-caption">
+          Nada archivado.
+        </div>
+        <q-list v-else dense separator>
+          <q-item v-for="a in archivedList" :key="a.id" class="q-px-none">
+            <q-item-section avatar>
+              <q-icon :name="traffic(a.severity).icon" :color="traffic(a.severity).color" size="sm" />
+            </q-item-section>
+            <q-item-section>
+              <q-item-label class="text-caption text-weight-medium">{{ a.title }}</q-item-label>
+              <q-item-label caption class="text-grey-6">
+                {{ formatNotifDate(a.archivedAt) }}
+                <span v-if="a.stillDetected"> · sigue detectada</span>
+                <span v-else> · ya no aplica</span>
+              </q-item-label>
+            </q-item-section>
+            <q-item-section side>
+              <q-btn
+                flat
+                dense
+                round
+                icon="unarchive"
+                color="primary"
+                size="sm"
+                @click="restaurarUna(a.id)"
+              >
+                <q-tooltip>Restaurar a activas</q-tooltip>
+              </q-btn>
+            </q-item-section>
           </q-item>
         </q-list>
         <q-btn
-          v-if="critical.length"
-          unelevated
+          v-if="archivedList.length"
+          flat
           dense
-          class="full-width q-mt-md"
-          color="red-8"
-          text-color="white"
-          icon="mail"
-          label="Avisar críticas"
-          :loading="notifying"
-          @click="notifyTeam"
+          color="grey-5"
+          label="Vaciar archivadas"
+          class="full-width q-mt-sm"
+          @click="vaciarArchivadas"
         />
       </q-tab-panel>
 
@@ -193,18 +265,30 @@ import { useQuasar } from 'quasar'
 import { supabase } from 'boot/supabase'
 import { useDataStore } from 'stores/data-store'
 import { evaluateOperationalAlerts } from 'src/utils/operationalAlerts'
-import { ackAlerts, severityTraffic } from 'src/utils/alertsAck'
+import {
+  ackAlerts,
+  archiveAlert,
+  archiveAlerts,
+  clearArchived,
+  filterActiveAlerts,
+  getArchivedMap,
+  restoreAlert,
+  severityTraffic,
+} from 'src/utils/alertsAck'
+import { useAuthStore } from 'stores/auth-store'
 
 const props = defineProps({
   variant: { type: String, default: 'page' }, // page | drawer
 })
 
 const dataStore = useDataStore()
+const authStore = useAuthStore()
 const $q = useQuasar()
 const tab = ref('activas')
 const refreshing = ref(false)
 const notifying = ref(false)
-const alerts = ref([])
+const rawAlerts = ref([])
+const archiveTick = ref(0)
 
 const form = reactive({
   titulo: '',
@@ -228,15 +312,42 @@ const prioridades = [
   { label: 'Éxito', value: 'success' },
 ]
 
-const critical = computed(() => alerts.value.filter((a) => a.severity === 'critical'))
+const estId = computed(() => authStore.profile?.establecimiento_id)
+
+const activeAlerts = computed(() => {
+  void archiveTick.value
+  return filterActiveAlerts(rawAlerts.value, estId.value)
+})
+
+const archivedList = computed(() => {
+  void archiveTick.value
+  const map = getArchivedMap(estId.value)
+  const detectedIds = new Set(rawAlerts.value.map((a) => a.id))
+  return Object.entries(map)
+    .map(([id, meta]) => ({
+      id,
+      title: meta.title || id,
+      message: meta.message || '',
+      severity: meta.severity || 'info',
+      archivedAt: meta.archivedAt,
+      stillDetected: detectedIds.has(id),
+    }))
+    .sort((a, b) => new Date(b.archivedAt) - new Date(a.archivedAt))
+})
+
+const critical = computed(() => activeAlerts.value.filter((a) => a.severity === 'critical'))
 
 function traffic(severity) {
   return severityTraffic(severity)
 }
 
+function bumpArchive() {
+  archiveTick.value += 1
+}
+
 function markRead() {
   if (props.variant !== 'page') return
-  ackAlerts(alerts.value)
+  ackAlerts(activeAlerts.value)
   window.dispatchEvent(new CustomEvent('alerts-acked'))
 }
 
@@ -255,13 +366,46 @@ function formatNotifDate(iso) {
 }
 
 function recompute() {
-  alerts.value = evaluateOperationalAlerts({
+  rawAlerts.value = evaluateOperationalAlerts({
     lotes: dataStore.lotes || [],
     potreros: dataStore.potreros || [],
     fuentesAgua: dataStore.fuentesAgua || [],
     inventarioItems: dataStore.inventarioItems || [],
     evaluaciones: dataStore.evaluaciones || [],
   })
+  bumpArchive()
+  markRead()
+}
+
+function archivarUna(alert) {
+  archiveAlert(estId.value, alert)
+  bumpArchive()
+  markRead()
+  $q.notify({ type: 'info', message: 'Alerta archivada', timeout: 1200, position: 'bottom' })
+}
+
+function archivarTodas() {
+  if (!activeAlerts.value.length) return
+  archiveAlerts(estId.value, activeAlerts.value)
+  bumpArchive()
+  markRead()
+  $q.notify({
+    type: 'info',
+    message: 'Todas las activas archivadas',
+    timeout: 1500,
+    position: 'bottom',
+  })
+}
+
+function restaurarUna(id) {
+  restoreAlert(estId.value, id)
+  bumpArchive()
+  markRead()
+}
+
+function vaciarArchivadas() {
+  clearArchived(estId.value)
+  bumpArchive()
   markRead()
 }
 
@@ -391,7 +535,7 @@ onMounted(async () => {
   recompute()
 })
 
-defineExpose({ alerts, recompute, refresh })
+defineExpose({ alerts: activeAlerts, recompute, refresh })
 </script>
 
 <style scoped>

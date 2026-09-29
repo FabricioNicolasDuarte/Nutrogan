@@ -338,7 +338,7 @@ import { useRouter, useRoute } from 'vue-router'
 import { useQuasar } from 'quasar'
 import LivingLogo from 'components/ui/LivingLogo.vue'
 import { evaluateOperationalAlerts } from 'src/utils/operationalAlerts'
-import { hasUnreadAlerts } from 'src/utils/alertsAck'
+import { filterActiveAlerts, hasUnreadAlerts } from 'src/utils/alertsAck'
 
 const tab = ref('inicio')
 const rightDrawerOpen = ref(false)
@@ -352,17 +352,19 @@ const $q = useQuasar()
 
 const isMapPage = computed(() => !!route.meta.mapPage)
 
-const operationalAlerts = computed(() =>
-  evaluateOperationalAlerts({
+const operationalAlerts = computed(() => {
+  void alertsAckTick.value
+  const raw = evaluateOperationalAlerts({
     lotes: dataStore.lotes || [],
     potreros: dataStore.potreros || [],
     fuentesAgua: dataStore.fuentesAgua || [],
     inventarioItems: dataStore.inventarioItems || [],
     evaluaciones: dataStore.evaluaciones || [],
-  }),
-)
+  })
+  return filterActiveAlerts(raw, authStore.profile?.establecimiento_id)
+})
 
-/** Punto del notch: rojo si hay alertas no leídas; verde si todo revisado o no hay. */
+/** Punto del notch: rojo si hay alertas activas no leídas; verde si todo revisado o no hay. */
 const hasUnreadAlertsDot = computed(() => {
   void alertsAckTick.value
   return hasUnreadAlerts(operationalAlerts.value)
@@ -379,9 +381,11 @@ function goAlertas() {
 
 onMounted(() => {
   window.addEventListener('alerts-acked', bumpAlertsAck)
+  window.addEventListener('alerts-archive-changed', bumpAlertsAck)
 })
 onUnmounted(() => {
   window.removeEventListener('alerts-acked', bumpAlertsAck)
+  window.removeEventListener('alerts-archive-changed', bumpAlertsAck)
 })
 
 // --- DATOS USUARIO ---
