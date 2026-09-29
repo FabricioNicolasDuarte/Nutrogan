@@ -183,7 +183,7 @@
               v-if="authStore.canManageTeam"
               clickable
               v-ripple
-              to="/team"
+              to="/equipo"
               active-class="nav-active"
             >
               <q-item-section avatar><q-icon name="people_outline" size="22px" /></q-item-section>
@@ -201,7 +201,13 @@
               /></q-item-section>
             </q-item>
 
-            <q-item clickable v-ripple to="/about" active-class="nav-active">
+            <q-item
+              v-if="!authStore.isOperario"
+              clickable
+              v-ripple
+              to="/about"
+              active-class="nav-active"
+            >
               <q-item-section avatar><q-icon name="info_outline" size="22px" /></q-item-section>
               <q-item-section class="text-body2">Información</q-item-section>
               <q-item-section side

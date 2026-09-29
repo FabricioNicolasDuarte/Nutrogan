@@ -86,6 +86,7 @@ export const useDataStore = defineStore(
         fetchMiembrosEquipo(),
         fetchNotifications(),
         fetchInventarioMovimientos(),
+        fetchRegistrosLluvia(),
       ])
     }
 
@@ -287,26 +288,15 @@ export const useDataStore = defineStore(
       const estId = authStore.profile?.establecimiento_id
       if (!estId) throw new Error('No hay establecimiento activo para invitar')
 
-      const { data, error } = await supabase
-        .from('invitaciones_equipo')
-        .insert({
-          email: email,
-          rol: rol,
-          establecimiento_id: estId,
-        })
-        .select()
+      // Preferir edge invite-user (usuario Auth ya existente → miembros)
+      const { data, error } = await supabase.functions.invoke('invite-user', {
+        body: { email, rol: rol || 'operario', establecimiento_id: estId },
+      })
+      if (error) throw error
+      if (data && data.success === false) throw new Error(data.error || 'No se pudo invitar')
 
-      if (error) {
-        if (error.code === '23505') {
-          await supabase
-            .from('invitaciones_equipo')
-            .update({ rol: rol, establecimiento_id: estId })
-            .eq('email', email)
-          return { success: true, message: 'Invitación actualizada' }
-        }
-        throw error
-      }
-      return data
+      await fetchMiembrosEquipo()
+      return { success: true, message: data?.message || 'Usuario agregado al equipo' }
     }
 
     async function updateMiembroRol(membresiaId, nuevoRol) {

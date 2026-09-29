@@ -11,7 +11,6 @@ const routes = [
       },
 
       // --- ZONA OPERATIVA (Todos tienen acceso) ---
-      // IMPORTANTE: El Operario necesita entrar aquí para ver listados básicos
       { path: 'lotes', component: () => import('pages/LotesPage.vue') },
       { path: 'lote/:id', component: () => import('pages/LoteDetailPage.vue') },
       {
@@ -44,9 +43,20 @@ const routes = [
         meta: { requiresRole: ['admin', 'tecnico'] },
       },
 
-      // --- ZONA ADMINISTRATIVA (Restringida) ---
+      // Equipo real = Profile TeamManager
+      {
+        path: 'equipo',
+        redirect: (to) => ({ path: '/profile', query: { tab: 'team', ...to.query } }),
+        meta: { requiresRole: ['admin'] },
+      },
+      // Legacy: founders
       {
         path: 'team',
+        redirect: '/fundadores',
+        meta: { requiresRole: ['admin'] },
+      },
+      {
+        path: 'fundadores',
         component: () => import('pages/DeveloperTeamPage.vue'),
         meta: { requiresRole: ['admin'] },
       },
@@ -63,7 +73,7 @@ const routes = [
   {
     path: '/field',
     component: () => import('layouts/FieldLayout.vue'),
-    meta: { requiresAuth: true }, // Todos pueden entrar
+    meta: { requiresAuth: true },
     children: [{ path: '', component: () => import('pages/field/FieldDashboardPage.vue') }],
   },
 
@@ -71,6 +81,11 @@ const routes = [
     path: '/welcome',
     component: () => import('pages/WelcomePage.vue'),
     meta: { requiresAuth: true },
+  },
+  // Confirmación email / magic link (Supabase redirect)
+  {
+    path: '/auth/callback',
+    component: () => import('pages/AuthCallbackPage.vue'),
   },
   { path: '/login', component: () => import('pages/LoginPage.vue') },
   { path: '/:catchAll(.*)*', component: () => import('pages/ErrorNotFound.vue') },

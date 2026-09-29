@@ -39,8 +39,11 @@ import { useAuthStore } from 'stores/auth-store'
 const authStore = useAuthStore()
 
 onMounted(async () => {
-  // Refrescamos la sesión para confirmar que Supabase ya tiene el usuario activo
   await authStore.checkAuth()
+  // Si ya hay sesión tras confirmar email → dashboard / campo
+  if (authStore.isAuthenticated) {
+    // no auto-redirect agresivo: el CTA del template manda a /
+  }
 })
 </script>
 

@@ -1,10 +1,12 @@
 {
-  "generated_at": "2026-09-29T18:00:00.000Z",
-  "source": "static inventory from src/*.js|vue (RLS lives in Supabase project; no migrations folder yet)",
+  "generated_at": "2026-09-29T18:15:00.000Z",
+  "source": "static inventory from src + edge functions",
   "tables": [
+    "alimentos",
     "analisis_de_agua",
     "consumos_de_dieta",
     "dietas",
+    "dietas_items",
     "establecimientos",
     "evaluaciones",
     "eventos_reproductivos",
@@ -21,7 +23,8 @@
     "potreros",
     "registros_lluvia"
   ],
-  "storage_buckets": ["avatars"],
+  "storage_buckets": ["avatars", "potrero-snapshots"],
+  "rpcs": ["crear_usuario_secreto", "eliminar_usuario_total", "registrar_movimiento_inventario"],
   "edge_functions": [
     "analizar-ndvi",
     "asistente-ia",
@@ -31,8 +34,12 @@
     "invite-user",
     "send-alert"
   ],
+  "rls": {
+    "migration": "supabase/migrations/20260929180000_rls_establecimiento.sql",
+    "status": "versioned in repo — apply manually in Supabase SQL Editor after review"
+  },
   "notes": [
-    "Dump OpenAPI vía REST devolvió paths vacíos con anon key; este inventario es la fuente versionada mínima.",
-    "Secrets de Gemini: solo Deno.env GOOGLE_API_KEY en asistente-ia (nunca VITE_*)."
+    "No hay dump DDL completo (OpenAPI anon vacío). RLS intended en migrations/.",
+    "Secrets Gemini: solo GOOGLE_API_KEY en edge asistente-ia."
   ]
 }

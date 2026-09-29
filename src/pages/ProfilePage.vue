@@ -161,7 +161,8 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, watch } from 'vue'
+import { useRoute } from 'vue-router'
 import { useAuthStore } from 'stores/auth-store'
 import ProfileHero from 'components/profile/ProfileHero.vue'
 import TeamManager from 'components/profile/TeamManager.vue'
@@ -169,7 +170,18 @@ import EstablishmentSettings from 'components/profile/EstablishmentSettings.vue'
 import EmergencyUnit from 'components/profile/EmergencyUnit.vue'
 
 const authStore = useAuthStore()
+const route = useRoute()
 const tab = ref('personal')
+
+watch(
+  () => route.query.tab,
+  (t) => {
+    if (t === 'team' && authStore.canManageTeam) tab.value = 'team'
+    else if (t === 'establishment' && authStore.canViewEstablishmentData) tab.value = 'establishment'
+    else if (t === 'personal') tab.value = 'personal'
+  },
+  { immediate: true },
+)
 </script>
 
 <style scoped>

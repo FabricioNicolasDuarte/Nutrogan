@@ -137,6 +137,7 @@
         </q-btn-dropdown>
 
         <q-btn
+          v-if="authStore.canEditFieldStructure"
           color="primary"
           icon="add"
           label="Nuevo Potrero"
@@ -173,7 +174,14 @@
                 </div>
               </div>
 
-              <q-btn flat round dense icon="more_vert" color="grey-5">
+              <q-btn
+                v-if="authStore.canEditFieldStructure"
+                flat
+                round
+                dense
+                icon="more_vert"
+                color="grey-5"
+              >
                 <q-menu class="bg-dark text-white border-neon">
                   <q-list dense style="min-width: 140px">
                     <q-item clickable v-close-popup @click="editarPotrero(potrero)">
@@ -269,7 +277,7 @@
               </span>
 
               <q-btn
-                v-if="!potrero.geometria"
+                v-if="!potrero.geometria && authStore.canEditFieldStructure"
                 flat
                 dense
                 color="white"

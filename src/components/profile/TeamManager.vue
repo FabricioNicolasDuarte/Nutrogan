@@ -265,20 +265,37 @@
 
     <q-dialog v-model="showCreateDialog">
       <q-card class="bg-grey-10 text-white border-neon" style="width: 400px">
-        <q-card-section class="bg-header-gradient"
-          ><div class="text-h6">Nuevo Miembro</div></q-card-section
-        >
-        <q-form @submit.prevent="crearUsuario">
-          <q-card-section class="q-gutter-y-md">
+        <q-card-section class="bg-header-gradient">
+          <div class="text-h6">Nuevo Miembro</div>
+          <div class="text-caption text-grey-5">Crear cuenta nueva o vincular usuario existente</div>
+        </q-card-section>
+        <q-card-section class="q-pt-none">
+          <q-btn-toggle
+            v-model="createMode"
+            spread
+            toggle-color="primary"
+            text-color="grey-5"
+            toggle-text-color="black"
+            :options="[
+              { label: 'Crear', value: 'create' },
+              { label: 'Invitar existente', value: 'invite' },
+            ]"
+            class="full-width"
+            dense
+          />
+        </q-card-section>
+        <q-form @submit.prevent="createMode === 'invite' ? invitarUsuario() : crearUsuario()">
+          <q-card-section class="q-gutter-y-md q-pt-none">
             <q-input
               v-model="newUser.email"
-              label="Email Corporativo"
+              label="Email"
               filled
               dark
               color="primary"
               :rules="[(val) => !!val || 'Requerido']"
             />
             <q-input
+              v-if="createMode === 'create'"
               v-model="newUser.nombre"
               label="Nombre Completo"
               filled
@@ -295,6 +312,7 @@
               color="primary"
             />
             <q-input
+              v-if="createMode === 'create'"
               v-model="newUser.password"
               label="Contraseña Provisoria"
               filled
@@ -302,11 +320,15 @@
               color="primary"
               type="password"
             />
+            <div v-else class="text-caption text-grey-5">
+              El email debe tener cuenta Auth en Nutrogan. Se agrega al establecimiento vía
+              invite-user.
+            </div>
           </q-card-section>
           <q-card-actions align="right">
             <q-btn flat label="Cancelar" v-close-popup color="grey" />
             <q-btn
-              label="Crear Acceso"
+              :label="createMode === 'invite' ? 'Invitar' : 'Crear Acceso'"
               type="submit"
               color="primary"
               text-color="black"
@@ -352,6 +374,7 @@ const showEditDialog = ref(false)
 const dialogAlertas = ref(false)
 const loading = ref(false)
 const loadingAlert = ref(false)
+const createMode = ref('create')
 
 const newUser = reactive({ email: '', nombre: '', rol: 'operario', password: '' })
 const editForm = reactive({ usuario_id: null, nombre_completo: '', telefono: '' })
@@ -508,6 +531,19 @@ async function crearUsuario() {
     newUser.password = ''
   } else {
     $q.notify({ type: 'negative', message: res.error })
+  }
+  loading.value = false
+}
+
+async function invitarUsuario() {
+  loading.value = true
+  try {
+    const res = await dataStore.invitarMiembro(newUser.email, newUser.rol)
+    $q.notify({ type: 'positive', message: res?.message || 'Invitación aplicada' })
+    showCreateDialog.value = false
+    newUser.email = ''
+  } catch (e) {
+    $q.notify({ type: 'negative', message: e.message || 'No se pudo invitar' })
   }
   loading.value = false
 }

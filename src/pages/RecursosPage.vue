@@ -66,20 +66,19 @@
 <script setup>
 import { computed, onMounted } from 'vue'
 import { useDataStore } from 'stores/data-store'
+import { useAuthStore } from 'stores/auth-store'
 
 const dataStore = useDataStore()
+const authStore = useAuthStore()
 
 onMounted(() => {
-  // Cargamos datos frescos para que las tarjetas muestren info real
   dataStore.fetchAll()
 })
 
 const recursosEnriquecidos = computed(() => {
-  // 1. Potreros Stats
   const totalHa = dataStore.potreros.reduce((acc, p) => acc + (p.superficie_ha || 0), 0).toFixed(0)
-  const potrerosOcupados = dataStore.lotes.filter((l) => l.potrero_actual_id).length // Aprox
+  const potrerosOcupados = dataStore.lotes.filter((l) => l.potrero_actual_id).length
 
-  // 2. Despensa Stats
   const itemsCriticos = dataStore.inventarioItems.filter(
     (i) => i.stock_actual <= i.stock_minimo_alerta,
   ).length
@@ -88,26 +87,23 @@ const recursosEnriquecidos = computed(() => {
     0,
   )
 
-  // 3. Agua Stats
   const fuentesMalas = dataStore.fuentesAgua.filter(
     (f) => f.ultimo_estado === 'Peligro' || f.ultimo_estado === 'Precaución',
   ).length
 
-  // 4. Lluvias Stats
   const hoy = new Date()
-  const lluviasMes = dataStore.registrosLluvia
+  const lluviasMes = (dataStore.registrosLluvia || [])
     .filter((r) => {
       const d = new Date(r.fecha)
       return d.getMonth() === hoy.getMonth() && d.getFullYear() === hoy.getFullYear()
     })
-    .reduce((acc, r) => acc + r.milimetros, 0)
+    .reduce((acc, r) => acc + (Number(r.milimetros) || 0), 0)
 
-  // 5. Satelital Stats
   const conDatosSatelitales = dataStore.potreros.filter(
     (p) => typeof p.ultimo_ndvi === 'number',
   ).length
 
-  return [
+  const cards = [
     {
       titulo: 'Mis Potreros',
       caption: 'Gestión de parcelas y superficie.',
@@ -154,7 +150,10 @@ const recursosEnriquecidos = computed(() => {
         { icon: 'thermostat', text: 'Pronóstico 5 días', color: 'orange-4' },
       ],
     },
-    {
+  ]
+
+  if (authStore.canViewReports) {
+    cards.push({
       titulo: 'Satélite (NDVI)',
       caption: 'Índices de vigor vegetal.',
       link: '/recursos/satelital',
@@ -168,8 +167,10 @@ const recursosEnriquecidos = computed(() => {
           color: 'green-13',
         },
       ],
-    },
-  ]
+    })
+  }
+
+  return cards
 })
 </script>
 

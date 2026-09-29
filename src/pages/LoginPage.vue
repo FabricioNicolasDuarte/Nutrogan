@@ -108,7 +108,8 @@ const handleLogin = async () => {
   const res = await authStore.loginWithPassword(form.email, form.password)
 
   if (res.success) {
-    router.push('/')
+    // Operario: arranca en modo campo (producto field-first)
+    router.push(authStore.isOperario ? '/field' : '/')
   } else {
     errorMsg.value = 'Credenciales inválidas o acceso no autorizado.'
   }

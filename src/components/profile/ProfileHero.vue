@@ -26,8 +26,8 @@
       <q-icon name="edit" size="xs" color="grey-6" class="q-ml-xs" />
     </div>
 
-    <q-badge color="grey-8" text-color="white" class="q-mb-md">
-      {{ profile.rol || 'USUARIO' }}
+    <q-badge color="grey-8" text-color="white" class="q-mb-md text-uppercase">
+      {{ authStore.currentRole || 'usuario' }}
     </q-badge>
 
     <div class="full-width q-px-sm q-mb-lg">
