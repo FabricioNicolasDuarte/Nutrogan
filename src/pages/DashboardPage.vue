@@ -23,19 +23,6 @@
           <div class="page-title-box">PANEL DE CONTROL</div>
         </div>
         <div class="row items-center justify-end q-gutter-x-md z-top">
-          <q-btn
-            v-if="alertCount > 0"
-            unelevated
-            dense
-            color="orange-9"
-            text-color="white"
-            icon="notification_important"
-            :label="`${alertCount}`"
-            class="q-px-sm"
-            @click="showAlerts = true"
-          >
-            <q-tooltip>Alertas operativas</q-tooltip>
-          </q-btn>
           <div class="glass-capsule row items-center q-px-md shadow-3">
             <q-icon name="search" color="grey-5" size="xs" />
             <q-select
@@ -85,19 +72,21 @@
       <div class="main-frame col column relative-position overflow-hidden shadow-10">
         <div class="col-grow relative-position overflow-hidden map-area-rounded">
           <div
-            class="full-height full-width relative-position transition-blur"
+            class="map-leaflet-host relative-position transition-blur"
             :class="{ 'blur-content': !!selectedPotrero }"
           >
             <l-map
+              v-if="mapReady"
               ref="mapRefDesktop"
               v-model:zoom="zoom"
               :center="mapCenter"
+              :use-global-leaflet="false"
               :options="{
                 zoomControl: false,
                 attributionControl: false,
                 fadeAnimation: true,
               }"
-              style="height: 100%; width: 100%; z-index: 0"
+              class="map-leaflet-el"
               @ready="onMapReady"
             >
               <l-tile-layer :url="currentTileLayer" layer-type="base" name="Base Layer" />
@@ -107,6 +96,9 @@
                 :options="geoJsonOptions"
               />
             </l-map>
+            <div v-else class="absolute-full flex flex-center">
+              <q-spinner-orbit color="primary" size="2em" />
+            </div>
             <div class="absolute-full no-pointer-events" style="z-index: 10">
               <div
                 v-for="potrero in potrerosConPosicion"
@@ -320,39 +312,34 @@
           </div>
         </div>
         <div class="row q-gutter-x-sm">
-          <q-btn
-            v-if="alertCount > 0"
-            dense
-            unelevated
-            color="orange-9"
-            text-color="white"
-            icon="notification_important"
-            :label="String(alertCount)"
-            @click="showAlerts = true"
-          />
           <q-badge color="dark" class="border-neon text-primary q-py-xs">
             <q-icon name="pets" class="q-mr-xs" /> {{ kpis.totalAnimales }}
           </q-badge>
         </div>
       </div>
 
-      <div class="col relative-position overflow-hidden rounded-borders shadow-3">
+      <div class="col relative-position overflow-hidden rounded-borders shadow-3 map-area-mobile">
         <l-map
+          v-if="mapReady"
           ref="mapRefMobile"
           v-model:zoom="zoom"
           :center="mapCenter"
+          :use-global-leaflet="false"
           :options="{
             zoomControl: false,
             attributionControl: false,
             fadeAnimation: true,
             tap: false,
           }"
-          style="height: 100%; width: 100%; z-index: 0"
+          class="map-leaflet-el"
           @ready="onMapReady"
         >
           <l-tile-layer :url="currentTileLayer" layer-type="base" name="Base Layer" />
           <l-geo-json v-if="potrerosGeoJson" :geojson="potrerosGeoJson" :options="geoJsonOptions" />
         </l-map>
+        <div v-else class="absolute-full flex flex-center bg-dark">
+          <q-spinner-orbit color="primary" size="2em" />
+        </div>
 
         <div class="absolute-full no-pointer-events" style="z-index: 10">
           <div
@@ -558,12 +545,6 @@
       </q-card>
     </q-dialog>
 
-    <q-dialog v-model="showAlerts">
-      <div style="width: min(520px, 95vw)">
-        <OperationalAlertsPanel />
-      </div>
-    </q-dialog>
-
     <q-inner-loading :showing="globalLoading" dark class="z-max">
       <q-spinner-orbit size="40px" color="primary" />
     </q-inner-loading>
@@ -575,13 +556,19 @@ import { ref, computed, onMounted, nextTick, watch } from 'vue'
 import { useDataStore } from 'stores/data-store'
 import { useQuasar } from 'quasar'
 import { useRouter } from 'vue-router'
+import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
 import { LMap, LTileLayer, LGeoJson } from '@vue-leaflet/vue-leaflet'
 import ProDetailCard from 'components/dashboard/ProDetailCard.vue'
-import OperationalAlertsPanel from 'components/dashboard/OperationalAlertsPanel.vue'
 import { useSound } from 'src/composables/useSound'
 import { cabezasEnPasto, cabezasTotales, lotesSinPotrero, pctEnPasto } from 'src/utils/livestockKpis'
-import { evaluateOperationalAlerts } from 'src/utils/operationalAlerts'
+
+// Fix iconos Leaflet (Vite)
+import iconRetinaUrl from 'leaflet/dist/images/marker-icon-2x.png'
+import iconUrl from 'leaflet/dist/images/marker-icon.png'
+import shadowUrl from 'leaflet/dist/images/marker-shadow.png'
+delete L.Icon.Default.prototype._getIconUrl
+L.Icon.Default.mergeOptions({ iconRetinaUrl, iconUrl, shadowUrl })
 
 const dataStore = useDataStore()
 const $q = useQuasar()
@@ -592,14 +579,14 @@ const { playMuu } = useSound()
 const zoom = ref(14)
 const mapCenter = ref([-26.1775, -58.1756])
 let mapObject = null
-const mapRefDesktop = ref(null) // Renombrado para coincidir con template Desktop
-const mapRefMobile = ref(null) // Mobile
+const mapRefDesktop = ref(null)
+const mapRefMobile = ref(null)
 const mapMode = ref('satellite')
 const searchTarget = ref(null)
+const mapReady = ref(false)
 
 const selectedPotrero = ref(null)
 const globalLoading = ref(false)
-const showAlerts = ref(false)
 
 // Estados para Lógica Móvil
 const dialogoPotreroMobile = ref(false)
@@ -641,17 +628,6 @@ const kpis = computed(() => {
     lotesSinAsignar: lotesSinPotrero(dataStore.lotes).length,
   }
 })
-
-const alertCount = computed(
-  () =>
-    evaluateOperationalAlerts({
-      lotes: dataStore.lotes || [],
-      potreros: dataStore.potreros || [],
-      fuentesAgua: dataStore.fuentesAgua || [],
-      inventarioItems: dataStore.inventarioItems || [],
-      evaluaciones: dataStore.evaluaciones || [],
-    }).length,
-)
 
 const searchOptions = computed(() => {
   const opts = []
@@ -880,20 +856,59 @@ function onMapReady(map) {
   map.on('move', updateMarkerPositions)
   map.on('zoom', updateMarkerPositions)
   map.on('resize', updateMarkerPositions)
-  // Fix para que cargue bien al inicio
-  setTimeout(() => {
-    if (mapObject) {
-      mapObject.invalidateSize()
-      updateMarkerPositions()
-    }
-  }, 400)
+  const harden = () => {
+    if (!mapObject) return
+    mapObject.invalidateSize({ animate: false })
+    fitPotrerosBounds()
+    updateMarkerPositions()
+  }
+  nextTick(harden)
+  setTimeout(harden, 200)
+  setTimeout(harden, 600)
+  setTimeout(harden, 1200)
 }
 
-function centrarMapa() {
-  if (!mapObject || !('geolocation' in navigator)) return
-  navigator.geolocation.getCurrentPosition((p) => {
-    mapObject.flyTo([p.coords.latitude, p.coords.longitude], 16)
-  })
+function fitPotrerosBounds() {
+  if (!mapObject) return
+  const pts = []
+  for (const p of dataStore.potreros || []) {
+    let geo = p.geometria
+    if (!geo) continue
+    if (typeof geo === 'string') {
+      try {
+        geo = JSON.parse(geo)
+      } catch {
+        continue
+      }
+    }
+    const ring = geo.type === 'Feature' ? geo.geometry?.coordinates?.[0] : geo.coordinates?.[0]
+    if (!Array.isArray(ring)) continue
+    for (const c of ring) {
+      if (Array.isArray(c) && c.length >= 2) pts.push([c[1], c[0]])
+    }
+  }
+  if (pts.length < 2) return
+  try {
+    mapObject.fitBounds(pts, { padding: [48, 48], maxZoom: 16 })
+  } catch {
+    // ignore invalid bounds
+  }
+}
+
+function centrarMapa(forceGeo) {
+  if (!mapObject) return
+  if (!forceGeo) {
+    fitPotrerosBounds()
+    return
+  }
+  if (!('geolocation' in navigator)) return
+  navigator.geolocation.getCurrentPosition(
+    (p) => {
+      mapObject.flyTo([p.coords.latitude, p.coords.longitude], 16)
+    },
+    () => fitPotrerosBounds(),
+    { timeout: 8000 },
+  )
 }
 
 // Utils (Compartidos)
@@ -1053,12 +1068,33 @@ function getObjetivoColor(obj) {
 }
 
 onMounted(async () => {
-  await dataStore.fetchAll()
+  globalLoading.value = true
+  try {
+    await dataStore.fetchAll()
+  } finally {
+    globalLoading.value = false
+  }
+  await nextTick()
+  // Montar mapa solo cuando el layout ya midió altura (evita tiles en 0×0 en local)
+  mapReady.value = true
 })
 watch(
   () => dataStore.potreros,
-  () => nextTick(updateMarkerPositions),
+  () =>
+    nextTick(() => {
+      fitPotrerosBounds()
+      updateMarkerPositions()
+    }),
   { deep: true },
+)
+watch(
+  () => $q.screen.gt.sm,
+  async () => {
+    mapObject = null
+    mapReady.value = false
+    await nextTick()
+    mapReady.value = true
+  },
 )
 </script>
 
@@ -1071,22 +1107,34 @@ watch(
   font-family: 'Fira Code', monospace;
 }
 .dashboard-page {
-  height: 100vh;
-  min-height: 100vh;
+  height: 100%;
+  min-height: 0;
+  max-height: 100%;
   display: flex;
   flex-direction: column;
+  overflow: hidden;
+}
+
+.desktop-layout {
+  flex: 1 1 auto;
+  min-height: 0;
+  height: 100%;
+  overflow: hidden;
 }
 
 /* MOBILE SPECIFIC */
 @media (max-width: 600px) {
   .dashboard-page {
-    height: auto;
-    overflow-y: auto;
-    /* Ajuste para que el mapa ocupe casi todo, descontando header */
-    height: 100vh;
+    height: 100%;
+    overflow: hidden;
   }
   .mobile-layout {
     height: 100%;
+    min-height: 0;
+  }
+  .map-area-mobile {
+    min-height: 280px;
+    flex: 1 1 auto;
   }
 }
 
@@ -1138,6 +1186,25 @@ watch(
   margin-bottom: 10px;
   display: flex;
   flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: hidden;
+}
+.map-area-rounded {
+  flex: 1 1 auto;
+  min-height: 0;
+  position: relative;
+}
+.map-leaflet-host {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+.map-leaflet-el {
+  width: 100% !important;
+  height: 100% !important;
+  z-index: 0;
 }
 .corral-panel {
   height: 150px;

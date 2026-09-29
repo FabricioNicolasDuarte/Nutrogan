@@ -109,9 +109,8 @@
         </div>
 
         <div class="col-12 col-lg-3">
-          <div class="column full-height q-gutter-md">
-            <MarketPriceWidget />
-            <OperationalAlertsPanel />
+          <div class="column full-height">
+            <MarketPriceWidget class="full-height" />
           </div>
         </div>
       </div>
@@ -166,7 +165,6 @@ import ChartRentabilidad from 'components/charts/ChartRentabilidad.vue'
 import ChartPrediccionStock from 'components/charts/ChartPrediccionStock.vue'
 import LotMetricsTable from 'components/tables/LotMetricsTable.vue'
 import MarketPriceWidget from 'components/dashboard/MarketPriceWidget.vue'
-import OperationalAlertsPanel from 'components/dashboard/OperationalAlertsPanel.vue'
 import {
   cabezasTotales,
   valuacionHaciendaEstimada,

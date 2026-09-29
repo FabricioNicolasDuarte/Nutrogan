@@ -16,10 +16,11 @@ export function createNotificacionesModule({ supabase, authStore }) {
 
   async function createNotification(notifData) {
     notifData.establecimiento_id = authStore.profile.establecimiento_id
+    const alreadySent = notifData.estado === 'enviado'
     if (notifData.prioridad && notifData.prioridad.toLowerCase() === 'urgente') {
       notifData.fecha_programada = new Date().toISOString()
       notifData.estado = 'enviado'
-    } else {
+    } else if (!notifData.estado) {
       notifData.estado = 'pendiente'
     }
     const { data, error } = await supabase
@@ -28,7 +29,12 @@ export function createNotificacionesModule({ supabase, authStore }) {
       .select()
     if (error) throw error
     notifications.value.unshift(data[0])
-    if (notifData.prioridad && notifData.prioridad.toLowerCase() === 'urgente') {
+    // Solo auto-disparar mail si el caller no envió ya (p.ej. Panel / TeamManager)
+    if (
+      !alreadySent &&
+      notifData.prioridad &&
+      notifData.prioridad.toLowerCase() === 'urgente'
+    ) {
       await sendEmailTrigger(data[0])
     }
   }

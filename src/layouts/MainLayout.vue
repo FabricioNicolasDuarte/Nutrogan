@@ -166,6 +166,10 @@
             <div class="glow-blob"></div>
           </div>
 
+          <div class="glass-card q-mb-lg q-pa-md relative-position overflow-hidden">
+            <OperationalAlertsPanel variant="drawer" />
+          </div>
+
           <div class="text-caption text-grey-5 q-mb-sm font-mono tracking-wider opacity-60 q-pl-xs">
             NAVEGACIÓN
           </div>
@@ -239,6 +243,14 @@
       @click="rightDrawerOpen = true"
     >
       <div class="notch-dot"></div>
+      <q-badge
+        v-if="alertCount > 0"
+        floating
+        color="orange-9"
+        text-color="white"
+        :label="alertCount > 9 ? '9+' : String(alertCount)"
+        class="alerts-notch-badge"
+      />
     </div>
 
     <q-page-container class="page-padding-fix" v-touch-swipe.left="openDrawer">
@@ -306,16 +318,31 @@
 <script setup>
 import { ref, computed, watch } from 'vue'
 import { useAuthStore } from 'stores/auth-store'
+import { useDataStore } from 'stores/data-store'
 import { useRouter } from 'vue-router'
 import { useQuasar } from 'quasar'
 import LivingLogo from 'components/ui/LivingLogo.vue'
+import OperationalAlertsPanel from 'components/dashboard/OperationalAlertsPanel.vue'
+import { evaluateOperationalAlerts } from 'src/utils/operationalAlerts'
 
 const tab = ref('inicio')
 const rightDrawerOpen = ref(false)
 
 const authStore = useAuthStore()
+const dataStore = useDataStore()
 const router = useRouter()
 const $q = useQuasar()
+
+const alertCount = computed(
+  () =>
+    evaluateOperationalAlerts({
+      lotes: dataStore.lotes || [],
+      potreros: dataStore.potreros || [],
+      fuentesAgua: dataStore.fuentesAgua || [],
+      inventarioItems: dataStore.inventarioItems || [],
+      evaluaciones: dataStore.evaluaciones || [],
+    }).length,
+)
 
 // --- DATOS USUARIO ---
 const userAvatar = computed(
@@ -721,12 +748,25 @@ function handlePan(details) {
   background-color: #39ff14;
   transition: all 0.5s ease;
 }
+.alerts-notch-badge {
+  position: absolute !important;
+  top: -6px;
+  left: -10px;
+  font-size: 10px;
+  z-index: 1;
+}
 
 .page-padding-fix {
   padding-top: 0 !important;
   padding-bottom: 0 !important;
   height: 100vh;
   width: 100vw;
+  overflow: hidden;
+}
+.page-padding-fix :deep(.q-page) {
+  height: 100%;
+  max-height: 100%;
+  min-height: 0 !important;
   overflow: hidden;
 }
 
