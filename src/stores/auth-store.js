@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia'
 import { supabase } from 'boot/supabase'
 import { ref, computed } from 'vue'
+import { roleCapabilities } from '../utils/roleCapabilities'
 
 export const useAuthStore = defineStore('auth', () => {
   const user = ref(null)
@@ -12,28 +13,24 @@ export const useAuthStore = defineStore('auth', () => {
   // --- IDENTIFICADORES DE ROL ---
   const isAuthenticated = computed(() => !!user.value)
 
+  const caps = computed(() => roleCapabilities(currentRole.value))
+
   // Roles exactos para la lógica interna
-  const isOperario = computed(() => currentRole.value === 'operario')
-  const isTecnico = computed(() => currentRole.value === 'tecnico')
-  const isAdmin = computed(() => currentRole.value === 'admin')
+  const isOperario = computed(() => caps.value.isOperario)
+  const isTecnico = computed(() => caps.value.isTecnico)
+  const isAdmin = computed(() => caps.value.isAdmin)
 
   // --- CAPABILITIES (Permisos Semánticos) ---
-
-  // 1. GESTIÓN ESTRATÉGICA (Solo Admin)
-  const canManageTeam = computed(() => isAdmin.value)
-  const canViewEstablishmentData = computed(() => isAdmin.value)
-  const canViewFinancials = computed(() => isAdmin.value)
-  const canConfigureEstablishment = computed(() => isAdmin.value)
-
-  // 2. GESTIÓN TÉCNICA (Admin + Técnico)
-  const canViewReports = computed(() => isAdmin.value || isTecnico.value)
-  const canEditFieldStructure = computed(() => isAdmin.value || isTecnico.value)
-  const canEditMaps = computed(() => isAdmin.value || isTecnico.value)
-  const canViewEventHistory = computed(() => isAdmin.value || isTecnico.value)
-
-  // 3. OPERATIVA (Todos)
-  const canAccessOperational = computed(() => true)
-  const canAccessFieldMode = computed(() => true)
+  const canManageTeam = computed(() => caps.value.canManageTeam)
+  const canViewEstablishmentData = computed(() => caps.value.canViewEstablishmentData)
+  const canViewFinancials = computed(() => caps.value.canViewFinancials)
+  const canConfigureEstablishment = computed(() => caps.value.canConfigureEstablishment)
+  const canViewReports = computed(() => caps.value.canViewReports)
+  const canEditFieldStructure = computed(() => caps.value.canEditFieldStructure)
+  const canEditMaps = computed(() => caps.value.canEditMaps)
+  const canViewEventHistory = computed(() => caps.value.canViewEventHistory)
+  const canAccessOperational = computed(() => caps.value.canAccessOperational)
+  const canAccessFieldMode = computed(() => caps.value.canAccessFieldMode)
 
   // --- ACTIONS ---
 

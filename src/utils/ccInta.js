@@ -22,6 +22,7 @@ export const CC_INTA_DESCRIPTIONS = {
 }
 
 export function clampCcInta(score) {
+  if (score === null || score === undefined || score === '') return CC_INTA_DEFAULT
   const n = Number(score)
   if (!Number.isFinite(n)) return CC_INTA_DEFAULT
   const stepped = Math.round(n * 2) / 2

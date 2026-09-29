@@ -1,0 +1,121 @@
+{
+  "ran_at": "2026-09-29T20:04:12.669Z",
+  "fails": 0,
+  "results": [
+    {
+      "name": "auth.login",
+      "pass": true,
+      "detail": "fabricioduarteoficial@gmail.com"
+    },
+    {
+      "name": "rest.perfiles_usuarios",
+      "pass": true,
+      "detail": "200"
+    },
+    {
+      "name": "rest.miembros_establecimiento",
+      "pass": true,
+      "detail": "200 n=1"
+    },
+    {
+      "name": "auth.rol_asignado",
+      "pass": true,
+      "detail": "admin"
+    },
+    {
+      "name": "auth.establecimiento",
+      "pass": true,
+      "detail": "6697a6fe-33d6-4003-88e8-af547caca4e6"
+    },
+    {
+      "name": "rest.lotes",
+      "pass": true,
+      "detail": "200"
+    },
+    {
+      "name": "kpi.EN_PASTO",
+      "pass": true,
+      "detail": "140/140 (100%)"
+    },
+    {
+      "name": "rest.potreros",
+      "pass": true,
+      "detail": "n=9"
+    },
+    {
+      "name": "gis.potrero_con_geometria",
+      "pass": true,
+      "detail": "P1"
+    },
+    {
+      "name": "rest.evaluaciones",
+      "pass": true,
+      "detail": "200 n=21"
+    },
+    {
+      "name": "kpi.GDPV_sample",
+      "pass": true,
+      "detail": "N/A (honest)"
+    },
+    {
+      "name": "rest.inventario_items",
+      "pass": true,
+      "detail": "200 n=4"
+    },
+    {
+      "name": "rest.fuentes_de_agua",
+      "pass": true,
+      "detail": "200 n=10"
+    },
+    {
+      "name": "rest.registros_lluvia",
+      "pass": true,
+      "detail": "200 n=7"
+    },
+    {
+      "name": "rest.notificaciones_programadas",
+      "pass": true,
+      "detail": "200"
+    },
+    {
+      "name": "rest.eventos_sanitarios",
+      "pass": true,
+      "detail": "200"
+    },
+    {
+      "name": "rest.movimientos_de_lotes",
+      "pass": true,
+      "detail": "200"
+    },
+    {
+      "name": "rest.establecimientos",
+      "pass": true,
+      "detail": "200"
+    },
+    {
+      "name": "edge.get-market-price",
+      "pass": true,
+      "detail": "200 {\"success\":true,\"precio\":2113,\"moneda\":\"ARS\",\"unidad\":\"kg\",\"fuente\":\"Ref. Mercado (Estimado)\",\"es_es"
+    },
+    {
+      "name": "edge.asistente-ia",
+      "pass": true,
+      "detail": "200 {\"response\":\"OK\"}"
+    },
+    {
+      "name": "edge.analizar-ndvi",
+      "pass": true,
+      "detail": "200 {\"message\":\"Actualización completada (Planetary Computer / Agro opcional)\",\"resultados\":[{\"id\":\"960dca8c-3668-4867-9887-0b9b0d88ed2e\",\"estado\":\"exitoso\",\"ndvi\":0.378,\"fecha\":\"2026-"
+    },
+    {
+      "name": "edge.send-alert.empty",
+      "pass": true,
+      "detail": "200 {\"message\":\"Sin destinatarios\"}"
+    },
+    {
+      "name": "edge.invite-user.reachable",
+      "pass": true,
+      "detail": "400 {\"success\":false,\"error\":\"Faltan datos (email o establecimiento_id)\"}"
+    }
+  ]
+}
