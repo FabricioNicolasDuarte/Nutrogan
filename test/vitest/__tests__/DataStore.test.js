@@ -40,9 +40,9 @@ describe('DataStore - Lógica Financiera (GDPV)', () => {
     expect(store.getGDPV(evaluacionesDesordenadas)).toBe('1.667')
   })
 
-  it('Maneja falta de datos (devuelve 0 si no hay historial)', () => {
+  it('Maneja falta de datos (devuelve N/A si no hay historial)', () => {
     const store = useDataStore()
-    expect(store.getGDPV([])).toBe(0)
-    expect(store.getGDPV([{ peso_promedio_kg: 200 }])).toBe(0)
+    expect(store.getGDPV([])).toBe('N/A')
+    expect(store.getGDPV([{ peso_promedio_kg: 200 }])).toBe('N/A')
   })
 })

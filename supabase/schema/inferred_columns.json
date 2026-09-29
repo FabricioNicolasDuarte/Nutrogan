@@ -1,0 +1,882 @@
+{
+  "generated_at": "2026-09-29T18:28:32.766Z",
+  "tables": {
+    "establecimientos": {
+      "columns": [
+        {
+          "name": "id",
+          "inferred": "text",
+          "sample": "6697a6fe-33d6-4003-88e8-af547caca4e6"
+        },
+        {
+          "name": "nombre",
+          "inferred": "text",
+          "sample": "Mi Primer Establecimiento"
+        },
+        {
+          "name": "ubicacion",
+          "inferred": "text",
+          "sample": null
+        },
+        {
+          "name": "created_at",
+          "inferred": "text",
+          "sample": "2025-11-05T02:18:12.074598+00:00"
+        },
+        {
+          "name": "geometria",
+          "inferred": "text",
+          "sample": null
+        },
+        {
+          "name": "ultimo_ndvi",
+          "inferred": "text",
+          "sample": null
+        },
+        {
+          "name": "fecha_ultimo_ndvi",
+          "inferred": "text",
+          "sample": null
+        },
+        {
+          "name": "ciudad",
+          "inferred": "text",
+          "sample": "Municipio de Formosa"
+        },
+        {
+          "name": "provincia",
+          "inferred": "text",
+          "sample": "Formosa"
+        },
+        {
+          "name": "pin_location",
+          "inferred": "jsonb",
+          "sample": "[json]"
+        },
+        {
+          "name": "veterinario_telefono",
+          "inferred": "text",
+          "sample": "3704-123456"
+        },
+        {
+          "name": "ingeniero_telefono",
+          "inferred": "text",
+          "sample": "3704-654321"
+        },
+        {
+          "name": "emergencia_config",
+          "inferred": "jsonb",
+          "sample": "[json]"
+        },
+        {
+          "name": "owner_id",
+          "inferred": "text",
+          "sample": "b514bfa1-df30-4262-b524-46b8b91daf14"
+        }
+      ]
+    },
+    "lotes": {
+      "columns": [
+        {
+          "name": "id",
+          "inferred": "text",
+          "sample": "5d643309-0dad-4477-90a8-573a1a2a1aa5"
+        },
+        {
+          "name": "establecimiento_id",
+          "inferred": "text",
+          "sample": "6697a6fe-33d6-4003-88e8-af547caca4e6"
+        },
+        {
+          "name": "identificacion",
+          "inferred": "text",
+          "sample": "LT-001"
+        },
+        {
+          "name": "categoria_zootecnica_id",
+          "inferred": "text",
+          "sample": null
+        },
+        {
+          "name": "potrero_actual_id",
+          "inferred": "text",
+          "sample": "960dca8c-3668-4867-9887-0b9b0d88ed2e"
+        },
+        {
+          "name": "activo",
+          "inferred": "boolean",
+          "sample": "true"
+        },
+        {
+          "name": "created_at",
+          "inferred": "text",
+          "sample": "2025-11-19T20:51:33.509141+00:00"
+        },
+        {
+          "name": "objetivo",
+          "inferred": "text",
+          "sample": "Engorde"
+        },
+        {
+          "name": "cantidad_animales",
+          "inferred": "bigint",
+          "sample": "10"
+        },
+        {
+          "name": "peso_ingreso_kg",
+          "inferred": "bigint",
+          "sample": "450"
+        }
+      ]
+    },
+    "potreros": {
+      "columns": [
+        {
+          "name": "id",
+          "inferred": "text",
+          "sample": "960dca8c-3668-4867-9887-0b9b0d88ed2e"
+        },
+        {
+          "name": "establecimiento_id",
+          "inferred": "text",
+          "sample": "6697a6fe-33d6-4003-88e8-af547caca4e6"
+        },
+        {
+          "name": "nombre",
+          "inferred": "text",
+          "sample": "P1"
+        },
+        {
+          "name": "superficie_ha",
+          "inferred": "numeric",
+          "sample": "4.47"
+        },
+        {
+          "name": "estado",
+          "inferred": "text",
+          "sample": "Descanso"
+        },
+        {
+          "name": "disponibilidad_forraje_kg_ha",
+          "inferred": "text",
+          "sample": null
+        },
+        {
+          "name": "dias_descanso_optimo",
+          "inferred": "bigint",
+          "sample": "40"
+        },
+        {
+          "name": "fuente_agua_id",
+          "inferred": "text",
+          "sample": null
+        },
+        {
+          "name": "disponibilidad_forraje",
+          "inferred": "text",
+          "sample": null
+        },
+        {
+          "name": "ultimo_ndvi",
+          "inferred": "numeric",
+          "sample": "0.584"
+        },
+        {
+          "name": "geometria",
+          "inferred": "jsonb",
+          "sample": "[json]"
+        },
+        {
+          "name": "activo",
+          "inferred": "boolean",
+          "sample": "true"
+        },
+        {
+          "name": "fecha_ultimo_ndvi",
+          "inferred": "text",
+          "sample": "2025-12-16T20:51:30.398+00:00"
+        },
+        {
+          "name": "ndvi_max",
+          "inferred": "text",
+          "sample": null
+        },
+        {
+          "name": "ndvi_min",
+          "inferred": "text",
+          "sample": null
+        },
+        {
+          "name": "area_geometria",
+          "inferred": "numeric",
+          "sample": "60.64035684911385"
+        },
+        {
+          "name": "tipo",
+          "inferred": "text",
+          "sample": "campo-natural"
+        },
+        {
+          "name": "descripcion",
+          "inferred": "text",
+          "sample": ""
+        },
+        {
+          "name": "updated_at",
+          "inferred": "text",
+          "sample": "2025-11-14T03:17:50.86213+00:00"
+        },
+        {
+          "name": "snapshot_url",
+          "inferred": "text",
+          "sample": "https://cglogstrtjvbpsoaghib.supabase.co/storage/v1/object/p"
+        },
+        {
+          "name": "ciudad",
+          "inferred": "text",
+          "sample": "Municipio de Formosa"
+        },
+        {
+          "name": "provincia",
+          "inferred": "text",
+          "sample": "Formosa"
+        },
+        {
+          "name": "ultimo_ndmi",
+          "inferred": "text",
+          "sample": null
+        },
+        {
+          "name": "fecha_ultimo_ndmi",
+          "inferred": "text",
+          "sample": null
+        }
+      ]
+    },
+    "fuentes_de_agua": {
+      "columns": [
+        {
+          "name": "id",
+          "inferred": "text",
+          "sample": "74c68bf4-fe6f-4075-a792-b30de44265fd"
+        },
+        {
+          "name": "establecimiento_id",
+          "inferred": "text",
+          "sample": "6697a6fe-33d6-4003-88e8-af547caca4e6"
+        },
+        {
+          "name": "nombre",
+          "inferred": "text",
+          "sample": "FA-001"
+        },
+        {
+          "name": "tipo",
+          "inferred": "text",
+          "sample": "Bebedero"
+        },
+        {
+          "name": "potrero_id",
+          "inferred": "text",
+          "sample": "651244ab-724f-435d-8b09-97238a5c7880"
+        },
+        {
+          "name": "geometria",
+          "inferred": "jsonb",
+          "sample": "[json]"
+        },
+        {
+          "name": "es_inteligente",
+          "inferred": "boolean",
+          "sample": "true"
+        },
+        {
+          "name": "ultimo_estado",
+          "inferred": "text",
+          "sample": "Óptimo"
+        },
+        {
+          "name": "activo",
+          "inferred": "boolean",
+          "sample": "true"
+        },
+        {
+          "name": "updated_at",
+          "inferred": "text",
+          "sample": "2025-11-24T22:23:25.778462+00:00"
+        }
+      ]
+    },
+    "analisis_de_agua": {
+      "columns": [
+        {
+          "name": "id",
+          "inferred": "text",
+          "sample": "242ef4a5-85ff-498c-8987-0f6f539e8e81"
+        },
+        {
+          "name": "fuente_id",
+          "inferred": "text",
+          "sample": "ec2d0f9a-db5d-4f5d-9725-236e2d06f14e"
+        },
+        {
+          "name": "fecha_analisis",
+          "inferred": "text",
+          "sample": "2025-11-17"
+        },
+        {
+          "name": "metodo",
+          "inferred": "text",
+          "sample": "Sensor"
+        },
+        {
+          "name": "ph",
+          "inferred": "numeric",
+          "sample": "7.7"
+        },
+        {
+          "name": "solidos_totales",
+          "inferred": "bigint",
+          "sample": "1150"
+        },
+        {
+          "name": "conductividad_electrica",
+          "inferred": "bigint",
+          "sample": "1002"
+        },
+        {
+          "name": "dureza",
+          "inferred": "bigint",
+          "sample": "260"
+        },
+        {
+          "name": "nitratos",
+          "inferred": "bigint",
+          "sample": "5"
+        },
+        {
+          "name": "arsenico",
+          "inferred": "bigint",
+          "sample": "0"
+        },
+        {
+          "name": "observaciones",
+          "inferred": "text",
+          "sample": "Lectura automática de sensor IoT"
+        },
+        {
+          "name": "created_at",
+          "inferred": "text",
+          "sample": "2025-11-17T06:01:26.440812+00:00"
+        }
+      ]
+    },
+    "registros_lluvia": {
+      "columns": [
+        {
+          "name": "id",
+          "inferred": "text",
+          "sample": "5371e948-063e-4cc1-bacd-ca27221d6158"
+        },
+        {
+          "name": "establecimiento_id",
+          "inferred": "text",
+          "sample": "6697a6fe-33d6-4003-88e8-af547caca4e6"
+        },
+        {
+          "name": "fecha",
+          "inferred": "text",
+          "sample": "2025-11-18"
+        },
+        {
+          "name": "milimetros",
+          "inferred": "bigint",
+          "sample": "0"
+        },
+        {
+          "name": "observaciones",
+          "inferred": "text",
+          "sample": ""
+        },
+        {
+          "name": "created_at",
+          "inferred": "text",
+          "sample": "2025-11-18T07:03:13.829079+00:00"
+        }
+      ]
+    },
+    "dietas": {
+      "columns": []
+    },
+    "dietas_items": {
+      "columns": []
+    },
+    "alimentos": {
+      "columns": [
+        {
+          "name": "id",
+          "inferred": "text",
+          "sample": "3ce13ce2-2db8-486e-b2ff-e2181126290f"
+        },
+        {
+          "name": "establecimiento_id",
+          "inferred": "text",
+          "sample": "6697a6fe-33d6-4003-88e8-af547caca4e6"
+        },
+        {
+          "name": "nombre",
+          "inferred": "text",
+          "sample": "maiz"
+        },
+        {
+          "name": "precio_kg",
+          "inferred": "numeric",
+          "sample": "0.25"
+        },
+        {
+          "name": "stock_kg",
+          "inferred": "bigint",
+          "sample": "20"
+        }
+      ]
+    },
+    "inventario_items": {
+      "columns": [
+        {
+          "name": "id",
+          "inferred": "text",
+          "sample": "242f4e6d-d8e1-41f2-8380-9e08c2d98f5c"
+        },
+        {
+          "name": "establecimiento_id",
+          "inferred": "text",
+          "sample": "6697a6fe-33d6-4003-88e8-af547caca4e6"
+        },
+        {
+          "name": "nombre",
+          "inferred": "text",
+          "sample": "FORRAJE P/RECRIA"
+        },
+        {
+          "name": "categoria",
+          "inferred": "text",
+          "sample": "Otro"
+        },
+        {
+          "name": "stock_actual",
+          "inferred": "bigint",
+          "sample": "1370"
+        },
+        {
+          "name": "unidad",
+          "inferred": "text",
+          "sample": "kg"
+        },
+        {
+          "name": "precio_unitario",
+          "inferred": "bigint",
+          "sample": "750"
+        },
+        {
+          "name": "stock_minimo_alerta",
+          "inferred": "bigint",
+          "sample": "500"
+        },
+        {
+          "name": "activo",
+          "inferred": "boolean",
+          "sample": "true"
+        },
+        {
+          "name": "created_at",
+          "inferred": "text",
+          "sample": "2025-12-03T23:09:56.325943+00:00"
+        },
+        {
+          "name": "updated_at",
+          "inferred": "text",
+          "sample": "2025-12-16T04:46:23.354969+00:00"
+        }
+      ]
+    },
+    "inventario_movimientos": {
+      "columns": [
+        {
+          "name": "id",
+          "inferred": "bigint",
+          "sample": "1"
+        },
+        {
+          "name": "item_id",
+          "inferred": "text",
+          "sample": "69c37532-7863-453e-baa7-da1ab2636e7d"
+        },
+        {
+          "name": "lote_id",
+          "inferred": "text",
+          "sample": null
+        },
+        {
+          "name": "fecha",
+          "inferred": "text",
+          "sample": "2025-11-17T06:29:39.48504+00:00"
+        },
+        {
+          "name": "tipo_movimiento",
+          "inferred": "text",
+          "sample": "Ajuste Manual"
+        },
+        {
+          "name": "cantidad",
+          "inferred": "bigint",
+          "sample": "600"
+        },
+        {
+          "name": "costo_total",
+          "inferred": "bigint",
+          "sample": "1800000"
+        },
+        {
+          "name": "observaciones",
+          "inferred": "text",
+          "sample": "Stock inicial de carga"
+        }
+      ]
+    },
+    "invitaciones_equipo": {
+      "columns": [
+        {
+          "name": "id",
+          "inferred": "text",
+          "sample": "d1f299a3-d703-4e3b-a5ed-6b7bbfbff049"
+        },
+        {
+          "name": "email",
+          "inferred": "text",
+          "sample": "fabricioduarteoficial@gmail.com"
+        },
+        {
+          "name": "rol",
+          "inferred": "text",
+          "sample": "admin"
+        },
+        {
+          "name": "establecimiento_id",
+          "inferred": "text",
+          "sample": "6697a6fe-33d6-4003-88e8-af547caca4e6"
+        },
+        {
+          "name": "created_at",
+          "inferred": "text",
+          "sample": "2025-12-14T07:20:46.791963+00:00"
+        }
+      ]
+    },
+    "miembros_establecimiento": {
+      "columns": [
+        {
+          "name": "id",
+          "inferred": "text",
+          "sample": "6d45ece8-b29f-4cd6-bfae-fc97a7906ee4"
+        },
+        {
+          "name": "usuario_id",
+          "inferred": "text",
+          "sample": "b514bfa1-df30-4262-b524-46b8b91daf14"
+        },
+        {
+          "name": "establecimiento_id",
+          "inferred": "text",
+          "sample": "6697a6fe-33d6-4003-88e8-af547caca4e6"
+        },
+        {
+          "name": "rol",
+          "inferred": "text",
+          "sample": "admin"
+        },
+        {
+          "name": "created_at",
+          "inferred": "text",
+          "sample": "2025-12-10T22:42:30.8759+00:00"
+        }
+      ]
+    },
+    "movimientos_de_lotes": {
+      "columns": [
+        {
+          "name": "id",
+          "inferred": "text",
+          "sample": "3b4384ed-926c-4803-ab21-db94aa08fcc9"
+        },
+        {
+          "name": "lote_id",
+          "inferred": "text",
+          "sample": "2ebf96aa-da7f-4f6b-a7f1-148959b1490d"
+        },
+        {
+          "name": "potrero_id",
+          "inferred": "text",
+          "sample": "e26cbe1d-42a1-489a-8757-fbbd178e9dbc"
+        },
+        {
+          "name": "fecha_entrada",
+          "inferred": "text",
+          "sample": "2025-11-05"
+        },
+        {
+          "name": "fecha_salida",
+          "inferred": "text",
+          "sample": null
+        },
+        {
+          "name": "observaciones",
+          "inferred": "text",
+          "sample": null
+        }
+      ]
+    },
+    "notificaciones_programadas": {
+      "columns": [
+        {
+          "name": "id",
+          "inferred": "text",
+          "sample": "4d86d660-3145-415f-9276-dd67db40ac33"
+        },
+        {
+          "name": "establecimiento_id",
+          "inferred": "text",
+          "sample": "6697a6fe-33d6-4003-88e8-af547caca4e6"
+        },
+        {
+          "name": "created_by",
+          "inferred": "text",
+          "sample": null
+        },
+        {
+          "name": "titulo",
+          "inferred": "text",
+          "sample": "Prueba ya mismo"
+        },
+        {
+          "name": "mensaje",
+          "inferred": "text",
+          "sample": "Hola chicas"
+        },
+        {
+          "name": "categoria",
+          "inferred": "text",
+          "sample": "general"
+        },
+        {
+          "name": "prioridad",
+          "inferred": "text",
+          "sample": "urgente"
+        },
+        {
+          "name": "fecha_programada",
+          "inferred": "text",
+          "sample": "2025-11-24T22:36:06.628+00:00"
+        },
+        {
+          "name": "estado",
+          "inferred": "text",
+          "sample": "enviado"
+        },
+        {
+          "name": "estilos_email",
+          "inferred": "jsonb",
+          "sample": "[json]"
+        },
+        {
+          "name": "destinatarios_snapshot",
+          "inferred": "jsonb",
+          "sample": "[json]"
+        },
+        {
+          "name": "created_at",
+          "inferred": "text",
+          "sample": "2025-11-24T22:36:04.874567+00:00"
+        }
+      ]
+    },
+    "perfiles_usuarios": {
+      "columns": [
+        {
+          "name": "id",
+          "inferred": "text",
+          "sample": "5fa2601a-8e5e-43b5-b8c1-aa723fdfc15e"
+        },
+        {
+          "name": "nombre_completo",
+          "inferred": "text",
+          "sample": null
+        },
+        {
+          "name": "rol",
+          "inferred": "text",
+          "sample": "usuario"
+        },
+        {
+          "name": "apellido",
+          "inferred": "text",
+          "sample": null
+        },
+        {
+          "name": "telefono",
+          "inferred": "text",
+          "sample": null
+        },
+        {
+          "name": "avatar_url",
+          "inferred": "text",
+          "sample": null
+        },
+        {
+          "name": "establecimiento_id",
+          "inferred": "text",
+          "sample": "6697a6fe-33d6-4003-88e8-af547caca4e6"
+        },
+        {
+          "name": "establecimiento_activo_id",
+          "inferred": "text",
+          "sample": "6697a6fe-33d6-4003-88e8-af547caca4e6"
+        },
+        {
+          "name": "email",
+          "inferred": "text",
+          "sample": "fabricioduarteutn@gmail.com"
+        },
+        {
+          "name": "direccion",
+          "inferred": "text",
+          "sample": null
+        },
+        {
+          "name": "config_notificaciones",
+          "inferred": "jsonb",
+          "sample": "[json]"
+        }
+      ]
+    },
+    "evaluaciones": {
+      "columns": [
+        {
+          "name": "id",
+          "inferred": "text",
+          "sample": "90bb7fd4-f0ec-46fa-a4e4-043ab276a7f7"
+        },
+        {
+          "name": "fecha_evaluacion",
+          "inferred": "text",
+          "sample": "2025-11-17"
+        },
+        {
+          "name": "peso_promedio_kg",
+          "inferred": "text",
+          "sample": null
+        },
+        {
+          "name": "condicion_corporal",
+          "inferred": "bigint",
+          "sample": "7"
+        },
+        {
+          "name": "observaciones",
+          "inferred": "text",
+          "sample": "Evaluación CC (Escáner)"
+        },
+        {
+          "name": "created_at",
+          "inferred": "text",
+          "sample": "2025-11-17T07:48:21.303088+00:00"
+        },
+        {
+          "name": "lote_id",
+          "inferred": "text",
+          "sample": "ca93667b-6557-4207-b2e3-2ee37b72aed5"
+        }
+      ]
+    },
+    "eventos_sanitarios": {
+      "columns": [
+        {
+          "name": "id",
+          "inferred": "text",
+          "sample": "b5263f7a-b2ab-4a75-b22a-bb9bfa23b7c8"
+        },
+        {
+          "name": "fecha",
+          "inferred": "text",
+          "sample": "2025-12-11"
+        },
+        {
+          "name": "tipo_evento",
+          "inferred": "text",
+          "sample": "Vacunación"
+        },
+        {
+          "name": "descripcion",
+          "inferred": "text",
+          "sample": "Carga Rápida Campo"
+        },
+        {
+          "name": "lote_id",
+          "inferred": "text",
+          "sample": "5d643309-0dad-4477-90a8-573a1a2a1aa5"
+        }
+      ]
+    },
+    "eventos_reproductivos": {
+      "columns": []
+    },
+    "consumos_de_dieta": {
+      "columns": [
+        {
+          "name": "id",
+          "inferred": "text",
+          "sample": "ac3ac885-1905-449d-a9e2-fa8aa703b59e"
+        },
+        {
+          "name": "lote_id",
+          "inferred": "text",
+          "sample": "2ebf96aa-da7f-4f6b-a7f1-148959b1490d"
+        },
+        {
+          "name": "dieta_id",
+          "inferred": "text",
+          "sample": null
+        },
+        {
+          "name": "alimento_id",
+          "inferred": "text",
+          "sample": "13411a99-c4ba-4291-920f-befce8f360a3"
+        },
+        {
+          "name": "fecha_inicio",
+          "inferred": "text",
+          "sample": "2025-11-05"
+        },
+        {
+          "name": "fecha_fin",
+          "inferred": "text",
+          "sample": null
+        },
+        {
+          "name": "kg_animal_dia",
+          "inferred": "bigint",
+          "sample": "20"
+        },
+        {
+          "name": "costo_total_periodo",
+          "inferred": "bigint",
+          "sample": "300"
+        },
+        {
+          "name": "observaciones",
+          "inferred": "text",
+          "sample": null
+        }
+      ]
+    }
+  }
+}

@@ -18,7 +18,8 @@
             El sistema nervioso central de tu establecimiento.
             <br />
             <span class="text-caption text-grey-6 row flex-center justify-center q-mt-sm">
-              <q-icon name="verified" class="q-mr-xs text-cyan" /> Validado por CEDEVA
+              <q-icon name="agriculture" class="q-mr-xs text-cyan" /> Campo offline-first · CC INTA ·
+              mapa y potreros
             </span>
           </p>
         </div>
@@ -146,8 +147,8 @@
 
               <div class="row justify-center q-mt-xl opacity-60">
                 <div class="bg-dark-glass q-px-lg q-py-sm rounded-borders border-cyan text-center">
-                  <div class="text-caption text-uppercase text-cyan-3">Proyecto Validado Por</div>
-                  <div class="text-h6 text-weight-bold text-cyan-12">CEDEVA</div>
+                  <div class="text-caption text-uppercase text-cyan-3">En colaboración con</div>
+                  <div class="text-h6 text-weight-bold text-cyan-12">CEDEVA · UTN FRRe</div>
                 </div>
               </div>
             </div>

@@ -16,7 +16,8 @@
     "dev:pwa": "set NODE_OPTIONS=--openssl-legacy-provider && quasar dev -m pwa",
     "build": "quasar build -m pwa",
     "build:spa": "quasar build",
-    "postinstall": "quasar prepare"
+    "postinstall": "quasar prepare",
+    "smoke:edges": "node scripts/smoke-edges.mjs"
   },
   "dependencies": {
     "@formkit/auto-animate": "^0.9.0",

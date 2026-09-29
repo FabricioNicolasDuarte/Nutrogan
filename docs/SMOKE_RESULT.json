@@ -1,0 +1,24 @@
+{
+  "ran_at": "2026-09-29T18:32:00.000Z",
+  "unit_tests": "8/8 pass (vitest metrics + DataStore)",
+  "edges": {
+    "auth": "PASS",
+    "get-market-price": "PASS",
+    "asistente-ia": "PASS (Gemini via GOOGLE_API_KEY OK)",
+    "analizar-ndvi": "FAIL — Sentinel Hub invalid_client (actualizar secrets en Supabase)",
+    "en_pasto_data": "PASS 140/140"
+  },
+  "ui_smoke_local": {
+    "url": "http://localhost:9000/#/",
+    "hacienda_140": true,
+    "modo_campo_slider": true,
+    "potreros_labels": 9,
+    "note": "nutrogan.com no resolvió en el browser automation (chrome-error); smoke UI en local"
+  },
+  "schema_dump": {
+    "inferred_sql": "supabase/schema/inferred_from_live.sql",
+    "inferred_json": "supabase/schema/inferred_columns.json",
+    "note": "Sin database password no hay pg_dump oficial; esto es snapshot tipado por muestras live"
+  },
+  "billing": "no implementado — fuera de alcance del producto actual (sin gateway de pagos)"
+}
