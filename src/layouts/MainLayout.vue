@@ -833,14 +833,18 @@ function handlePan(details) {
   padding-bottom: 200px;
 }
 .page-padding-fix.is-map-page {
-  overflow: hidden;
+  /* IMPORTANTE: permitir scroll para llegar a Mi Corral */
+  overflow-x: hidden;
+  overflow-y: auto !important;
+  -webkit-overflow-scrolling: touch;
 }
 .page-padding-fix.is-map-page :deep(.q-page) {
-  height: 100% !important;
-  max-height: 100% !important;
-  min-height: 0 !important;
-  overflow: hidden !important;
-  padding-bottom: 0;
+  height: auto !important;
+  max-height: none !important;
+  min-height: 100% !important;
+  overflow: visible !important;
+  /* Espacio libre bajo el corral para que no quede bajo el dock */
+  padding-bottom: 230px !important;
 }
 
 .footer-wrapper {

@@ -1107,34 +1107,41 @@ watch(
   font-family: 'Fira Code', monospace;
 }
 .dashboard-page {
-  height: 100%;
-  min-height: 0;
-  max-height: 100%;
+  height: auto;
+  min-height: 100%;
+  max-height: none;
   display: flex;
   flex-direction: column;
-  overflow: hidden;
+  overflow: visible;
 }
 
 .desktop-layout {
   flex: 1 1 auto;
   min-height: 0;
-  height: 100%;
-  overflow: hidden;
+  height: auto;
+  overflow: visible;
+  display: flex;
+  flex-direction: column;
+}
+
+.header-row {
+  flex-shrink: 0;
 }
 
 /* MOBILE SPECIFIC */
 @media (max-width: 600px) {
   .dashboard-page {
-    height: 100%;
-    overflow: hidden;
+    height: auto;
+    overflow: visible;
   }
   .mobile-layout {
-    height: 100%;
-    min-height: 0;
+    height: auto;
+    min-height: 100%;
+    overflow: visible;
   }
   .map-area-mobile {
-    min-height: 280px;
-    flex: 1 1 auto;
+    height: 50vh;
+    min-height: 260px;
   }
 }
 
@@ -1186,13 +1193,14 @@ watch(
   margin-bottom: 10px;
   display: flex;
   flex-direction: column;
-  flex: 1 1 auto;
-  min-height: 0;
-  overflow: hidden;
+  flex: 0 0 auto;
+  overflow: visible;
 }
 .map-area-rounded {
-  flex: 1 1 auto;
-  min-height: 0;
+  /* Altura fija: el corral queda debajo y entra en el scroll de la página */
+  height: min(58vh, 620px);
+  min-height: 280px;
+  flex: 0 0 auto;
   position: relative;
 }
 .map-leaflet-host {
@@ -1207,10 +1215,11 @@ watch(
   z-index: 0;
 }
 .corral-panel {
-  height: 150px;
+  height: 160px;
+  min-height: 160px;
   flex-shrink: 0;
   z-index: 50;
-  background: rgba(10, 10, 12, 0.8);
+  background: rgba(10, 10, 12, 0.95);
   border-top: 1px solid rgb(255, 255, 255);
 }
 .bg-black-transparent {
