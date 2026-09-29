@@ -2,6 +2,9 @@
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
 
 const RESEND_API_KEY = Deno.env.get('RESEND_API_KEY')
+/** Remitente verificado en Resend (ej. Nutrogan Alertas <alertas@nutrogan.site>). Fallback: sandbox Resend. */
+const RESEND_FROM =
+  Deno.env.get('RESEND_FROM') || 'Nutrogan Alertas <onboarding@resend.dev>'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -105,7 +108,7 @@ serve(async (req) => {
           Authorization: `Bearer ${RESEND_API_KEY}`,
         },
         body: JSON.stringify({
-          from: 'Nutrogan Alertas <onboarding@resend.dev>',
+          from: RESEND_FROM,
           to: destinatarios.map((d) => d.email),
           subject: `${titulo}`, // Asunto limpio sin etiquetas
           html: htmlContent,

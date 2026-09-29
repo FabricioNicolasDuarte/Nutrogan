@@ -1,9 +1,11 @@
 import localforage from 'localforage'
 import { useDataStore } from 'stores/data-store'
 import { Notify } from 'quasar'
+import { calcularCalidadAgua } from 'src/utils/waterQuality'
 
 const QUEUE_KEY = 'pending'
 const FAILED_KEY = 'failed'
+const LAST_SYNC_KEY = 'last_sync_ok'
 const LEGACY_LS_KEY = 'nutrogan_offline_queue'
 const MAX_ATTEMPTS = 5
 
@@ -22,6 +24,7 @@ class SyncService {
     this.isSyncing = false
     this.queue = []
     this.failed = []
+    this.lastSyncOk = null
     this.ready = this.init()
 
     window.addEventListener('online', () => {
@@ -47,6 +50,7 @@ class SyncService {
 
       this.queue = (await queueDb.getItem(QUEUE_KEY)) || []
       this.failed = (await queueDb.getItem(FAILED_KEY)) || []
+      this.lastSyncOk = (await queueDb.getItem(LAST_SYNC_KEY)) || null
       this.emitUpdate()
     } catch (e) {
       console.error('[Sync] init falló, fallback memoria:', e)
@@ -72,6 +76,7 @@ class SyncService {
           pending: this.queue.length,
           failed: this.failed.length,
           syncing: this.isSyncing,
+          lastSyncOk: this.lastSyncOk,
         },
       }),
     )
@@ -134,6 +139,21 @@ class SyncService {
       if (item && typeof payload.p_cantidad === 'number') {
         item.stock_actual = Number(item.stock_actual || 0) + Number(payload.p_cantidad)
       }
+      return
+    }
+
+    if (tipo === 'analisis_agua' && Array.isArray(store.fuentesAgua)) {
+      const fuente = store.fuentesAgua.find((f) => f.id === payload.fuente_id)
+      if (fuente) {
+        const { estado } = calcularCalidadAgua(payload)
+        if (!fuente.analisis_de_agua) fuente.analisis_de_agua = []
+        fuente.analisis_de_agua.unshift({
+          id: `local-${Date.now()}`,
+          ...payload,
+          _offline: true,
+        })
+        fuente.ultimo_estado = estado
+      }
     }
   }
 
@@ -173,6 +193,11 @@ class SyncService {
 
     this.queue = stillPending
     await this.persist()
+
+    if (processedCount > 0) {
+      this.lastSyncOk = new Date().toISOString()
+      await queueDb.setItem(LAST_SYNC_KEY, this.lastSyncOk)
+    }
 
     this.isSyncing = false
     this.emitUpdate()
@@ -220,6 +245,9 @@ class SyncService {
       case 'lluvia':
         await store.createRegistro('registros_lluvia', item.payload)
         break
+      case 'analisis_agua':
+        await store.agregarAnalisisDeAgua(item.payload)
+        break
       default:
         throw new Error(`Tipo de acción desconocido: ${item.tipo}`)
     }
@@ -231,6 +259,10 @@ class SyncService {
 
   getFailedCount() {
     return this.failed.length
+  }
+
+  getLastSyncOk() {
+    return this.lastSyncOk
   }
 
   getPending() {

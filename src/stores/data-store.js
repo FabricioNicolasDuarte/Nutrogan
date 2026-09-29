@@ -48,6 +48,7 @@ export const useDataStore = defineStore(
         bag.fetchNotifications(),
         bag.fetchInventarioMovimientos(),
         bag.fetchRegistrosLluvia(),
+        bag.fetchAllEvaluaciones(),
       ])
     }
 

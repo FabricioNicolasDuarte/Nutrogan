@@ -23,6 +23,19 @@
           <div class="page-title-box">PANEL DE CONTROL</div>
         </div>
         <div class="row items-center justify-end q-gutter-x-md z-top">
+          <q-btn
+            v-if="alertCount > 0"
+            unelevated
+            dense
+            color="orange-9"
+            text-color="white"
+            icon="notification_important"
+            :label="`${alertCount}`"
+            class="q-px-sm"
+            @click="showAlerts = true"
+          >
+            <q-tooltip>Alertas operativas</q-tooltip>
+          </q-btn>
           <div class="glass-capsule row items-center q-px-md shadow-3">
             <q-icon name="search" color="grey-5" size="xs" />
             <q-select
@@ -307,6 +320,16 @@
           </div>
         </div>
         <div class="row q-gutter-x-sm">
+          <q-btn
+            v-if="alertCount > 0"
+            dense
+            unelevated
+            color="orange-9"
+            text-color="white"
+            icon="notification_important"
+            :label="String(alertCount)"
+            @click="showAlerts = true"
+          />
           <q-badge color="dark" class="border-neon text-primary q-py-xs">
             <q-icon name="pets" class="q-mr-xs" /> {{ kpis.totalAnimales }}
           </q-badge>
@@ -535,6 +558,12 @@
       </q-card>
     </q-dialog>
 
+    <q-dialog v-model="showAlerts">
+      <div style="width: min(520px, 95vw)">
+        <OperationalAlertsPanel />
+      </div>
+    </q-dialog>
+
     <q-inner-loading :showing="globalLoading" dark class="z-max">
       <q-spinner-orbit size="40px" color="primary" />
     </q-inner-loading>
@@ -549,8 +578,10 @@ import { useRouter } from 'vue-router'
 import 'leaflet/dist/leaflet.css'
 import { LMap, LTileLayer, LGeoJson } from '@vue-leaflet/vue-leaflet'
 import ProDetailCard from 'components/dashboard/ProDetailCard.vue'
+import OperationalAlertsPanel from 'components/dashboard/OperationalAlertsPanel.vue'
 import { useSound } from 'src/composables/useSound'
 import { cabezasEnPasto, cabezasTotales, lotesSinPotrero, pctEnPasto } from 'src/utils/livestockKpis'
+import { evaluateOperationalAlerts } from 'src/utils/operationalAlerts'
 
 const dataStore = useDataStore()
 const $q = useQuasar()
@@ -568,6 +599,7 @@ const searchTarget = ref(null)
 
 const selectedPotrero = ref(null)
 const globalLoading = ref(false)
+const showAlerts = ref(false)
 
 // Estados para Lógica Móvil
 const dialogoPotreroMobile = ref(false)
@@ -609,6 +641,17 @@ const kpis = computed(() => {
     lotesSinAsignar: lotesSinPotrero(dataStore.lotes).length,
   }
 })
+
+const alertCount = computed(
+  () =>
+    evaluateOperationalAlerts({
+      lotes: dataStore.lotes || [],
+      potreros: dataStore.potreros || [],
+      fuentesAgua: dataStore.fuentesAgua || [],
+      inventarioItems: dataStore.inventarioItems || [],
+      evaluaciones: dataStore.evaluaciones || [],
+    }).length,
+)
 
 const searchOptions = computed(() => {
   const opts = []

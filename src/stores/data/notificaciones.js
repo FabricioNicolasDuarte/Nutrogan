@@ -45,14 +45,19 @@ export function createNotificacionesModule({ supabase, authStore }) {
       if (typeof recipients === 'string') recipients = JSON.parse(recipients)
       if (!recipients || recipients.length === 0) return
       const payload = {
-        tipo: notification.categoria ? notification.categoria.toUpperCase() : 'GENERAL',
+        titulo: notification.titulo || 'Alerta Nutrogan',
         mensaje: notification.mensaje,
+        categoria: notification.categoria || 'general',
+        prioridad: (notification.prioridad || 'normal').toLowerCase(),
         destinatarios: recipients.map((r) => ({
           nombre: r.nombre,
           email: r.email,
-          canal: 'email',
         })),
-        asunto_extra: notification.titulo,
+        metadata: {
+          logo_url:
+            'https://cglogstrtjvbpsoaghib.supabase.co/storage/v1/object/public/assets/nutrogan-logo.png',
+          app_url: 'https://www.nutrogan.site',
+        },
       }
       const { error } = await supabase.functions.invoke('send-alert', { body: payload })
       if (error) throw error

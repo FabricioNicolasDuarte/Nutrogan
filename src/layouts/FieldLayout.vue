@@ -27,6 +27,9 @@
             <span v-else-if="fallidos > 0" class="text-caption text-weight-bold text-negative">
               {{ fallidos }} FALLIDOS
             </span>
+            <span v-else-if="lastSyncLabel" class="text-caption text-grey-8">
+              {{ lastSyncLabel }}
+            </span>
           </div>
         </div>
 
@@ -58,9 +61,13 @@
             · Pendientes: <strong>{{ pendientes }}</strong>
             · Fallidos: <strong>{{ fallidos }}</strong>
           </div>
+          <div v-if="lastSyncLabel" class="text-caption text-grey-7 q-mb-md">
+            Última sync OK: {{ lastSyncLabel }}
+          </div>
 
           <div v-if="pendientes === 0 && fallidos === 0" class="text-grey-7 q-py-md text-center">
-            Nada pendiente de subir.
+            Cola vacía — los registros de campo ya están en el servidor (o aún no hay nada
+            pendiente).
           </div>
 
           <q-list v-if="pendientesList.length" bordered separator class="rounded-borders q-mb-md">
@@ -130,6 +137,7 @@ const isSyncing = ref(false)
 const showSyncPanel = ref(false)
 const pendientesList = ref([])
 const fallidosList = ref([])
+const lastSyncOk = ref(null)
 
 async function refreshQueue() {
   await syncService.ensureReady()
@@ -138,6 +146,7 @@ async function refreshQueue() {
   pendientesList.value = syncService.getPending()
   fallidosList.value = syncService.getFailed()
   isSyncing.value = syncService.isSyncing
+  lastSyncOk.value = syncService.getLastSyncOk()
 }
 
 const updateOnlineStatus = () => {
@@ -150,6 +159,7 @@ function onQueueUpdated(e) {
     pendientes.value = e.detail.pending ?? pendientes.value
     fallidos.value = e.detail.failed ?? fallidos.value
     isSyncing.value = !!e.detail.syncing
+    if (e.detail.lastSyncOk) lastSyncOk.value = e.detail.lastSyncOk
   }
   refreshQueue()
 }
@@ -193,6 +203,7 @@ function labelAccion(item) {
     evento_reproductivo: 'Reproducción',
     consumo: 'Consumo despensa',
     lluvia: 'Lluvia',
+    analisis_agua: 'Análisis de agua',
   }
   return map[item.tipo] || item.tipo
 }
@@ -211,6 +222,11 @@ function formatHora(iso) {
   }
 }
 
+const lastSyncLabel = computed(() => {
+  if (!lastSyncOk.value) return ''
+  return formatHora(lastSyncOk.value)
+})
+
 onMounted(async () => {
   await refreshQueue()
   window.addEventListener('online', updateOnlineStatus)
@@ -228,14 +244,16 @@ const statusIcon = computed(() => {
   if (!isOnline.value) return 'wifi_off'
   if (isSyncing.value) return 'sync'
   if (fallidos.value > 0) return 'error_outline'
-  return 'wifi'
+  if (pendientes.value > 0) return 'cloud_upload'
+  return 'cloud_done'
 })
 
 const statusText = computed(() => {
   if (!isOnline.value) return 'OFFLINE'
   if (isSyncing.value) return 'SUBIENDO...'
   if (fallidos.value > 0) return 'CON ERRORES'
-  return 'ONLINE'
+  if (pendientes.value > 0) return 'PENDIENTE'
+  return 'SINCRONIZADO'
 })
 
 function confirmarSalida() {

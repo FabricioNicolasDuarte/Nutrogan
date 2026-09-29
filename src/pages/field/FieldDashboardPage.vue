@@ -26,6 +26,23 @@
     </div>
 
     <div v-if="currentView === 'menu'" class="q-pa-md q-pb-xl">
+      <div
+        v-if="pastureWarnings.length"
+        class="pasture-banner q-mb-md q-pa-md"
+        style="border: 3px solid #c62828; background: #ffebee"
+      >
+        <div class="text-weight-bolder text-negative q-mb-xs">
+          PASTURA BAJA ({{ pastureWarnings.length }})
+        </div>
+        <div
+          v-for="w in pastureWarnings.slice(0, 3)"
+          :key="w.id"
+          class="text-body2 text-grey-9 q-mb-xs"
+        >
+          {{ w.title }} — {{ w.message }}
+        </div>
+      </div>
+
       <div class="text-h6 text-weight-bolder q-mb-md q-mt-sm text-center text-grey-9">
         PANEL DE ACCIONES
       </div>
@@ -71,6 +88,13 @@
           <button class="industrial-btn bg-white full-width" @click="iniciarFlujo('scan_cc')">
             <q-icon name="fitness_center" size="3em" class="q-mb-xs" />
             <span class="btn-label">CC INTA</span>
+          </button>
+        </div>
+
+        <div class="col-6 col-md-4">
+          <button class="industrial-btn bg-white full-width" @click="iniciarFlujo('analisis_agua')">
+            <q-icon name="water_drop" size="3em" class="q-mb-xs" />
+            <span class="btn-label">AGUA</span>
           </button>
         </div>
       </div>
@@ -140,6 +164,35 @@
             <q-item-label class="text-subtitle1 text-grey-8"
               >Stock: {{ item.stock_actual }} {{ item.unidad }}</q-item-label
             >
+          </q-item-section>
+        </q-item>
+      </div>
+
+      <div v-if="currentView === 'select_fuente'">
+        <div
+          v-if="!(dataStore.fuentesAgua || []).length"
+          class="q-pa-lg text-center text-grey-8 text-h6"
+        >
+          No hay fuentes de agua cargadas. Crealas en el módulo Agua (escritorio).
+        </div>
+        <q-item
+          v-for="fuente in dataStore.fuentesAgua"
+          :key="fuente.id"
+          clickable
+          v-ripple
+          class="lote-item-giant"
+          @click="seleccionarFuente(fuente)"
+        >
+          <q-item-section avatar>
+            <q-icon name="water_drop" size="3em" color="black" />
+          </q-item-section>
+          <q-item-section>
+            <q-item-label class="text-h5 text-weight-bolder text-black">{{
+              fuente.nombre
+            }}</q-item-label>
+            <q-item-label class="text-subtitle1 text-grey-8">
+              Estado: {{ fuente.ultimo_estado || 'Sin análisis' }}
+            </q-item-label>
           </q-item-section>
         </q-item>
       </div>
@@ -295,6 +348,8 @@ import {
   describeCcInta,
   formatCcInta,
 } from 'src/utils/ccInta'
+import { fieldPastureWarnings } from 'src/utils/operationalAlerts'
+import { calcularCalidadAgua } from 'src/utils/waterQuality'
 
 const dataStore = useDataStore()
 const $q = useQuasar()
@@ -304,6 +359,9 @@ const currentView = ref('menu')
 const currentFlow = ref(null)
 const selectedLote = ref(null)
 const selectedItem = ref(null)
+const selectedFuente = ref(null)
+const aguaPh = ref(null)
+const aguaStep = ref('ph') // ph | tds
 const numpadValue = ref('')
 const numpadLabel = ref('')
 const numpadUnit = ref('')
@@ -317,15 +375,22 @@ const procesandoFoto = ref(false)
 const showResultDialog = ref(false)
 const ccResult = ref(CC_INTA_DEFAULT)
 
+const pastureWarnings = computed(() =>
+  fieldPastureWarnings(dataStore.potreros || [], dataStore.lotes || []),
+)
+
 // Helpers Vista
 const esVistaLista = computed(() =>
-  ['select_lote', 'select_destino', 'select_item', 'select_option'].includes(currentView.value),
+  ['select_lote', 'select_destino', 'select_item', 'select_option', 'select_fuente'].includes(
+    currentView.value,
+  ),
 )
 const getTitle = computed(() => {
   if (currentView.value === 'menu') return 'PANEL DE CONTROL'
   if (currentView.value === 'select_lote') return 'SELECCIONAR LOTE'
   if (currentView.value === 'select_destino') return 'DESTINO'
   if (currentView.value === 'select_item') return 'INSUMO'
+  if (currentView.value === 'select_fuente') return 'FUENTE DE AGUA'
   if (currentView.value === 'numpad') return 'INGRESAR DATO'
   return 'MODO CAMPO'
 })
@@ -336,11 +401,17 @@ function volverMenu() {
   currentView.value = 'menu'
   currentFlow.value = null
   selectedLote.value = null
+  selectedFuente.value = null
+  aguaPh.value = null
+  aguaStep.value = 'ph'
 }
 
 function iniciarFlujo(flujo) {
   currentFlow.value = flujo
   selectedLote.value = null
+  selectedFuente.value = null
+  aguaPh.value = null
+  aguaStep.value = 'ph'
   numpadValue.value = ''
 
   if (flujo === 'lluvia') {
@@ -348,9 +419,18 @@ function iniciarFlujo(flujo) {
     currentView.value = 'numpad'
   } else if (flujo === 'consumo') {
     currentView.value = 'select_item'
+  } else if (flujo === 'analisis_agua') {
+    currentView.value = 'select_fuente'
   } else {
     currentView.value = 'select_lote'
   }
+}
+
+function seleccionarFuente(fuente) {
+  selectedFuente.value = fuente
+  aguaStep.value = 'ph'
+  configNumpad(`pH — ${fuente.nombre}`, 'pH')
+  currentView.value = 'numpad'
 }
 
 function seleccionarLote(lote) {
@@ -486,6 +566,29 @@ async function confirmarNumpad() {
       p_cantidad: -val,
     })
     notificarExito('CONSUMO REGISTRADO')
+  } else if (currentFlow.value === 'analisis_agua') {
+    if (aguaStep.value === 'ph') {
+      if (!(val >= 0 && val <= 14)) {
+        $q.notify({ type: 'warning', message: 'pH entre 0 y 14', position: 'center' })
+        return
+      }
+      aguaPh.value = val
+      aguaStep.value = 'tds'
+      configNumpad(`TDS — ${selectedFuente.value.nombre}`, 'ppm')
+      return
+    }
+    const payload = {
+      fuente_id: selectedFuente.value.id,
+      fecha_analisis: new Date().toISOString().split('T')[0],
+      ph: aguaPh.value,
+      solidos_totales: val,
+      nitratos: 0,
+      arsenico: 0,
+      observaciones: 'Registro rápido modo campo (pH + TDS)',
+    }
+    const { estado } = calcularCalidadAgua(payload)
+    await syncService.addAction('analisis_agua', payload)
+    notificarExito(`AGUA: ${estado}`)
   }
   volverMenu()
 }

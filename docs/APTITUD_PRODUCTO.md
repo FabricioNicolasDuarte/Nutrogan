@@ -30,11 +30,21 @@ Gestión ganadera offline-first: potreros, lotes, pesos → GDPV, condición cor
 
 ## Reservas que siguen
 
-1. Scraping MAG toma el primer `$` razonable — puede no ser la categoría correcta (novillo/vaca). Verificar o fijar manual.
+1. Scraping MAG toma el primer `$` razonable — puede no ser la categoría correcta (novillo/vaca). Verificar o fijar **manual con categoría** en el widget.
 2. Bandas NDVI EXCELENTE/BUENO son heurística, no biomasa kg MS.
-3. Alertas de equipo son manuales (no disparan solas por CC/GDPV/agua).
-4. `send-alert` usa `onboarding@resend.dev` (sandbox Resend) hasta dominio propio.
+3. Alertas operativas se **evalúan en cliente** (CC/GDPV/agua/stock/NDVI+carga) y se pueden **avisar al equipo** (email) desde Reportes/Dashboard; no hay cron server-side.
+4. `send-alert` usa `RESEND_FROM` si está configurado; si no, sandbox `onboarding@resend.dev`.
 5. Umbrales de agua son **orientativos de campo**, no norma ISO única; laboratorio manda.
+
+## Cierre de loop (2026-09-29)
+
+| Pieza | Estado |
+|-------|--------|
+| Motor `operationalAlerts` | CC, GDPV, agua, stock, NDVI con carga |
+| UI + mail | Panel en Reportes; badge en Dashboard; categorías agua/forraje en equipo |
+| Campo | Botón AGUA (pH+TDS offline); banner pastura baja |
+| Precio | MAG / SIN DATO / MANUAL + categoría |
+| Sync campo | SINCRONIZADO + última OK + cola `analisis_agua` |
 
 ## Cómo validar en campo
 

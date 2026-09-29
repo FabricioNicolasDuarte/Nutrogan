@@ -109,8 +109,9 @@
         </div>
 
         <div class="col-12 col-lg-3">
-          <div class="column full-height">
-            <MarketPriceWidget class="full-height" />
+          <div class="column full-height q-gutter-md">
+            <MarketPriceWidget />
+            <OperationalAlertsPanel />
           </div>
         </div>
       </div>
@@ -165,11 +166,13 @@ import ChartRentabilidad from 'components/charts/ChartRentabilidad.vue'
 import ChartPrediccionStock from 'components/charts/ChartPrediccionStock.vue'
 import LotMetricsTable from 'components/tables/LotMetricsTable.vue'
 import MarketPriceWidget from 'components/dashboard/MarketPriceWidget.vue'
+import OperationalAlertsPanel from 'components/dashboard/OperationalAlertsPanel.vue'
 import {
   cabezasTotales,
   valuacionHaciendaEstimada,
   valuacionInventario,
 } from 'src/utils/livestockKpis'
+import { evaluateOperationalAlerts } from 'src/utils/operationalAlerts'
 
 const dataStore = useDataStore()
 const $q = useQuasar()
@@ -201,9 +204,13 @@ const kpiData = computed(() => {
     dataStore.marketPrice?.value,
   )
   const cabezas = cabezasTotales(lotes)
-  const alertas = items.filter(
-    (i) => (Number(i.stock_actual) || 0) <= (Number(i.stock_minimo_alerta) || 0),
-  ).length
+  const alertas = evaluateOperationalAlerts({
+    lotes,
+    potreros: dataStore.potreros || [],
+    fuentesAgua: dataStore.fuentesAgua || [],
+    inventarioItems: items,
+    evaluaciones: dataStore.evaluaciones || [],
+  }).length
 
   return {
     valuacionInsumos,

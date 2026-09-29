@@ -8,7 +8,7 @@ Tres capas. Correr en este orden:
 npm run test:unit:run
 ```
 
-Cubre: GDPV, KPIs de hacienda, CC INTA, matriz de roles, inventario de rutas del router, DataStore getters, cards.
+Cubre: GDPV, KPIs de hacienda, CC INTA, alertas operativas, matriz de roles, inventario de rutas del router, DataStore getters, cards.
 
 ## 2. Smoke funcional API (Supabase live)
 

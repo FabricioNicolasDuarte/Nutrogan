@@ -392,6 +392,8 @@ const categorias = [
   { id: 'lluvia', label: 'Clima / Lluvias', color: 'cyan' },
   { id: 'sanidad', label: 'Sanidad Animal', color: 'red' },
   { id: 'stock', label: 'Movimiento Stock', color: 'green' },
+  { id: 'agua', label: 'Agua / Bebederos', color: 'blue' },
+  { id: 'forraje', label: 'Pastura / NDVI', color: 'light-green' },
   { id: 'general', label: 'General / RRHH', color: 'grey' },
 ]
 

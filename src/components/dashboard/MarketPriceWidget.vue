@@ -138,8 +138,18 @@
 
         <q-card-section class="q-pt-lg">
           <div class="text-caption text-grey-4 q-mb-sm">
-            Ingrese el valor de referencia (ARS/kg):
+            Valor de referencia (ARS/kg vivo). Indicá categoría para trazabilidad (ej. Novillo
+            Mag/Liniers).
           </div>
+          <q-input
+            v-model="tempCategory"
+            outlined
+            dark
+            color="green-13"
+            label="Categoría / plaza"
+            class="q-mb-md"
+            hint="Opcional · queda en el origen del dato"
+          />
           <q-input
             v-model.number="tempPrice"
             type="number"
@@ -179,6 +189,7 @@ const $q = useQuasar()
 const loading = ref(false)
 const showEditDialog = ref(false)
 const tempPrice = ref(0)
+const tempCategory = ref('')
 
 const badgeMeta = computed(() => {
   if (dataStore.marketPrice.mode === 'manual') {
@@ -191,7 +202,9 @@ const badgeMeta = computed(() => {
 })
 
 const origenLabel = computed(() => {
-  if (dataStore.marketPrice.mode === 'manual') return 'Fijado por el usuario'
+  if (dataStore.marketPrice.mode === 'manual') {
+    return dataStore.marketPrice.source || 'Fijado por el usuario'
+  }
   if (dataStore.marketPrice.esEstimado || !dataStore.marketPrice.value) {
     return dataStore.marketPrice.source || 'Sin dato de mercado'
   }
@@ -199,7 +212,9 @@ const origenLabel = computed(() => {
 })
 
 const origenHint = computed(() => {
-  if (dataStore.marketPrice.mode === 'manual') return 'Valor de referencia manual.'
+  if (dataStore.marketPrice.mode === 'manual') {
+    return 'Referencia manual — no es cotización MAG en vivo.'
+  }
   if (dataStore.marketPrice.esEstimado || !dataStore.marketPrice.value) {
     return 'No se inventa precio. Usá modo manual si MAG no responde.'
   }
@@ -219,12 +234,13 @@ function formatPrice(val) {
 
 function activarManual() {
   tempPrice.value = dataStore.marketPrice.value
+  tempCategory.value = dataStore.marketPrice.categoria || ''
   showEditDialog.value = true
 }
 
 function saveManual() {
   if (tempPrice.value > 0) {
-    dataStore.setManualPrice(tempPrice.value)
+    dataStore.setManualPrice(tempPrice.value, { categoria: tempCategory.value })
     showEditDialog.value = false
     $q.notify({
       type: 'positive',

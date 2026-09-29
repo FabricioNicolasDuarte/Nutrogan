@@ -11,6 +11,7 @@ export function createEstablecimientoModule({ supabase, authStore }) {
     lastUpdated: null,
     source: 'Sin definir',
     esEstimado: false,
+    categoria: null,
   })
 
   async function fetchEstablecimiento() {
@@ -28,14 +29,17 @@ export function createEstablecimientoModule({ supabase, authStore }) {
     }
   }
 
-  function setManualPrice(price) {
+  function setManualPrice(price, meta = {}) {
+    const n = parseFloat(price)
+    const categoria = meta.categoria ? String(meta.categoria).trim() : ''
     marketPrice.value = {
       ...marketPrice.value,
-      value: parseFloat(price),
+      value: Number.isFinite(n) ? n : null,
       mode: 'manual',
       lastUpdated: new Date().toISOString(),
-      source: 'Usuario',
+      source: categoria ? `Manual — ${categoria}` : 'Manual (usuario)',
       esEstimado: false,
+      categoria: categoria || null,
     }
   }
 
