@@ -16,7 +16,7 @@
         <q-form @submit.prevent="handleLogin" class="q-gutter-y-md">
           <q-input
             v-model="form.email"
-            placeholder="usuario@nutrogan.com"
+            placeholder="usuario@nutrogan.site"
             outlined
             dark
             color="primary"

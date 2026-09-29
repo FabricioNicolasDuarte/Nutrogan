@@ -473,7 +473,7 @@ async function enviarAlerta() {
           'https://cglogstrtjvbpsoaghib.supabase.co/storage/v1/object/public/assets/nutrogan-logo.png',
         footer_text: 'Enviado desde el Panel de Control Nutrogan',
         // CORRECCIÓN FINAL: Apuntar siempre a PROD
-        app_url: 'https://www.nutrogan.com',
+        app_url: 'https://www.nutrogan.site',
       },
     }
 

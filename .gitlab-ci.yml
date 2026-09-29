@@ -92,6 +92,6 @@ deploy_staging:
     - echo "✅ Éxito."
   environment:
     name: staging
-    url: https://staging.nutrogan.com
+    url: https://nutrogan.site
   only:
     - main

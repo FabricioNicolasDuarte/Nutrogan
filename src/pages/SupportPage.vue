@@ -45,7 +45,7 @@
               class="full-width"
               icon="mail"
               label="Enviar Email"
-              href="mailto:soporte@nutrogan.com"
+              href="mailto:soporte@nutrogan.site"
             />
           </div>
         </q-card>

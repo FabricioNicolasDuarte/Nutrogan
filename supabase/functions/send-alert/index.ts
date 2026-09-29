@@ -49,7 +49,7 @@ serve(async (req) => {
     const logoUrl =
       metadata?.logo_url ||
       'https://cglogstrtjvbpsoaghib.supabase.co/storage/v1/object/public/assets/nutrogan-logo.png'
-    const appUrl = metadata?.app_url || 'https://nutrogan.com'
+    const appUrl = metadata?.app_url || 'https://www.nutrogan.site'
     // HTML PROFESIONAL LIMPIO
     const htmlContent = `
       <!DOCTYPE html>
