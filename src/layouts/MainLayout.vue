@@ -179,18 +179,13 @@
               @click="rightDrawerOpen = false"
             >
               <q-item-section avatar>
-                <q-icon name="notification_important" size="22px" />
-              </q-item-section>
-              <q-item-section class="text-body2">
-                Alertas
-                <q-badge
-                  v-if="alertCount > 0"
-                  color="orange-9"
-                  text-color="white"
-                  :label="String(alertCount)"
-                  class="q-ml-sm"
+                <q-icon
+                  name="notification_important"
+                  size="22px"
+                  :color="hasUnreadAlertsDot ? 'red-8' : 'green-13'"
                 />
               </q-item-section>
+              <q-item-section class="text-body2">Alertas</q-item-section>
               <q-item-section side>
                 <q-icon name="chevron_right" size="xs" color="grey-8" />
               </q-item-section>
@@ -263,16 +258,10 @@
       @mouseenter="rightDrawerOpen = true"
       @click="rightDrawerOpen = true"
     >
-      <div class="notch-dot"></div>
-      <q-badge
-        v-if="alertCount > 0"
-        floating
-        color="orange-9"
-        text-color="white"
-        :label="alertCount > 9 ? '9+' : String(alertCount)"
-        class="alerts-notch-badge cursor-pointer"
-        @click.stop="goAlertas"
-      />
+      <div
+        class="notch-dot"
+        :class="hasUnreadAlertsDot ? 'notch-dot--alert' : 'notch-dot--ok'"
+      ></div>
     </div>
 
     <q-page-container
@@ -342,16 +331,18 @@
 </template>
 
 <script setup>
-import { ref, computed, watch } from 'vue'
+import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
 import { useAuthStore } from 'stores/auth-store'
 import { useDataStore } from 'stores/data-store'
 import { useRouter, useRoute } from 'vue-router'
 import { useQuasar } from 'quasar'
 import LivingLogo from 'components/ui/LivingLogo.vue'
 import { evaluateOperationalAlerts } from 'src/utils/operationalAlerts'
+import { hasUnreadAlerts } from 'src/utils/alertsAck'
 
 const tab = ref('inicio')
 const rightDrawerOpen = ref(false)
+const alertsAckTick = ref(0)
 
 const authStore = useAuthStore()
 const dataStore = useDataStore()
@@ -361,21 +352,37 @@ const $q = useQuasar()
 
 const isMapPage = computed(() => !!route.meta.mapPage)
 
-const alertCount = computed(
-  () =>
-    evaluateOperationalAlerts({
-      lotes: dataStore.lotes || [],
-      potreros: dataStore.potreros || [],
-      fuentesAgua: dataStore.fuentesAgua || [],
-      inventarioItems: dataStore.inventarioItems || [],
-      evaluaciones: dataStore.evaluaciones || [],
-    }).length,
+const operationalAlerts = computed(() =>
+  evaluateOperationalAlerts({
+    lotes: dataStore.lotes || [],
+    potreros: dataStore.potreros || [],
+    fuentesAgua: dataStore.fuentesAgua || [],
+    inventarioItems: dataStore.inventarioItems || [],
+    evaluaciones: dataStore.evaluaciones || [],
+  }),
 )
+
+/** Punto del notch: rojo si hay alertas no leídas; verde si todo revisado o no hay. */
+const hasUnreadAlertsDot = computed(() => {
+  void alertsAckTick.value
+  return hasUnreadAlerts(operationalAlerts.value)
+})
+
+function bumpAlertsAck() {
+  alertsAckTick.value += 1
+}
 
 function goAlertas() {
   rightDrawerOpen.value = false
   router.push('/alertas')
 }
+
+onMounted(() => {
+  window.addEventListener('alerts-acked', bumpAlertsAck)
+})
+onUnmounted(() => {
+  window.removeEventListener('alerts-acked', bumpAlertsAck)
+})
 
 // --- DATOS USUARIO ---
 const userAvatar = computed(
@@ -778,23 +785,31 @@ function handlePan(details) {
     width: 24px;
     .notch-dot {
       transform: scale(1.5);
-      box-shadow: 0 0 10px #39ff14;
     }
   }
 }
 .notch-dot {
-  width: 4px;
-  height: 4px;
+  width: 6px;
+  height: 6px;
   border-radius: 50%;
+  transition: all 0.35s ease;
   background-color: #39ff14;
-  transition: all 0.5s ease;
+  box-shadow: 0 0 8px rgba(57, 255, 20, 0.7);
 }
-.alerts-notch-badge {
-  position: absolute !important;
-  top: -6px;
-  left: -10px;
-  font-size: 10px;
-  z-index: 1;
+.notch-dot--ok {
+  background-color: #39ff14;
+  box-shadow: 0 0 8px rgba(57, 255, 20, 0.7);
+}
+.notch-dot--alert {
+  background-color: #d32f2f;
+  box-shadow: 0 0 10px rgba(211, 47, 47, 0.85);
+  animation: notch-pulse 1.4s ease-in-out infinite;
+}
+@keyframes notch-pulse {
+  50% {
+    box-shadow: 0 0 14px rgba(211, 47, 47, 1);
+    transform: scale(1.15);
+  }
 }
 
 .page-padding-fix {

@@ -196,7 +196,7 @@ const badgeMeta = computed(() => {
     return { label: 'MANUAL', color: 'blue-grey-8', textColor: 'white', icon: 'lock' }
   }
   if (dataStore.marketPrice.esEstimado || dataStore.marketPrice.value == null) {
-    return { label: 'SIN DATO MAG', color: 'orange-8', textColor: 'white', icon: 'warning' }
+    return { label: 'SIN DATO MAG', color: 'yellow-8', textColor: 'black', icon: 'warning' }
   }
   return { label: 'MAG', color: 'green-13', textColor: 'black', icon: 'cloud_done' }
 })

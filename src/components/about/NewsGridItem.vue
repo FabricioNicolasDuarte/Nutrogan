@@ -1,5 +1,11 @@
 <template>
-  <div class="news-item cursor-pointer full-height relative-position overflow-hidden bg-dark">
+  <a
+    class="news-item cursor-pointer full-height relative-position overflow-hidden bg-dark block"
+    :href="href || undefined"
+    :target="href ? '_blank' : undefined"
+    :rel="href ? 'noopener noreferrer' : undefined"
+    @click="onClick"
+  >
     <q-img
       :src="image"
       class="full-height full-width image-zoom"
@@ -17,7 +23,12 @@
 
     <div class="absolute-bottom q-pa-md z-10 content-box">
       <div class="row items-center q-mb-sm">
-        <q-badge :color="tagColor" :label="tag" class="q-mr-sm text-weight-bold shadow-2" />
+        <q-badge
+          :color="tagColor"
+          :text-color="tagTextColor"
+          :label="tag"
+          class="q-mr-sm text-weight-bold shadow-2"
+        />
         <span class="text-caption text-grey-4 text-shadow">{{ date }}</span>
       </div>
       <div
@@ -26,17 +37,23 @@
         {{ title }}
       </div>
     </div>
-  </div>
+  </a>
 </template>
 
 <script setup>
-defineProps({
+const props = defineProps({
   image: String,
   title: String,
   date: String,
   tag: String,
   tagColor: { type: String, default: 'primary' },
+  tagTextColor: { type: String, default: 'white' },
+  href: { type: String, default: '' },
 })
+
+function onClick(e) {
+  if (!props.href) e.preventDefault()
+}
 </script>
 
 <style lang="scss" scoped>
@@ -44,7 +61,9 @@ defineProps({
   border-radius: 20px;
   border: 1px solid rgba(255, 255, 255, 0.15);
   transition: all 0.3s ease;
-  height: 100%; /* Fundamental para que herede la altura del padre */
+  height: 100%;
+  text-decoration: none;
+  color: inherit;
 
   &:hover {
     border-color: var(--q-primary);
@@ -81,7 +100,6 @@ defineProps({
   text-shadow: 0 2px 4px rgba(0, 0, 0, 0.8);
 }
 
-/* ESLint fix */
 .ellipsis-3-lines {
   display: -webkit-box;
   -webkit-line-clamp: 3;

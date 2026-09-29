@@ -172,17 +172,19 @@
                     >
                       <div class="pulsing-dot cyan q-mr-sm"></div>
                       <span class="text-caption text-bold font-mono text-cyan-11 text-xs"
-                        >LIVE</span
+                        >DEMO</span
                       >
                     </div>
                     <video
                       src="/videos/Video_Escaneo_Corporal_Vaca_Brangus.mp4"
                       poster="/images/nutrogan-bg.png"
-                      class="fit object-cover"
-                      preload="none"
+                      class="tech-video"
+                      preload="metadata"
                       muted
                       playsinline
+                      loop
                       controls
+                      autoplay
                     ></video>
                   </div>
                 </div>
@@ -657,36 +659,39 @@ const guidesDatabase = {
 
 const noticias = ref([
   {
-    title: 'Precios Liniers',
-    date: 'Hoy',
-    tag: 'MERCADO',
-    tagColor: 'green-6',
-    image:
-      'https://images.unsplash.com/photo-1545464508-3563458925cb?auto=format&fit=crop&q=80&w=400',
+    title: 'CEDEVA Laguna Yema: avances en ganadería regenerativa',
+    date: 'Oct 2024',
+    tag: 'CEDEVA',
+    tagColor: 'green-13',
+    tagTextColor: 'black',
+    image: '/images/news/cedeva-ganaderia.jpg',
+    href: 'https://m.formosa.gob.ar/noticia/32624/1655/cedeva_laguna_yema_compartio_avances_de_validacion_en_ganaderia_regenerativa_en_ingeniero_juarez',
   },
   {
-    title: 'Alerta Sequía',
-    date: '10 Dic',
-    tag: 'CLIMA',
-    tagColor: 'orange-8',
-    image:
-      'https://images.unsplash.com/photo-1504386106331-3e4e71712b38?auto=format&fit=crop&q=80&w=400',
+    title: 'Capacitación ganadera y entrega de reproductores (CEDEVA)',
+    date: 'Sep 2024',
+    tag: 'CEDEVA',
+    tagColor: 'green-13',
+    tagTextColor: 'black',
+    image: '/images/news/cedeva-caprinos.jpeg',
+    href: 'https://m.formosa.gob.ar/noticia/32422/1655/cedeva_de_laguna_yema_capacito_en_ganaderia_y_entrego_reproductores_caprinos_a_productores_de_la_zona',
   },
   {
-    title: 'CEDEVA Info',
-    date: '05 Dic',
-    tag: 'INSTITUCIONAL',
-    tagColor: 'blue-6',
-    image:
-      'https://images.unsplash.com/photo-1500382017468-9049fed747ef?auto=format&fit=crop&q=80&w=400',
+    title: 'Centro de Validación Laguna Yema — Formosa',
+    date: 'Institucional',
+    tag: 'CEDEVA',
+    tagColor: 'cyan-8',
+    image: '/images/news/cedeva-header.jpg',
+    href: 'https://www.formosa.gob.ar/cedeva/lagunayema',
   },
   {
-    title: 'Vacunación',
-    date: '01 Dic',
-    tag: 'SANIDAD',
-    tagColor: 'red-5',
-    image:
-      'https://images.unsplash.com/photo-1596733430282-7438b9319692?auto=format&fit=crop&q=80&w=400',
+    title: 'INTA: investigación y extensión agropecuaria',
+    date: 'Referencia',
+    tag: 'INTA',
+    tagColor: 'yellow-8',
+    tagTextColor: 'black',
+    image: '/images/news/inta-vacas.jpg',
+    href: 'https://www.argentina.gob.ar/inta',
   },
 ])
 
@@ -867,8 +872,17 @@ function openGuide(key) {
   aspect-ratio: 16/9;
   width: 100%;
 }
-.object-cover {
+.tech-video {
+  width: 100%;
+  height: 100%;
+  display: block;
   object-fit: cover;
+  position: relative;
+  z-index: 1;
+  background: #000;
+}
+.scanning-overlay {
+  pointer-events: none;
 }
 .tutorial-card {
   position: relative;

@@ -2,7 +2,7 @@
   <div class="alerts-hub column text-white" :class="{ 'alerts-hub--page': variant === 'page' }">
     <div class="row items-center justify-between q-mb-sm" v-if="variant !== 'page'">
       <div class="row items-center">
-        <q-icon name="notification_important" color="orange-8" size="sm" class="q-mr-sm" />
+        <q-icon name="notification_important" color="red-8" size="sm" class="q-mr-sm" />
         <div>
           <div class="text-subtitle2 text-weight-bold">Alertas operativas</div>
           <div class="text-caption text-grey-5">
@@ -24,7 +24,7 @@
 
     <div v-else class="row items-center justify-between q-mb-md">
       <div class="text-caption text-grey-5">
-        {{ alerts.length }} activas · umbrales de campo (sin inventar datos)
+        {{ alerts.length }} activas · semáforo rojo / amarillo / verde
       </div>
       <q-btn
         flat
@@ -42,8 +42,8 @@
       dense
       narrow-indicator
       class="text-grey-5 q-mb-sm"
-      active-color="orange-8"
-      indicator-color="orange-8"
+      active-color="primary"
+      indicator-color="primary"
       align="justify"
     >
       <q-tab name="activas" label="Activas" />
@@ -59,15 +59,26 @@
     >
       <q-tab-panel name="activas" class="q-pa-none">
         <div v-if="!alerts.length" class="text-center text-grey-6 q-py-md text-caption">
-          Sin alertas con los datos cargados.
+          Sin alertas — estado verde.
         </div>
         <q-list v-else dense separator class="rounded-borders overflow-hidden">
           <q-item v-for="a in alerts" :key="a.id" class="q-px-none">
             <q-item-section avatar>
-              <q-icon :name="severityIcon(a.severity)" :color="severityColor(a.severity)" size="xs" />
+              <q-avatar size="28px" :color="traffic(a.severity).color" :text-color="traffic(a.severity).textColor || 'white'">
+                <q-icon :name="traffic(a.severity).icon" size="16px" />
+              </q-avatar>
             </q-item-section>
             <q-item-section>
-              <q-item-label class="text-weight-medium text-caption">{{ a.title }}</q-item-label>
+              <q-item-label class="text-weight-medium text-caption">
+                <q-badge
+                  :color="traffic(a.severity).color"
+                  :text-color="traffic(a.severity).textColor || 'white'"
+                  :label="traffic(a.severity).label"
+                  class="q-mr-xs"
+                  style="font-size: 0.65rem"
+                />
+                {{ a.title }}
+              </q-item-label>
               <q-item-label caption class="text-grey-6" style="font-size: 0.7rem">
                 {{ a.message }}
               </q-item-label>
@@ -79,7 +90,7 @@
           unelevated
           dense
           class="full-width q-mt-md"
-          color="orange-9"
+          color="red-8"
           text-color="white"
           icon="mail"
           label="Avisar críticas"
@@ -182,8 +193,9 @@ import { useQuasar } from 'quasar'
 import { supabase } from 'boot/supabase'
 import { useDataStore } from 'stores/data-store'
 import { evaluateOperationalAlerts } from 'src/utils/operationalAlerts'
+import { ackAlerts, severityTraffic } from 'src/utils/alertsAck'
 
-defineProps({
+const props = defineProps({
   variant: { type: String, default: 'page' }, // page | drawer
 })
 
@@ -218,15 +230,14 @@ const prioridades = [
 
 const critical = computed(() => alerts.value.filter((a) => a.severity === 'critical'))
 
-function severityIcon(s) {
-  if (s === 'critical') return 'error'
-  if (s === 'warn') return 'warning'
-  return 'info'
+function traffic(severity) {
+  return severityTraffic(severity)
 }
-function severityColor(s) {
-  if (s === 'critical') return 'red-8'
-  if (s === 'warn') return 'orange-8'
-  return 'blue-6'
+
+function markRead() {
+  if (props.variant !== 'page') return
+  ackAlerts(alerts.value)
+  window.dispatchEvent(new CustomEvent('alerts-acked'))
 }
 
 function formatNotifDate(iso) {
@@ -251,6 +262,7 @@ function recompute() {
     inventarioItems: dataStore.inventarioItems || [],
     evaluaciones: dataStore.evaluaciones || [],
   })
+  markRead()
 }
 
 async function refresh() {

@@ -251,7 +251,7 @@
                     <q-item-label caption>{{ notif.mensaje?.substring(0, 50) }}...</q-item-label>
                   </q-item-section>
                   <q-item-section side>
-                    <q-badge :color="notif.estado === 'enviado' ? 'green' : 'orange'">
+                    <q-badge :color="notif.estado === 'enviado' ? 'green-13' : 'yellow-8'" text-color="black">
                       {{ notif.estado }}
                     </q-badge>
                   </q-item-section>
