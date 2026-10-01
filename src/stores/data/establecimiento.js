@@ -12,6 +12,7 @@ export function createEstablecimientoModule({ supabase, authStore }) {
     source: 'Sin definir',
     esEstimado: false,
     categoria: null,
+    categoriaPreferida: 'novillo',
   })
 
   async function fetchEstablecimiento() {
@@ -43,9 +44,13 @@ export function createEstablecimientoModule({ supabase, authStore }) {
     }
   }
 
-  async function fetchMarketPriceAuto() {
+  async function fetchMarketPriceAuto(opts = {}) {
+    const categoria =
+      opts.categoria || marketPrice.value.categoriaPreferida || marketPrice.value.categoria || 'novillo'
     try {
-      const { data, error } = await supabase.functions.invoke('get-market-price')
+      const { data, error } = await supabase.functions.invoke('get-market-price', {
+        body: { categoria },
+      })
       if (error) throw error
 
       if (data && data.success && data.precio != null && Number(data.precio) > 0) {
@@ -56,6 +61,8 @@ export function createEstablecimientoModule({ supabase, authStore }) {
           lastUpdated: data.fecha,
           source: data.fuente || 'Mercado',
           esEstimado: !!data.es_estimado,
+          categoria: data.categoria || (data.match_categoria ? categoria : null),
+          categoriaPreferida: categoria,
         }
       } else {
         // Sin inventar número: dejar valor previo / pedir manual
@@ -65,10 +72,18 @@ export function createEstablecimientoModule({ supabase, authStore }) {
           source: data?.fuente || 'Sin dato MAG — fijá precio manual',
           esEstimado: true,
           lastUpdated: data?.fecha || new Date().toISOString(),
+          categoriaPreferida: categoria,
         }
       }
     } catch (e) {
       console.error('Error obteniendo precio de mercado:', e)
+    }
+  }
+
+  function setCategoriaPreferida(categoria) {
+    marketPrice.value = {
+      ...marketPrice.value,
+      categoriaPreferida: categoria || 'novillo',
     }
   }
 
@@ -88,6 +103,7 @@ export function createEstablecimientoModule({ supabase, authStore }) {
     fetchEstablecimiento,
     setManualPrice,
     fetchMarketPriceAuto,
+    setCategoriaPreferida,
     updateConfigEmergencia,
   }
 }

@@ -324,6 +324,7 @@ import { supabase } from 'boot/supabase'
 import { useQuasar } from 'quasar'
 import { useSound } from 'src/composables/useSound'
 import SatelliteHistoryChart from 'components/charts/SatelliteHistoryChart.vue'
+import { estadoForrajeNdvi } from 'src/utils/ndviBands'
 
 const dataStore = useDataStore()
 const authStore = useAuthStore()
@@ -383,12 +384,7 @@ function getNdviColorClass(ndvi) {
 }
 
 function getEstadoForraje(ndvi) {
-  if (typeof ndvi !== 'number') return 'N/A'
-  if (ndvi >= 0.7) return 'EXCELENTE'
-  if (ndvi >= 0.5) return 'BUENO'
-  if (ndvi >= 0.4) return 'REGULAR'
-  if (ndvi >= 0.2) return 'BAJO'
-  return 'CRÍTICO'
+  return estadoForrajeNdvi(ndvi, { short: true })
 }
 
 function getNdviPercentage(ndvi) {

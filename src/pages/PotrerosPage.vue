@@ -382,6 +382,7 @@ import { useAuthStore } from 'stores/auth-store'
 import { supabase } from 'boot/supabase'
 import { useQuasar } from 'quasar'
 import { useSound } from 'src/composables/useSound'
+import { estadoForrajeNdviTitle } from 'src/utils/ndviBands'
 
 const dataStore = useDataStore()
 const authStore = useAuthStore()
@@ -498,11 +499,7 @@ function getNdviColorHex(ndvi) {
 function getEstadoPotrero(potrero) {
   if (!potrero.geometria) return 'Sin mapa'
   if (typeof potrero.ultimo_ndvi !== 'number') return 'Sin datos'
-  if (potrero.ultimo_ndvi >= 0.7) return 'Excelente'
-  if (potrero.ultimo_ndvi >= 0.5) return 'Bueno'
-  if (potrero.ultimo_ndvi >= 0.4) return 'Regular'
-  if (potrero.ultimo_ndvi >= 0.2) return 'Bajo'
-  return 'Crítico'
+  return estadoForrajeNdviTitle(potrero.ultimo_ndvi)
 }
 
 function getNdviPercentage(ndvi) {

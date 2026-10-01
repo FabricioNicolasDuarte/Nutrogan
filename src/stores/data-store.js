@@ -74,6 +74,7 @@ export const useDataStore = defineStore(
       marketPrice: bag.marketPrice,
       setManualPrice: bag.setManualPrice,
       fetchMarketPriceAuto: bag.fetchMarketPriceAuto,
+      setCategoriaPreferida: bag.setCategoriaPreferida,
 
       getPotreroById: bag.getPotreroById,
       fetchEstablecimiento: bag.fetchEstablecimiento,

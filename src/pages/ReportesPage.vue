@@ -41,6 +41,14 @@
     </div>
 
     <div class="q-px-sm-md">
+      <q-banner dense class="bg-grey-10 text-grey-4 q-mb-md rounded-borders border-soft-banner">
+        <template #avatar>
+          <q-icon name="info" color="grey-5" />
+        </template>
+        Reportes usan solo datos cargados. NDVI = vigor relativo (no kg MS). Alertas se evalúan en
+        el dispositivo (sin cron servidor). Umbrales de agua son orientativos de campo.
+      </q-banner>
+
       <div class="row q-col-gutter-md q-mb-lg">
         <div class="col-12 col-sm-6 col-md-3">
           <q-card flat class="kpi-card relative-position overflow-hidden border-neon-left">
@@ -171,6 +179,7 @@ import {
   valuacionInventario,
 } from 'src/utils/livestockKpis'
 import { evaluateOperationalAlerts } from 'src/utils/operationalAlerts'
+import { estadoForrajeNdviTitle } from 'src/utils/ndviBands'
 
 const dataStore = useDataStore()
 const $q = useQuasar()
@@ -241,11 +250,7 @@ function capitalize(str) {
 }
 
 function calcularEstadoPotrero(ndvi) {
-  if (typeof ndvi !== 'number') return 'Sin Datos'
-  if (ndvi >= 0.6) return 'Óptimo'
-  if (ndvi >= 0.4) return 'Bueno'
-  if (ndvi >= 0.2) return 'Regular'
-  return 'Crítico'
+  return estadoForrajeNdviTitle(ndvi)
 }
 
 function getUltimoPeso(lote) {

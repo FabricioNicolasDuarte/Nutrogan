@@ -5,6 +5,9 @@
  * No sustituye laboratorio ni criterio veterinario.
  */
 
+export const WATER_QUALITY_DISCLAIMER =
+  'Umbrales orientativos de campo (NRC/extensión). No sustituyen laboratorio ni criterio veterinario.'
+
 export function calcularCalidadAgua(datos = {}) {
   const peligros = []
   const ph = parseFloat(datos.ph)

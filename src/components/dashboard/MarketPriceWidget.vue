@@ -68,10 +68,32 @@
                   />
                 </q-item-section>
                 <q-item-section>
-                  <q-item-label>Automático</q-item-label>
-                  <q-item-label caption class="text-grey-6">Sincronizar con Mercado</q-item-label>
+                  <q-item-label>Automático (MAG)</q-item-label>
+                  <q-item-label caption class="text-grey-6">Por categoría elegida</q-item-label>
                 </q-item-section>
                 <q-item-section side v-if="dataStore.marketPrice.mode === 'auto'">
+                  <q-icon name="check" color="green-13" size="xs" />
+                </q-item-section>
+              </q-item>
+
+              <q-item-label header class="text-grey-5 font-mono text-caption q-pb-none q-pt-sm">
+                CATEGORÍA MAG
+              </q-item-label>
+              <q-item
+                v-for="cat in categoriasMag"
+                :key="cat.id"
+                clickable
+                v-ripple
+                dense
+                @click="elegirCategoriaMag(cat.id)"
+              >
+                <q-item-section>
+                  <q-item-label class="text-caption">{{ cat.label }}</q-item-label>
+                </q-item-section>
+                <q-item-section
+                  side
+                  v-if="(dataStore.marketPrice.categoriaPreferida || 'novillo') === cat.id"
+                >
                   <q-icon name="check" color="green-13" size="xs" />
                 </q-item-section>
               </q-item>
@@ -141,14 +163,17 @@
             Valor de referencia (ARS/kg vivo). Indicá categoría para trazabilidad (ej. Novillo
             Mag/Liniers).
           </div>
-          <q-input
+          <q-select
             v-model="tempCategory"
+            :options="categoriasMagLabels"
             outlined
             dark
             color="green-13"
-            label="Categoría / plaza"
+            label="Categoría"
             class="q-mb-md"
-            hint="Opcional · queda en el origen del dato"
+            emit-value
+            map-options
+            hint="Obligatoria para trazabilidad del $/kg"
           />
           <q-input
             v-model.number="tempPrice"
@@ -183,13 +208,16 @@
 import { ref, computed } from 'vue'
 import { useDataStore } from 'stores/data-store'
 import { useQuasar, date } from 'quasar'
+import { MAG_CATEGORIAS } from 'src/utils/magPriceParse'
 
 const dataStore = useDataStore()
 const $q = useQuasar()
 const loading = ref(false)
 const showEditDialog = ref(false)
 const tempPrice = ref(0)
-const tempCategory = ref('')
+const tempCategory = ref('Novillo')
+const categoriasMag = MAG_CATEGORIAS
+const categoriasMagLabels = MAG_CATEGORIAS.map((c) => ({ label: c.label, value: c.label }))
 
 const badgeMeta = computed(() => {
   if (dataStore.marketPrice.mode === 'manual') {
@@ -218,7 +246,9 @@ const origenHint = computed(() => {
   if (dataStore.marketPrice.esEstimado || !dataStore.marketPrice.value) {
     return 'No se inventa precio. Usá modo manual si MAG no responde.'
   }
-  return 'Scraping MAG (verificar categoría de hacienda).'
+  const cat = dataStore.marketPrice.categoria
+  if (cat) return `Cotización MAG asociada a ${cat}.`
+  return 'MAG sin match de categoría — preferí manual con categoría explícita.'
 })
 
 const lastUpdate = computed(() => {
@@ -234,12 +264,12 @@ function formatPrice(val) {
 
 function activarManual() {
   tempPrice.value = dataStore.marketPrice.value
-  tempCategory.value = dataStore.marketPrice.categoria || ''
+  tempCategory.value = dataStore.marketPrice.categoria || 'Novillo'
   showEditDialog.value = true
 }
 
 function saveManual() {
-  if (tempPrice.value > 0) {
+  if (tempPrice.value > 0 && tempCategory.value) {
     dataStore.setManualPrice(tempPrice.value, { categoria: tempCategory.value })
     showEditDialog.value = false
     $q.notify({
@@ -248,42 +278,45 @@ function saveManual() {
       icon: 'check_circle',
       timeout: 1500,
     })
+  } else {
+    $q.notify({ type: 'warning', message: 'Indicá precio y categoría' })
+  }
+}
+
+async function elegirCategoriaMag(id) {
+  dataStore.setCategoriaPreferida?.(id)
+  loading.value = true
+  try {
+    await dataStore.fetchMarketPriceAuto({ categoria: id })
+    $q.notify({
+      type: 'positive',
+      message: `MAG · ${id}`,
+      icon: 'cloud_sync',
+      timeout: 1200,
+    })
+  } catch {
+    $q.notify({ type: 'negative', message: 'Error de conexión MAG' })
+  } finally {
+    loading.value = false
   }
 }
 
 async function toggleAutoMode() {
-  if (dataStore.marketPrice.mode === 'auto') {
-    loading.value = true
-    try {
-      await dataStore.fetchMarketPriceAuto()
-      $q.notify({
-        type: 'positive',
-        message: 'Sincronizado con Mercado',
-        icon: 'cloud_sync',
-        timeout: 1000,
-      })
-    } catch {
-      $q.notify({ type: 'negative', message: 'Error de conexión' })
-    } finally {
-      loading.value = false
-    }
-  } else {
-    loading.value = true
-    try {
-      await dataStore.fetchMarketPriceAuto()
-      if (dataStore.marketPrice.mode !== 'auto') {
-        // Fallback si el store no actualizó el modo automáticamente
-      }
-      $q.notify({
-        type: 'positive',
-        message: 'Modo Automático Activado',
-        icon: 'auto_mode',
-      })
-    } catch {
-      $q.notify({ type: 'negative', message: 'No se pudo conectar al mercado' })
-    } finally {
-      loading.value = false
-    }
+  loading.value = true
+  try {
+    await dataStore.fetchMarketPriceAuto({
+      categoria: dataStore.marketPrice.categoriaPreferida || 'novillo',
+    })
+    $q.notify({
+      type: 'positive',
+      message: 'Sincronizado con MAG',
+      icon: 'cloud_sync',
+      timeout: 1000,
+    })
+  } catch {
+    $q.notify({ type: 'negative', message: 'No se pudo conectar al mercado' })
+  } finally {
+    loading.value = false
   }
 }
 </script>

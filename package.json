@@ -19,6 +19,8 @@
     "test:e2e": "cypress run",
     "test:e2e:open": "cypress open",
     "test:all": "npm run test:unit:run && npm run test:smoke && npm run test:smoke:write",
+    "seed:demo": "node scripts/seed-demo-historico.mjs",
+    "seed:demo:purge": "node scripts/seed-demo-historico.mjs --purge",
     "dev": "set NODE_OPTIONS=--openssl-legacy-provider && quasar dev",
     "dev:pwa": "set NODE_OPTIONS=--openssl-legacy-provider && quasar dev -m pwa",
     "build": "quasar build -m pwa",

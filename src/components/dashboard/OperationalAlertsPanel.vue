@@ -24,7 +24,8 @@
 
     <div v-else class="row items-center justify-between q-mb-md">
       <div class="text-caption text-grey-5">
-        {{ activeAlerts.length }} activas · {{ archivedList.length }} archivadas · semáforo R/A/V
+        {{ activeAlerts.length }} activas · {{ archivedList.length }} archivadas · semáforo R/A/V ·
+        evaluación en dispositivo (sin cron servidor)
       </div>
       <q-btn
         flat

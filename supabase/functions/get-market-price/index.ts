@@ -1,9 +1,74 @@
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
-import { DOMParser } from 'https://deno.land/x/deno_dom/deno-dom-wasm.ts'
 
 const CORS_HEADERS = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+}
+
+const MAG_CATEGORIAS = [
+  { id: 'novillo', label: 'Novillo', patterns: [/novillos?/i, /nov\./i] },
+  { id: 'vaquillona', label: 'Vaquillona', patterns: [/vaquillonas?/i, /vaq\./i] },
+  { id: 'vaca', label: 'Vaca', patterns: [/\bvacas?\b/i] },
+  { id: 'ternero', label: 'Ternero', patterns: [/terneros?/i, /tern\./i] },
+  { id: 'invernada', label: 'Invernada', patterns: [/invernada/i] },
+]
+
+const PRICE_MIN = 1500
+const PRICE_MAX = 8000
+
+function extractPriceFromText(text: string): number | null {
+  if (!text) return null
+  const cleaned = String(text)
+    .replace(/\$/g, ' ')
+    .replace(/\./g, '')
+    .replace(/,/g, '.')
+    .trim()
+  const m = cleaned.match(/(\d{3,5}(?:\.\d+)?)/)
+  if (!m) return null
+  const valor = parseFloat(m[1])
+  if (!Number.isFinite(valor) || valor < PRICE_MIN || valor > PRICE_MAX) return null
+  return valor
+}
+
+function parseMagPrice(html: string, categoriaIdOrLabel = 'novillo') {
+  const raw = String(html || '')
+  const cat =
+    MAG_CATEGORIAS.find(
+      (c) =>
+        c.id === String(categoriaIdOrLabel).toLowerCase() ||
+        c.label.toLowerCase() === String(categoriaIdOrLabel).toLowerCase(),
+    ) || MAG_CATEGORIAS[0]
+
+  const chunks = raw
+    .replace(/<script[\s\S]*?<\/script>/gi, ' ')
+    .replace(/<style[\s\S]*?<\/style>/gi, ' ')
+    .replace(/<[^>]+>/g, ' ')
+    .replace(/&nbsp;/gi, ' ')
+    .replace(/\s+/g, ' ')
+
+  for (const pattern of cat.patterns) {
+    const re = new RegExp(
+      `(${pattern.source}).{0,100}?(\\$?\\s*\\d{1,2}[.,]?\\d{3}(?:[.,]\\d{2})?)`,
+      'i',
+    )
+    const m = chunks.match(re)
+    if (m) {
+      const precio = extractPriceFromText(m[2] || m[0])
+      if (precio != null) {
+        return { precio, categoria: cat.label, matched: true }
+      }
+    }
+  }
+
+  const any = chunks.match(/\$?\s*\d{1,2}[.,]?\d{3}(?:[.,]\d{2})?/g) || []
+  for (const piece of any) {
+    const precio = extractPriceFromText(piece)
+    if (precio != null) {
+      return { precio, categoria: null, matched: false }
+    }
+  }
+
+  return { precio: null, categoria: null, matched: false }
 }
 
 serve(async (req) => {
@@ -11,19 +76,18 @@ serve(async (req) => {
     return new Response('ok', { headers: CORS_HEADERS })
   }
 
-  // Variables para el resultado final
-  let precioFinal = null
-  let fuenteDato = 'Mercado Agroganadero (MAG)'
+  let categoriaReq = 'novillo'
+  try {
+    const body = await req.json()
+    if (body?.categoria) categoriaReq = String(body.categoria)
+  } catch {
+    /* sin body */
+  }
 
   try {
-    console.log('Intentando conectar con MAG...')
-
-    // 1. Intentar Scraping con 'Camuflaje' (User-Agent)
     const URL_FUENTE = 'https://www.mercadoagroganadero.com.ar/dll/hacienda1.dll/haciendainfo'
-
     const response = await fetch(URL_FUENTE, {
       headers: {
-        // Nos disfrazamos de navegador real para evitar bloqueos 403/502
         'User-Agent':
           'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
         Accept: 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
@@ -33,67 +97,53 @@ serve(async (req) => {
 
     if (response.ok) {
       const html = await response.text()
-      const document = new DOMParser().parseFromString(html, 'text/html')
+      const parsed = parseMagPrice(html, categoriaReq)
 
-      if (document) {
-        // Lógica de búsqueda flexible de precios en la tabla
-        const celdas = document.querySelectorAll('td, span, div, b')
-
-        for (const celda of celdas) {
-          const texto = celda.textContent.trim()
-          // Buscamos patrones de precio (ej: 2.200,00 o 2200)
-          if (texto.includes('$') || texto.match(/^\d{1,2}\.\d{3}/)) {
-            const numeroLimpio = texto.replace('$', '').replace(/\./g, '').replace(',', '.').trim()
-            const valor = parseFloat(numeroLimpio)
-
-            // Filtro de cordura: Precio realista entre 1500 y 4000
-            if (!isNaN(valor) && valor > 1500 && valor < 4000) {
-              precioFinal = valor
-              console.log(`Precio encontrado en web: ${precioFinal}`)
-              break
-            }
-          }
-        }
+      if (parsed.precio != null) {
+        const fuente = parsed.matched
+          ? `MAG — ${parsed.categoria}`
+          : 'MAG (categoría no confirmada)'
+        return new Response(
+          JSON.stringify({
+            success: true,
+            precio: parsed.precio,
+            moneda: 'ARS',
+            unidad: 'kg',
+            fuente,
+            categoria: parsed.categoria,
+            categoria_solicitada: categoriaReq,
+            match_categoria: parsed.matched,
+            es_estimado: !parsed.matched,
+            fecha: new Date().toISOString(),
+            nota: parsed.matched
+              ? `Cotización asociada a ${parsed.categoria}.`
+              : 'No se halló fila de la categoría pedida; primer $ usable. Preferí modo manual con categoría.',
+          }),
+          {
+            headers: { ...CORS_HEADERS, 'Content-Type': 'application/json' },
+            status: 200,
+          },
+        )
       }
     } else {
-      console.warn(`La web respondió con estado: ${response.status}. Activando modo respaldo.`)
+      console.warn(`MAG status: ${response.status}`)
     }
   } catch (error) {
-    console.error('Error de conexión con la web externa:', error.message)
-    // No lanzamos error fatal, dejamos que fluya hacia el respaldo
+    console.error('Error MAG:', (error as Error).message)
   }
 
-  // 2. Sin inventar precio: si MAG no responde, devolver null y que la UI pida manual
-  if (!precioFinal) {
-    console.log('MAG sin precio usable — no se inventa valor.')
-    return new Response(
-      JSON.stringify({
-        success: true,
-        precio: null,
-        moneda: 'ARS',
-        unidad: 'kg',
-        fuente: 'Sin dato MAG — fijá precio manual',
-        es_estimado: true,
-        fecha: new Date().toISOString(),
-      }),
-      {
-        headers: { ...CORS_HEADERS, 'Content-Type': 'application/json' },
-        status: 200,
-      },
-    )
-  }
-
-  // 3. Precio scrapeado (puede no ser la categoría exacta — etiquetar con honestidad)
   return new Response(
     JSON.stringify({
       success: true,
-      precio: precioFinal,
+      precio: null,
       moneda: 'ARS',
       unidad: 'kg',
-      fuente: fuenteDato,
-      es_estimado: false,
+      fuente: 'Sin dato MAG — fijá precio manual',
+      categoria: null,
+      categoria_solicitada: categoriaReq,
+      match_categoria: false,
+      es_estimado: true,
       fecha: new Date().toISOString(),
-      nota: 'Primer valor $ detectado en MAG; verificar categoría (novillo/vaca/etc.).',
     }),
     {
       headers: { ...CORS_HEADERS, 'Content-Type': 'application/json' },

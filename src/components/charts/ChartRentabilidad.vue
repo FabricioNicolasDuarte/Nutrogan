@@ -38,8 +38,8 @@
       </div>
       <p class="text-caption text-grey-4 q-mb-none">
         <strong>Costo</strong>: movimientos de inventario tipo «uso» por mes.
-        <strong>Valor producido</strong>: solo el mes actual, si hay GDPV medido × cabezas × $/kg.
-        Sin GDPV o sin precio, el valor queda en 0 (no se inventa).
+        <strong>Valor producido</strong>: GDPV medido entre evaluaciones × cabezas × $/kg, repartido
+        por mes calendario. Sin tramos con peso o sin precio, el valor queda en 0 (no se inventa).
       </p>
     </div>
   </div>
@@ -54,6 +54,7 @@ import { BarChart } from 'echarts/charts'
 import { GridComponent, TooltipComponent, LegendComponent } from 'echarts/components'
 import VChart from 'vue-echarts'
 import { calcGdpv } from 'src/utils/gdpv'
+import { valorProducidoPorMes } from 'src/utils/gdpvMonthly'
 
 use([CanvasRenderer, BarChart, GridComponent, TooltipComponent, LegendComponent])
 
@@ -107,19 +108,19 @@ const option = computed(() => {
   })
 
   const price = Number(props.precioMercado)
-  const kilosMes = parseFloat(totalKilosGanadosMes.value) || 0
-  const valorMes =
-    Number.isFinite(price) && price > 0 && kilosMes > 0 ? kilosMes * price : 0
-
-  const today = new Date()
-  const currentKey = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}`
+  const valorPorMes = valorProducidoPorMes(
+    dataStore.lotes,
+    dataStore.evaluaciones,
+    price,
+    6,
+  )
 
   for (let i = 5; i >= 0; i--) {
+    const today = new Date()
     const d = new Date(today.getFullYear(), today.getMonth() - i, 1)
     const k = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`
     if (!monthlyStats[k]) monthlyStats[k] = { costo: 0, valor: 0 }
-    // Solo el mes corriente lleva valor estimado (no se copia a meses pasados)
-    monthlyStats[k].valor = k === currentKey ? valorMes : 0
+    monthlyStats[k].valor = valorPorMes[k] || 0
   }
 
   const sortedKeys = Object.keys(monthlyStats).sort().slice(-6)

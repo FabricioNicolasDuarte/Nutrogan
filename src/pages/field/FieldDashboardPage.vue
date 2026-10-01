@@ -99,6 +99,10 @@
         </div>
       </div>
 
+      <div class="text-caption text-grey-7 q-mt-sm text-center" style="font-size: 0.7rem">
+        AGUA: umbrales orientativos de campo — no sustituyen laboratorio.
+      </div>
+
       <div style="height: 120px"></div>
     </div>
 
