@@ -1,21 +1,29 @@
 # Presentación TFI Expo — Nutrogan
 
-Archivo principal: [`TFI-NUTROGAN-UTN-FRRE.html`](./TFI-NUTROGAN-UTN-FRRE.html)
+## Archivos
 
-## Presentar (10 min)
+| Archivo | Uso |
+|---------|-----|
+| [`TFI-NUTROGAN-UTN-FRRE.html`](./TFI-NUTROGAN-UTN-FRRE.html) | Presentar en navegador + PDF 16:9 |
+| [`Nutrogan-TFI-Expo-2025.pptx`](./Nutrogan-TFI-Expo-2025.pptx) | Editar en PowerPoint / LibreOffice |
+| [`build_pptx.py`](./build_pptx.py) | Regenerar el PPTX si cambiás capturas |
 
-1. Abrí el HTML en Chrome/Edge → `F11`
-2. Navegá con `←` `→`
-3. Identidad: fondo geométrico Nutrogan, isotipo neón, pie UTN + CEDEVA Laguna Yema en todas las slides
-4. Incluye capturas live (dashboard / reportes) y maquetas del documento V5
+## Contenido
 
-## PDF 16:9
+- Identidad Nutrogan (fondo geométrico + isotipo neón)
+- Logos **UTN** y **CEDEVA** siempre sobre pastilla blanca (legibles)
+- Capturas **live** de la app (`assets/live/`) — no del documento V5
+- Layout **centrado**
+- 12 diapos · ~10 minutos
 
-- **Descargar PDF 16:9** (botón superior)
-- O Imprimir → Guardar como PDF, orientación horizontal, márgenes ninguno
+## Presentar HTML
 
-## Fuentes
+1. Abrí el HTML → `F11`
+2. `←` `→` para navegar
+3. **Descargar PDF 16:9** o Imprimir → PDF apaisado
 
-- `NUTROGAN_V5.docx` · `TFI EXPO.pptx`
-- Logos: Nutrogan mark, UTN, CEDEVA Yema
-- Screenshots: `assets/shots/`
+## Regenerar PPTX
+
+```bash
+python docs/presentacion/build_pptx.py
+```
