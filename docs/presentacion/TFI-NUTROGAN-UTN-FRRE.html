@@ -3,721 +3,769 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Nutrogan · TFI 2025 · UTN FRRE Extensión Formosa</title>
+  <title>Nutrogan · TFI Expo 2025 · UTN FRRE</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800;900&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
   <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.2/dist/jspdf.umd.min.js"></script>
   <style>
     :root {
-      --bg: #0a0c0a;
-      --panel: #121612;
-      --lime: #a2ff00;
-      --lime-dim: #6bb800;
+      --bg: #050505;
+      --panel: rgba(12, 14, 16, .72);
+      --lime: #39ff14;
+      --lime2: #a2ff00;
+      --blue: #004bfc;
       --cyan: #00e5ff;
-      --text: #f2f5f0;
-      --muted: #9aa396;
-      --line: rgba(255,255,255,.12);
-      --utn: #e8e8e8;
+      --text: #f4f7f2;
+      --muted: #a8b0a4;
+      --line: rgba(255,255,255,.14);
+      --danger: #ff0040;
     }
     * { box-sizing: border-box; margin: 0; padding: 0; }
     html, body {
       height: 100%;
-      background: #050605;
+      background: #020302;
       color: var(--text);
       font-family: Outfit, system-ui, sans-serif;
       overflow: hidden;
     }
     .deck {
-      width: 100vw;
-      height: 100vh;
-      display: grid;
-      place-items: center;
-      background:
-        radial-gradient(ellipse 80% 60% at 10% 0%, rgba(162,255,0,.08), transparent 50%),
-        radial-gradient(ellipse 60% 50% at 90% 100%, rgba(0,229,255,.06), transparent 45%),
-        var(--bg);
+      width: 100vw; height: 100vh;
+      display: grid; place-items: center;
+      background: #020302;
     }
     .stage {
       width: min(96vw, calc(96vh * 16 / 9));
       height: min(96vh, calc(96vw * 9 / 16));
       position: relative;
-      border: 1px solid var(--line);
-      border-radius: 14px;
+      border-radius: 16px;
       overflow: hidden;
-      background: linear-gradient(160deg, #101410 0%, #0a0c0a 55%, #0d1210 100%);
-      box-shadow: 0 30px 80px rgba(0,0,0,.55);
+      border: 1px solid rgba(57,255,20,.25);
+      box-shadow: 0 0 0 1px rgba(0,75,252,.2), 0 40px 100px rgba(0,0,0,.65), 0 0 60px rgba(57,255,20,.08);
+      background: #050505;
+    }
+    .stage::before {
+      content: "";
+      position: absolute; inset: 0;
+      background:
+        linear-gradient(180deg, rgba(5,5,5,.35), rgba(5,5,5,.82)),
+        url("assets/bg-brand.png") center/cover no-repeat;
+      opacity: .55;
+      pointer-events: none;
+      z-index: 0;
     }
     .slide {
-      position: absolute;
-      inset: 0;
-      padding: 4.2% 4.5% 8.5%;
+      position: absolute; inset: 0;
       display: none;
       flex-direction: column;
+      padding: 3.6% 4% 8.8%;
+      z-index: 1;
       opacity: 0;
-      transition: opacity .25s ease;
     }
-    .slide.active { display: flex; opacity: 1; }
+    .slide.active { display: flex; opacity: 1; animation: fade .28s ease; }
+    @keyframes fade { from { opacity: 0; transform: translateY(8px);} to { opacity:1; transform:none;} }
     .eyebrow {
       font-family: "IBM Plex Mono", monospace;
-      font-size: clamp(10px, 1.15vw, 13px);
-      letter-spacing: .14em;
+      font-size: clamp(10px, 1.1vw, 12px);
+      letter-spacing: .16em;
       text-transform: uppercase;
       color: var(--lime);
-      margin-bottom: .7rem;
+      margin-bottom: .55rem;
     }
     h1 {
-      font-size: clamp(1.8rem, 3.8vw, 3.2rem);
-      font-weight: 800;
-      line-height: 1.08;
-      letter-spacing: -0.03em;
-      max-width: 18ch;
+      font-size: clamp(2rem, 4.2vw, 3.5rem);
+      font-weight: 900;
+      letter-spacing: -.035em;
+      line-height: 1.02;
+      max-width: 16ch;
     }
     h2 {
-      font-size: clamp(1.45rem, 2.8vw, 2.35rem);
-      font-weight: 750;
-      letter-spacing: -0.02em;
-      margin-bottom: .85rem;
+      font-size: clamp(1.5rem, 2.9vw, 2.4rem);
+      font-weight: 800;
+      letter-spacing: -.025em;
+      margin-bottom: .7rem;
     }
-    h3 {
-      font-size: clamp(1rem, 1.5vw, 1.25rem);
-      font-weight: 650;
-      margin-bottom: .35rem;
-    }
-    p, li { color: #d5dcd0; font-size: clamp(.92rem, 1.35vw, 1.15rem); line-height: 1.45; }
-    .lead { color: var(--muted); font-size: clamp(1rem, 1.55vw, 1.25rem); max-width: 52ch; margin-top: .9rem; }
-    .grid-2 { display: grid; grid-template-columns: 1.15fr .85fr; gap: 1.4rem; flex: 1; min-height: 0; align-items: stretch; }
-    .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; flex: 1; min-height: 0; }
-    .grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: .8rem; }
+    h3 { font-size: clamp(1rem, 1.45vw, 1.2rem); font-weight: 700; }
+    p, li { font-size: clamp(.9rem, 1.28vw, 1.1rem); line-height: 1.4; color: #d9e0d4; }
+    .lead { color: var(--muted); font-size: clamp(1rem, 1.5vw, 1.22rem); max-width: 48ch; margin-top: .7rem; }
+    .hl { color: var(--lime); }
+    .cyan { color: var(--cyan); }
+    .grid-2 { display: grid; grid-template-columns: 1.05fr .95fr; gap: 1.1rem; flex: 1; min-height: 0; }
+    .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: .85rem; flex: 1; min-height: 0; }
+    .grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: .7rem; }
     .card {
-      background: rgba(255,255,255,.03);
+      background: var(--panel);
       border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: .9rem 1rem;
+      backdrop-filter: blur(14px);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.04);
+    }
+    .card.lime { border-color: rgba(57,255,20,.45); background: rgba(57,255,20,.07); }
+    .card.blue { border-color: rgba(0,75,252,.45); background: rgba(0,75,252,.12); }
+    .card.cyan { border-color: rgba(0,229,255,.4); background: rgba(0,229,255,.07); }
+    .shot {
+      width: 100%; height: 100%;
+      object-fit: cover;
       border-radius: 12px;
-      padding: 1rem 1.1rem;
+      border: 1px solid rgba(57,255,20,.3);
+      box-shadow: 0 12px 40px rgba(0,0,0,.45), 0 0 30px rgba(57,255,20,.08);
     }
-    .card strong { color: var(--lime); font-weight: 650; }
-    .card.accent { border-color: rgba(162,255,0,.35); background: rgba(162,255,0,.05); }
-    .card.cyan { border-color: rgba(0,229,255,.3); background: rgba(0,229,255,.04); }
-    ul.clean { list-style: none; display: grid; gap: .55rem; }
-    ul.clean li::before {
-      content: "";
-      display: inline-block;
-      width: .45em; height: .45em;
-      border-radius: 50%;
-      background: var(--lime);
-      margin-right: .55em;
-      transform: translateY(-.1em);
+    .shot-frame {
+      position: relative;
+      border-radius: 14px;
+      overflow: hidden;
+      min-height: 0;
+      background: #0a0a0a;
     }
-    .mono { font-family: "IBM Plex Mono", monospace; font-size: .85em; color: var(--cyan); }
-    .footer-bar {
-      position: absolute;
-      left: 0; right: 0; bottom: 0;
-      height: 7.2%;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 1rem;
-      padding: 0 4.5%;
-      background: rgba(0,0,0,.55);
-      border-top: 1px solid var(--line);
-      z-index: 5;
-    }
-    .footer-bar .brand {
-      display: flex; align-items: center; gap: .75rem; min-width: 0;
-    }
-    .footer-bar img.utn {
-      height: clamp(18px, 2.6vh, 28px);
-      width: auto;
-      filter: brightness(1.15) contrast(1.05);
-      opacity: .95;
-    }
-    .footer-bar img.nutro {
-      height: clamp(16px, 2.3vh, 24px);
-      width: auto;
-    }
-    .footer-meta {
+    .shot-frame .cap {
+      position: absolute; left: 10px; bottom: 10px;
+      background: rgba(0,0,0,.7);
+      border: 1px solid rgba(57,255,20,.35);
+      color: var(--lime);
       font-family: "IBM Plex Mono", monospace;
-      font-size: clamp(8px, 1vw, 11px);
-      color: #aeb6a8;
-      text-align: right;
+      font-size: 10px;
+      letter-spacing: .08em;
+      padding: .25rem .55rem;
+      border-radius: 999px;
+      text-transform: uppercase;
+    }
+    .pill {
+      display: inline-flex; align-items: center; gap: .35rem;
+      border-radius: 999px;
+      border: 1px solid rgba(57,255,20,.4);
+      color: var(--lime);
+      padding: .28rem .7rem;
+      font-family: "IBM Plex Mono", monospace;
+      font-size: .72rem;
+      letter-spacing: .06em;
+      background: rgba(0,0,0,.35);
+    }
+    .kpi {
+      font-size: clamp(1.7rem, 3.2vw, 2.6rem);
+      font-weight: 900;
+      color: var(--lime);
+      line-height: 1;
+      margin-bottom: .3rem;
+      text-shadow: 0 0 24px rgba(57,255,20,.35);
+    }
+    .footer-bar {
+      position: absolute; left: 0; right: 0; bottom: 0;
+      height: 7.4%;
+      z-index: 5;
+      display: flex; align-items: center; justify-content: space-between;
+      gap: .8rem;
+      padding: 0 3.5%;
+      background: linear-gradient(90deg, #004bfc 0%, #004bfc 28%, #39ff14 28%, #39ff14 100%);
+      color: #061006;
+    }
+    .footer-bar .left, .footer-bar .right {
+      display: flex; align-items: center; gap: .65rem; min-width: 0;
+    }
+    .footer-bar img.utn { height: clamp(16px, 2.5vh, 26px); width: auto; filter: brightness(0) invert(1); }
+    .footer-bar img.cedeva { height: clamp(22px, 3.4vh, 34px); width: auto; }
+    .footer-bar img.mark { height: clamp(18px, 2.7vh, 28px); width: auto; }
+    .footer-bar .tag {
+      font-family: "IBM Plex Mono", monospace;
+      font-size: clamp(8px, .95vw, 11px);
+      font-weight: 600;
+      letter-spacing: .04em;
+      color: #0a1208;
       white-space: nowrap;
     }
-    .footer-meta span { color: var(--lime); }
-    .toolbar {
-      position: fixed;
-      top: 12px; right: 12px;
-      z-index: 50;
-      display: flex;
-      gap: .45rem;
-      flex-wrap: wrap;
-      justify-content: flex-end;
+    .footer-bar .tag.light { color: #fff; }
+    .brand-row { display: flex; align-items: center; gap: 1rem; margin-bottom: 1rem; flex-wrap: wrap; }
+    .brand-row img.mark-lg { height: clamp(42px, 7vh, 64px); width: auto; filter: drop-shadow(0 0 18px rgba(57,255,20,.55)); }
+    .brand-row img.partner { height: clamp(40px, 6vh, 58px); width: auto; background: rgba(255,255,255,.92); border-radius: 10px; padding: .35rem .55rem; }
+    .brand-row img.utn-lg { height: clamp(28px, 4.5vh, 42px); width: auto; filter: brightness(1.15); }
+    .divider { width: 1px; height: 38px; background: var(--line); }
+    .team img {
+      width: clamp(78px, 10vw, 108px);
+      height: clamp(78px, 10vw, 108px);
+      border-radius: 50%;
+      object-fit: cover;
+      border: 2px solid var(--lime);
+      box-shadow: 0 0 24px rgba(57,255,20,.35);
+      margin-bottom: .55rem;
     }
-    .toolbar button, .nav-btn {
-      border: 1px solid var(--line);
-      background: rgba(15,20,15,.9);
+    .team { text-align: center; display: flex; flex-direction: column; align-items: center; }
+    .role {
+      font-family: "IBM Plex Mono", monospace;
+      font-size: .72rem;
+      color: var(--lime);
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      margin-bottom: .25rem;
+    }
+    .arch {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: .55rem;
+      align-items: stretch;
+    }
+    .arch .node {
+      text-align: center;
+      padding: .85rem .6rem;
+      border-radius: 12px;
+      border: 1px solid rgba(57,255,20,.35);
+      background: rgba(0,0,0,.45);
+    }
+    .arch .node .n {
+      font-family: "IBM Plex Mono", monospace;
+      color: var(--cyan);
+      font-size: .7rem;
+      letter-spacing: .1em;
+      margin-bottom: .35rem;
+    }
+    .flow-arrow {
+      display: flex; align-items: center; justify-content: center;
+      color: var(--lime);
+      font-size: 1.4rem;
+      font-weight: 800;
+    }
+    .modules { display: grid; grid-template-columns: repeat(4, 1fr); gap: .55rem; }
+    .modules .card { min-height: 0; }
+    .modules strong { color: var(--lime); display: block; margin-bottom: .25rem; font-size: .95rem; }
+    .modules p { font-size: .82rem; }
+    .quote {
+      font-size: clamp(1.25rem, 2.3vw, 1.85rem);
+      font-weight: 750;
+      line-height: 1.25;
+      max-width: 22ch;
+    }
+    .toolbar {
+      position: fixed; top: 10px; right: 10px; z-index: 40;
+      display: flex; gap: .4rem; flex-wrap: wrap; justify-content: flex-end;
+    }
+    .toolbar button, .nav button {
+      border: 1px solid rgba(57,255,20,.35);
+      background: rgba(5,5,5,.9);
       color: var(--text);
       font-family: Outfit, sans-serif;
-      font-weight: 600;
+      font-weight: 700;
       font-size: 13px;
-      padding: .55rem .85rem;
+      padding: .55rem .9rem;
       border-radius: 999px;
       cursor: pointer;
     }
-    .toolbar button.primary {
-      background: var(--lime);
-      color: #111;
-      border-color: transparent;
-    }
-    .toolbar button:hover, .nav-btn:hover { border-color: var(--lime); }
+    .toolbar button.primary { background: var(--lime); color: #061006; border-color: transparent; }
     .nav {
-      position: fixed;
-      bottom: 14px; left: 50%;
-      transform: translateX(-50%);
-      z-index: 50;
-      display: flex; gap: .5rem; align-items: center;
+      position: fixed; bottom: 12px; left: 50%; transform: translateX(-50%);
+      z-index: 40; display: flex; gap: .45rem; align-items: center;
     }
     .progress {
       font-family: "IBM Plex Mono", monospace;
-      font-size: 12px;
-      color: var(--muted);
-      min-width: 4.5rem;
+      font-size: 12px; color: var(--muted); min-width: 4.8rem; text-align: center;
+    }
+    .cover-hero {
+      display: grid;
+      grid-template-columns: 1.1fr .9fr;
+      gap: 1.2rem;
+      flex: 1;
+      min-height: 0;
+      align-items: center;
+    }
+    .cover-poster {
+      width: 100%;
+      height: 100%;
+      max-height: 100%;
+      object-fit: cover;
+      border-radius: 14px;
+      border: 1px solid rgba(57,255,20,.35);
+    }
+    .chips { display: flex; flex-wrap: wrap; gap: .45rem; margin-top: 1rem; }
+    .schema {
+      display: grid;
+      grid-template-columns: 1fr auto 1fr auto 1fr;
+      gap: .5rem;
+      align-items: center;
+      margin-top: .4rem;
+    }
+    .schema .box {
+      border-radius: 12px;
+      padding: .85rem;
+      border: 1px solid rgba(0,229,255,.35);
+      background: rgba(0,0,0,.5);
       text-align: center;
     }
-    .team-card { text-align: center; display: flex; flex-direction: column; align-items: center; }
-    .team-card img {
-      width: clamp(88px, 12vw, 120px);
-      height: clamp(88px, 12vw, 120px);
-      object-fit: cover;
+    .schema .box.lime { border-color: rgba(57,255,20,.45); }
+    .two-shot { display: grid; grid-template-columns: 1fr 1fr; gap: .75rem; flex: 1; min-height: 0; }
+    ul.clean { list-style: none; display: grid; gap: .45rem; }
+    ul.clean li::before {
+      content: "";
+      display: inline-block;
+      width: .42em; height: .42em;
       border-radius: 50%;
-      border: 2px solid rgba(162,255,0,.45);
-      margin-bottom: .7rem;
+      background: var(--lime);
+      margin-right: .5em;
+      box-shadow: 0 0 8px rgba(57,255,20,.6);
     }
-    .role { font-family: "IBM Plex Mono", monospace; font-size: .78rem; color: var(--lime); letter-spacing: .06em; text-transform: uppercase; margin-bottom: .35rem; }
-    .legajo { color: var(--muted); font-size: .85rem; }
-    .big-quote {
-      font-size: clamp(1.2rem, 2.2vw, 1.75rem);
-      font-weight: 650;
-      line-height: 1.35;
-      max-width: 28ch;
-      color: #fff;
-    }
-    .stack-item { display: flex; flex-direction: column; gap: .25rem; }
-    .stack-item .tag {
-      font-family: "IBM Plex Mono", monospace;
-      font-size: .72rem;
-      color: var(--cyan);
-      letter-spacing: .08em;
-      text-transform: uppercase;
-    }
-    .title-row {
-      display: flex; align-items: flex-end; justify-content: space-between; gap: 1rem; margin-bottom: 1rem;
-    }
-    .pill {
-      display: inline-flex; align-items: center; gap: .4rem;
-      border: 1px solid rgba(162,255,0,.4);
-      color: var(--lime);
-      border-radius: 999px;
-      padding: .25rem .7rem;
-      font-size: .78rem;
-      font-family: "IBM Plex Mono", monospace;
-    }
-    .hero-logos {
-      display: flex; align-items: center; gap: 1.25rem; margin-bottom: 1.4rem;
-    }
-    .hero-logos img.utn-hero { height: clamp(36px, 5.5vh, 52px); width: auto; filter: brightness(1.2); }
-    .hero-logos img.nutro-hero { height: clamp(34px, 5vh, 48px); width: auto; }
-    .divider { width: 1px; height: 36px; background: var(--line); }
-    .kpi {
-      font-size: clamp(1.6rem, 3vw, 2.4rem);
-      font-weight: 800;
-      color: var(--lime);
-      line-height: 1;
-      margin-bottom: .35rem;
-    }
-    .two-col-list {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: .7rem 1.2rem;
-    }
-    .center-slide { justify-content: center; }
-    .muted { color: var(--muted); }
-    .hl { color: var(--lime); }
-    .flow {
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: .7rem;
-      margin-top: .5rem;
-    }
-    .flow .card { position: relative; }
-    .flow .n {
-      font-family: "IBM Plex Mono", monospace;
-      color: var(--lime);
-      font-size: .8rem;
-      margin-bottom: .35rem;
-    }
-    #pdf-root {
-      position: fixed;
-      left: -10000px;
-      top: 0;
-      width: 1920px;
-      height: 1080px;
-      pointer-events: none;
-    }
+    .stat-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: .6rem; margin-top: .6rem; }
+    #pdf-root { position: fixed; left: -12000px; top: 0; width: 1920px; height: 1080px; }
     #pdf-root .slide {
-      position: relative;
-      width: 1920px;
-      height: 1080px;
-      display: flex !important;
-      opacity: 1 !important;
-      padding: 72px 86px 96px;
+      position: relative; width: 1920px; height: 1080px;
+      display: flex !important; opacity: 1 !important;
+      padding: 70px 78px 95px;
     }
-    #pdf-root .footer-bar { height: 78px; }
+    #pdf-root .stage::before, #pdf-root .footer-bar { }
     @media print {
       .toolbar, .nav { display: none !important; }
-      body, .deck { background: #000; overflow: visible; height: auto; }
-      .stage {
-        width: 100%;
-        height: auto;
-        border: none;
-        border-radius: 0;
-        box-shadow: none;
-        overflow: visible;
-      }
-      .slide {
-        position: relative;
-        display: flex !important;
-        opacity: 1 !important;
-        width: 100%;
-        height: auto;
-        min-height: 100vh;
-        page-break-after: always;
-        break-after: page;
-        padding: 6vh 6vw 10vh;
-      }
-      .footer-bar { position: fixed; }
+      .stage { width: 100%; height: auto; border: 0; border-radius: 0; box-shadow: none; }
+      .slide { position: relative; display: flex !important; opacity: 1 !important; min-height: 100vh; page-break-after: always; }
       @page { size: 338.67mm 190.5mm; margin: 0; }
     }
   </style>
 </head>
 <body>
   <div class="toolbar no-print">
-    <button type="button" class="primary" id="btnPdf">Descargar PDF 16:9</button>
-    <button type="button" id="btnPrint">Imprimir / PDF del sistema</button>
+    <button class="primary" id="btnPdf" type="button">Descargar PDF 16:9</button>
+    <button id="btnPrint" type="button">Imprimir</button>
   </div>
   <div class="nav no-print">
-    <button type="button" class="nav-btn" id="prev">←</button>
-    <div class="progress" id="progress">1 / 14</div>
-    <button type="button" class="nav-btn" id="next">→</button>
+    <button type="button" id="prev">←</button>
+    <div class="progress" id="progress">1 / 16</div>
+    <button type="button" id="next">→</button>
   </div>
 
   <div class="deck">
     <div class="stage" id="stage">
 
-      <!-- 1 -->
-      <section class="slide active" data-title="Portada">
-        <div class="hero-logos">
-          <img class="utn-hero" src="assets/utn-logo.png" alt="UTN" />
+      <!-- 1 COVER -->
+      <section class="slide active">
+        <div class="brand-row">
+          <img class="mark-lg" src="assets/nutrogan-mark.png" alt="Nutrogan" />
           <div class="divider"></div>
-          <img class="nutro-hero" src="assets/nutrogan-logo.svg" alt="Nutrogan" />
+          <img class="utn-lg" src="assets/utn-logo.png" alt="UTN" />
+          <div class="divider"></div>
+          <img class="partner" src="assets/cedeva-yema.png" alt="CEDEVA Laguna Yema" />
         </div>
-        <div class="eyebrow">Exposición de mejores proyectos TFI · 2025</div>
-        <h1>Nutrogan<br /><span class="hl">Gestión ganadera offline-first</span></h1>
-        <p class="lead">
-          Plataforma PWA para el NEA: datos reales en el potrero, sin depender de la señal.
-          Trabajo Final Integrador — Tecnicatura Universitaria en Programación.
-        </p>
-        <div style="margin-top:auto; display:flex; gap:.6rem; flex-wrap:wrap;">
-          <span class="pill">UTN FRRE · Extensión Formosa</span>
-          <span class="pill">Asesoramiento técnico CEDEVA</span>
-          <span class="pill">Egresados 2025</span>
-        </div>
-        <div class="footer-bar">
-          <div class="brand">
-            <img class="utn" src="assets/utn-logo.png" alt="UTN" />
-            <img class="nutro" src="assets/nutrogan-logo.svg" alt="Nutrogan" />
-          </div>
-          <div class="footer-meta">TFI G.21 · <span>www.nutrogan.site</span></div>
-        </div>
-      </section>
-
-      <!-- 2 -->
-      <section class="slide" data-title="Agenda">
-        <div class="eyebrow">10 minutos · hoja de ruta</div>
-        <h2>Qué vamos a recorrer</h2>
-        <div class="grid-2" style="align-items:start;">
-          <ul class="clean">
-            <li>Cómo surgió y por qué esta problemática</li>
-            <li>Objetivo que perseguimos (y el que no fingimos)</li>
-            <li>Cómo lo llevamos adelante con CEDEVA y la UTN</li>
-            <li>Arquitectura y stack: por qué estas decisiones</li>
-          </ul>
-          <ul class="clean">
-            <li>Funciones de la app: criterio de producto</li>
-            <li>Offline-first y UI “manos enguantadas”</li>
-            <li>Qué demuestra el MVP hoy</li>
-            <li>Mensaje a quienes están cursando la carrera</li>
-          </ul>
-        </div>
-        <div class="footer-bar">
-          <div class="brand">
-            <img class="utn" src="assets/utn-logo.png" alt="UTN" />
-            <img class="nutro" src="assets/nutrogan-logo.svg" alt="Nutrogan" />
-          </div>
-          <div class="footer-meta">UTN FRRE Extensión Formosa · <span>CEDEVA Formosa</span></div>
-        </div>
-      </section>
-
-      <!-- 3 -->
-      <section class="slide" data-title="Equipo">
-        <div class="eyebrow">El equipo · egresados 2025</div>
-        <h2>Quiénes lo construimos</h2>
-        <p class="muted" style="margin-bottom:1rem;">
-          Tec. Univ. en Programación — UTN FRRE Extensión Formosa · Comisión 2.2 · TFI G.21
-        </p>
-        <div class="grid-3">
-          <div class="card team-card">
-            <img src="assets/duarte.jpg" alt="Fabricio Duarte" />
-            <div class="role">Tech Lead / Frontend</div>
-            <h3>Fabricio N. Duarte</h3>
-            <div class="legajo">Legajo 29.154</div>
-            <p style="margin-top:.5rem;font-size:.92rem;">Arquitectura PWA, UX/UI, lógica offline, GIS e IA asistida.</p>
-          </div>
-          <div class="card team-card">
-            <img src="assets/ascona.jpg" alt="Enzo Ascona" />
-            <div class="role">Backend &amp; Data</div>
-            <h3>Enzo A. Ascona</h3>
-            <div class="legajo">Legajo 29.134</div>
-            <p style="margin-top:.5rem;font-size:.92rem;">PostgreSQL, seguridad RLS, stores Pinia y motor de datos.</p>
-          </div>
-          <div class="card team-card">
-            <img src="assets/amarilla.jpg" alt="Sebastián Amarilla" />
-            <div class="role">DevOps &amp; QA</div>
-            <h3>Sebastián E. Amarilla</h3>
-            <div class="legajo">Legajo 29.132</div>
-            <p style="margin-top:.5rem;font-size:.92rem;">Docker, CI/CD, testing automatizado y calidad de entrega.</p>
-          </div>
-        </div>
-        <div class="footer-bar">
-          <div class="brand">
-            <img class="utn" src="assets/utn-logo.png" alt="UTN" />
-            <img class="nutro" src="assets/nutrogan-logo.svg" alt="Nutrogan" />
-          </div>
-          <div class="footer-meta">Docentes: Facundo Verón / Eduardo Roig</div>
-        </div>
-      </section>
-
-      <!-- 4 -->
-      <section class="slide" data-title="Origen">
-        <div class="eyebrow">Origen</div>
-        <h2>Cómo surgió Nutrogan</h2>
-        <div class="grid-2">
+        <div class="cover-hero">
           <div>
-            <p class="big-quote">En el campo del NEA la decisión no espera a la señal 4G.</p>
-            <p class="lead" style="margin-top:1rem;">
-              El TFI nos pidió un problema real, con usuarios reales y restricciones duras.
-              En Formosa vimos una constante: planillas, memoria y WhatsApp… hasta que falta el dato
-              que define si se vende, se mueve o se espera.
+            <div class="eyebrow">UTN FRRE · Extensión Formosa · Expo TFI 2025</div>
+            <h1>nutrogan</h1>
+            <p class="lead">
+              Plataforma integral de <span class="hl">gestión y rentabilidad ganadera</span>.
+              Offline-first · GIS · Edge AI · Decisiones en el potrero.
+            </p>
+            <div class="chips">
+              <span class="pill">Tec. Univ. en Programación</span>
+              <span class="pill">Egresados 2025</span>
+              <span class="pill">Asesoramiento CEDEVA</span>
+              <span class="pill">www.nutrogan.site</span>
+            </div>
+          </div>
+          <img class="cover-poster" src="assets/shots/cover-poster.jpg" alt="Nutrogan TFI" />
+        </div>
+        <div class="footer-bar">
+          <div class="left">
+            <img class="utn" src="assets/utn-logo.png" alt="UTN" />
+            <span class="tag light">UTN FRRE · Extensión Formosa</span>
+          </div>
+          <div class="right">
+            <img class="cedeva" src="assets/cedeva-yema.png" alt="CEDEVA" />
+            <img class="mark" src="assets/nutrogan-mark.png" alt="N" />
+            <span class="tag">G.21 · TFI 2025</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- 2 AGENDA -->
+      <section class="slide">
+        <div class="eyebrow">Hoja de ruta · 10 minutos</div>
+        <h2>De la problemática al impacto</h2>
+        <div class="grid-4" style="flex:1; align-content:center;">
+          <div class="card lime"><div class="kpi">01</div><h3>Contexto</h3><p>CEDEVA, NEA y gestión a ciegas.</p></div>
+          <div class="card blue"><div class="kpi" style="color:var(--cyan)">02</div><h3>Solución</h3><p>PWA DSS offline-first y arquitectura.</p></div>
+          <div class="card cyan"><div class="kpi" style="color:var(--cyan)">03</div><h3>Producto</h3><p>Módulos, GIS, reportes y modo campo.</p></div>
+          <div class="card lime"><div class="kpi">04</div><h3>Ingeniería</h3><p>Scrum, GitFlow, QA, CI/CD e impacto.</p></div>
+        </div>
+        <div class="footer-bar">
+          <div class="left"><img class="utn" src="assets/utn-logo.png" alt="UTN" /><span class="tag light">Exposición mejores proyectos TFI</span></div>
+          <div class="right"><img class="cedeva" src="assets/cedeva-yema.png" alt="CEDEVA" /><img class="mark" src="assets/nutrogan-mark.png" alt="N" /><span class="tag">Agenda</span></div>
+        </div>
+      </section>
+
+      <!-- 3 EQUIPO -->
+      <section class="slide">
+        <div class="eyebrow">Equipo G.21 · Egresados 2025</div>
+        <h2>Quiénes construimos Nutrogan</h2>
+        <div class="grid-3">
+          <div class="card team">
+            <img src="assets/duarte.jpg" alt="Fabricio Duarte" />
+            <div class="role">Tech Lead · Frontend &amp; IA</div>
+            <h3>Fabricio N. Duarte</h3>
+            <p>Legajo 29.154 · DNI 37.082.207</p>
+            <p style="margin-top:.4rem;font-size:.88rem;">Arquitectura PWA, UX táctica, GIS e inteligencia en el borde.</p>
+          </div>
+          <div class="card team">
+            <img src="assets/ascona.jpg" alt="Enzo Ascona" />
+            <div class="role">Backend · Data &amp; Negocio</div>
+            <h3>Enzo A. Ascona</h3>
+            <p>Legajo 29.134 · DNI 42.635.761</p>
+            <p style="margin-top:.4rem;font-size:.88rem;">PostgreSQL, RLS, stores Pinia y motor financiero/productivo.</p>
+          </div>
+          <div class="card team">
+            <img src="assets/amarilla.jpg" alt="Sebastián Amarilla" />
+            <div class="role">DevOps · Infra &amp; QA</div>
+            <h3>Sebastián E. Amarilla</h3>
+            <p>Legajo 29.132 · DNI 39.318.151</p>
+            <p style="margin-top:.4rem;font-size:.88rem;">Docker, GitLab CI/CD, testing automatizado y despliegue.</p>
+          </div>
+        </div>
+        <p class="lead">Docentes: Eduardo Roig / Facundo Verón · Tec. Univ. en Programación · UTN FRRE Extensión Formosa</p>
+        <div class="footer-bar">
+          <div class="left"><img class="utn" src="assets/utn-logo.png" alt="UTN" /><span class="tag light">UTN FRRE Extensión Formosa</span></div>
+          <div class="right"><img class="cedeva" src="assets/cedeva-yema.png" alt="CEDEVA" /><img class="mark" src="assets/nutrogan-mark.png" alt="N" /><span class="tag">Equipo</span></div>
+        </div>
+      </section>
+
+      <!-- 4 CEDEVA -->
+      <section class="slide">
+        <div class="eyebrow">Cliente y validación</div>
+        <h2>Construido con el territorio</h2>
+        <div class="grid-2">
+          <div class="card lime">
+            <img src="assets/cedeva-yema.png" alt="CEDEVA" style="height:88px;width:auto;background:#fff;border-radius:10px;padding:.5rem .7rem;margin-bottom:.8rem;" />
+            <h3>CEDEVA Laguna Yema — Formosa</h3>
+            <p style="margin-top:.55rem;">
+              Centro de Validación de Tecnologías Agropecuarias. Ambientes subtropicales y semiáridos
+              (Las Lomitas / Misión Tacaaglé). Asesoramiento técnico sobre prácticas de campo,
+              pasturas, agua y ganadería de precisión.
             </p>
           </div>
-          <div class="card accent">
-            <h3>El punto de partida</h3>
-            <ul class="clean" style="margin-top:.8rem;">
-              <li>Ganadería de la región con baja conectividad</li>
-              <li>Sistemas “solo nube” que fallan en el potrero</li>
-              <li>Necesidad de trazabilidad: pesos, CC, agua, pastura</li>
-              <li>Diálogo con el territorio vía <strong>CEDEVA Formosa</strong></li>
+          <div>
+            <p class="quote">Transformar la gestión tradicional en <span class="hl">ganadería de precisión</span>.</p>
+            <ul class="clean" style="margin-top:1rem;">
+              <li>Validación institucional en Formosa</li>
+              <li>Prueba en establecimiento Santa Úrsula (Tatané)</li>
+              <li>Criterios productivos del NEA en el diseño del producto</li>
+              <li>Puente universidad ↔ sector agropecuario</li>
             </ul>
           </div>
         </div>
         <div class="footer-bar">
-          <div class="brand">
-            <img class="utn" src="assets/utn-logo.png" alt="UTN" />
-            <img class="nutro" src="assets/nutrogan-logo.svg" alt="Nutrogan" />
-          </div>
-          <div class="footer-meta">TFI · <span>Problemática situada</span></div>
+          <div class="left"><img class="utn" src="assets/utn-logo.png" alt="UTN" /><span class="tag light">Alianza UTN × CEDEVA</span></div>
+          <div class="right"><img class="cedeva" src="assets/cedeva-yema.png" alt="CEDEVA" /><img class="mark" src="assets/nutrogan-mark.png" alt="N" /><span class="tag">Contexto</span></div>
         </div>
       </section>
 
-      <!-- 5 -->
-      <section class="slide" data-title="Problema">
-        <div class="eyebrow">Problema</div>
-        <h2>Por qué abordamos esta problemática</h2>
+      <!-- 5 PROBLEMA -->
+      <section class="slide">
+        <div class="eyebrow">Problemática</div>
+        <h2>¿Por qué nace Nutrogan?</h2>
         <div class="grid-3">
-          <div class="card">
-            <div class="kpi">01</div>
-            <h3>Gestión a ciegas</h3>
-            <p>Sin GDPV ni historial confiable, el productor decide con intuición y datos incompletos.</p>
-          </div>
-          <div class="card">
-            <div class="kpi">02</div>
-            <h3>La nube no alcanza</h3>
-            <p>Apps que exigen online en el momento de cargar peso o agua… no sirven bajo el sol del monte.</p>
-          </div>
-          <div class="card">
-            <div class="kpi">03</div>
-            <h3>Software sin territorio</h3>
-            <p>Escalas y criterios ajenos al NEA. Nosotros anclamos CC a INTA 1–9 y validamos con CEDEVA.</p>
-          </div>
+          <div class="card"><div class="kpi">01</div><h3>Gestión a ciegas</h3><p>Decisiones sin GDPV, sin historial confiable y con datos dispersos.</p></div>
+          <div class="card"><div class="kpi">02</div><h3>Aislamiento digital</h3><p>Conectividad nula en el potrero: las apps “solo nube” no llegan al campo.</p></div>
+          <div class="card"><div class="kpi">03</div><h3>Informalidad</h3><p>Papel, memoria y evaluación visual subjetiva de la condición corporal.</p></div>
         </div>
-        <p class="lead" style="margin-top:1rem;">
-          No buscamos “otra app agro”. Buscamos <span class="hl">cerrar el loop</span>:
-          observar → registrar → decidir → avisar al equipo.
-        </p>
+        <div class="card blue" style="margin-top:.8rem;">
+          <strong class="cyan">Consecuencia:</strong>
+          pérdida de rentabilidad y fuga de valor en establecimientos del NEA.
+          Nutrogan responde con un sistema de soporte a la decisión, pensado para ese escenario.
+        </div>
         <div class="footer-bar">
-          <div class="brand">
-            <img class="utn" src="assets/utn-logo.png" alt="UTN" />
-            <img class="nutro" src="assets/nutrogan-logo.svg" alt="Nutrogan" />
-          </div>
-          <div class="footer-meta">CEDEVA Laguna Yema · Formosa</div>
+          <div class="left"><img class="utn" src="assets/utn-logo.png" alt="UTN" /><span class="tag light">Problemática real del NEA</span></div>
+          <div class="right"><img class="cedeva" src="assets/cedeva-yema.png" alt="CEDEVA" /><img class="mark" src="assets/nutrogan-mark.png" alt="N" /><span class="tag">Por qué</span></div>
         </div>
       </section>
 
-      <!-- 6 -->
-      <section class="slide" data-title="Objetivo">
-        <div class="eyebrow">Objetivo</div>
-        <h2>Qué perseguimos</h2>
+      <!-- 6 SOLUCION -->
+      <section class="slide">
+        <div class="eyebrow">Propuesta de valor</div>
+        <h2>DSS + PWA Offline-First</h2>
         <div class="grid-2">
-          <div class="card accent">
-            <h3>Objetivo de producto</h3>
-            <p style="margin-top:.7rem;">
-              Que un operario o técnico registre en el campo —offline— lo crítico del día
-              (peso, CC, agua, movimiento) y que el administrador vea reportes honestos,
-              alertas y valuación sin inventar métricas.
-            </p>
+          <div>
+            <p class="quote">Soberanía operativa: <span class="hl">100% funcional sin internet</span>.</p>
+            <div class="grid-2" style="margin-top:1rem; flex:none;">
+              <div class="card lime"><h3>Inteligencia</h3><p>Edge AI y métricas productivas (GDPV, CC INTA).</p></div>
+              <div class="card cyan"><h3>Geoespacial</h3><p>Mapas satelitales, potreros y NDVI de pastura.</p></div>
+              <div class="card blue"><h3>Rentabilidad</h3><p>Márgenes, despensa, valuación de hacienda.</p></div>
+              <div class="card lime"><h3>Equipo</h3><p>Roles, alertas y comunicación operativa.</p></div>
+            </div>
+          </div>
+          <div class="shot-frame">
+            <img class="shot" src="assets/shots/live-dashboard.jpg" alt="Dashboard Nutrogan" />
+            <span class="cap">Panel de control · live</span>
+          </div>
+        </div>
+        <div class="footer-bar">
+          <div class="left"><img class="utn" src="assets/utn-logo.png" alt="UTN" /><span class="tag light">Sistema de Soporte a la Decisión</span></div>
+          <div class="right"><img class="cedeva" src="assets/cedeva-yema.png" alt="CEDEVA" /><img class="mark" src="assets/nutrogan-mark.png" alt="N" /><span class="tag">Solución</span></div>
+        </div>
+      </section>
+
+      <!-- 7 DASHBOARD SHOWCASE -->
+      <section class="slide">
+        <div class="eyebrow">Producto en acción</div>
+        <h2>Dashboard Split View</h2>
+        <div class="two-shot">
+          <div class="shot-frame">
+            <img class="shot" src="assets/shots/ui-01.png" alt="Dashboard mapa y corral" />
+            <span class="cap">Mapa + Mi Corral · drag &amp; drop</span>
+          </div>
+          <div class="shot-frame">
+            <img class="shot" src="assets/shots/live-dashboard.jpg" alt="Dashboard actual" />
+            <span class="cap">685 cab · 80% en pasto · Formosa</span>
+          </div>
+        </div>
+        <div class="stat-row">
+          <div class="card lime"><div class="kpi" style="font-size:1.5rem;">Split</div><p>Mapa 60% · Corral 40%</p></div>
+          <div class="card cyan"><div class="kpi" style="font-size:1.5rem;color:var(--cyan)">DnD</div><p>Asignación lote ↔ potrero</p></div>
+          <div class="card blue"><div class="kpi" style="font-size:1.5rem;color:var(--cyan)">HUD</div><p>Tarjetas Pro flotantes</p></div>
+          <div class="card lime"><div class="kpi" style="font-size:1.5rem;">Campo</div><p>Deslizar a modo operario</p></div>
+        </div>
+        <div class="footer-bar">
+          <div class="left"><img class="utn" src="assets/utn-logo.png" alt="UTN" /><span class="tag light">UX Control de Misión</span></div>
+          <div class="right"><img class="cedeva" src="assets/cedeva-yema.png" alt="CEDEVA" /><img class="mark" src="assets/nutrogan-mark.png" alt="N" /><span class="tag">Dashboard</span></div>
+        </div>
+      </section>
+
+      <!-- 8 ARQUITECTURA -->
+      <section class="slide">
+        <div class="eyebrow">Arquitectura técnica</div>
+        <h2>Stack elegido para el campo</h2>
+        <div class="arch">
+          <div class="node"><div class="n">CLIENTE</div><h3>Vue 3 + Quasar</h3><p>PWA instalable, Pinia, UI táctica</p></div>
+          <div class="node"><div class="n">OFFLINE</div><h3>IndexedDB</h3><p>Cola durable + sync optimista</p></div>
+          <div class="node"><div class="n">BACKEND</div><h3>Supabase</h3><p>Postgres · Auth · Storage · Edges</p></div>
+          <div class="node"><div class="n">OPS</div><h3>Docker + CI/CD</h3><p>GitLab · Vitest · Cypress</p></div>
+        </div>
+        <div class="grid-2" style="margin-top:.85rem; flex:none;">
+          <div class="card lime">
+            <h3>Por qué esta arquitectura</h3>
+            <ul class="clean" style="margin-top:.5rem;">
+              <li>Un codebase → celular del peón y notebook del dueño</li>
+              <li>RLS: el dato se protege a sí mismo por establecimiento</li>
+              <li>Edge Functions: NDVI, mercado, alertas, IA</li>
+              <li>Leaflet + Vue overlays: GIS con drag &amp; drop real</li>
+            </ul>
           </div>
           <div class="card cyan">
-            <h3>Objetivo formativo (TFI)</h3>
-            <ul class="clean" style="margin-top:.7rem;">
-              <li>Arquitectura real: PWA + BaaS + RLS</li>
-              <li>Trabajo en equipo con roles claros</li>
-              <li>Calidad: tests, CI, deploy</li>
-              <li>Ética de datos: no fingir IoT ni precios</li>
-            </ul>
-          </div>
-        </div>
-        <p class="lead">MVP demostrable en producción: <span class="mono">www.nutrogan.site</span></p>
-        <div class="footer-bar">
-          <div class="brand">
-            <img class="utn" src="assets/utn-logo.png" alt="UTN" />
-            <img class="nutro" src="assets/nutrogan-logo.svg" alt="Nutrogan" />
-          </div>
-          <div class="footer-meta">Apta con reservas · <span>honestidad de producto</span></div>
-        </div>
-      </section>
-
-      <!-- 7 -->
-      <section class="slide" data-title="Cómo">
-        <div class="eyebrow">Método</div>
-        <h2>Cómo lo llevamos adelante</h2>
-        <div class="flow">
-          <div class="card"><div class="n">01</div><h3>Problema + territorio</h3><p>Entrevistas y marco CEDEVA: qué se mide y qué no se inventa.</p></div>
-          <div class="card"><div class="n">02</div><h3>Diseño offline-first</h3><p>Cola local, sync al volver la red, UI de campo primero.</p></div>
-          <div class="card"><div class="n">03</div><h3>GitFlow + roles</h3><p>Lead / Data / DevOps. Features aisladas, review y CI.</p></div>
-          <div class="card"><div class="n">04</div><h3>Iterar con evidencia</h3><p>Tests unitarios, smoke API, demo con datos históricos.</p></div>
-        </div>
-        <div class="card" style="margin-top:1rem;">
-          <strong>Asesoramiento técnico CEDEVA (Formosa)</strong>
-          <p style="margin-top:.4rem;">
-            Criterios de campo, lectura de pastura/agua y anclaje a prácticas regionales.
-            La universidad aporta ingeniería; el centro de validación aporta realidad productiva.
-          </p>
-        </div>
-        <div class="footer-bar">
-          <div class="brand">
-            <img class="utn" src="assets/utn-logo.png" alt="UTN" />
-            <img class="nutro" src="assets/nutrogan-logo.svg" alt="Nutrogan" />
-          </div>
-          <div class="footer-meta">UTN × CEDEVA · <span>co-construcción</span></div>
-        </div>
-      </section>
-
-      <!-- 8 -->
-      <section class="slide" data-title="Arquitectura">
-        <div class="eyebrow">Arquitectura</div>
-        <h2>Por qué esta arquitectura</h2>
-        <div class="grid-2">
-          <div>
-            <ul class="clean">
-              <li><strong>Cliente inteligente:</strong> Vue/Quasar calcula GDPV, alertas y calidad de agua sobre datos cargados.</li>
-              <li><strong>BaaS (Supabase):</strong> Auth, Postgres, Storage y Edge Functions sin montar un backend monolítico.</li>
-              <li><strong>RLS por establecimiento:</strong> multi-tenant seguro desde el día uno.</li>
-              <li><strong>PWA instalable:</strong> un solo codebase web → celular del peón y notebook del dueño.</li>
-            </ul>
-          </div>
-          <div class="card accent">
-            <h3>Principio rector</h3>
-            <p style="margin-top:.6rem;">
-              <span class="hl">Offline no es un “modo especial”</span>: es el camino feliz.
-              La nube sincroniza; no condiciona la carga en potrero.
-            </p>
-            <p class="mono" style="margin-top:1rem;">IndexedDB ←→ Sync ←→ Postgres</p>
+            <h3>Inteligencia en el borde</h3>
+            <p style="margin-top:.5rem;">TensorFlow.js en el navegador para apoyo a condición corporal.
+            Cálculos de GDPV, alertas operativas y calidad de agua en el cliente — respuesta inmediata en potrero.</p>
+            <p class="mono" style="margin-top:.7rem;font-family:IBM Plex Mono,monospace;color:var(--cyan);font-size:.85rem;">PWA ↔ Sync ↔ PostgreSQL + RLS</p>
           </div>
         </div>
         <div class="footer-bar">
-          <div class="brand">
-            <img class="utn" src="assets/utn-logo.png" alt="UTN" />
-            <img class="nutro" src="assets/nutrogan-logo.svg" alt="Nutrogan" />
-          </div>
-          <div class="footer-meta">Arquitectura TFI G.21</div>
+          <div class="left"><img class="utn" src="assets/utn-logo.png" alt="UTN" /><span class="tag light">Arquitectura TFI G.21</span></div>
+          <div class="right"><img class="cedeva" src="assets/cedeva-yema.png" alt="CEDEVA" /><img class="mark" src="assets/nutrogan-mark.png" alt="N" /><span class="tag">Stack</span></div>
         </div>
       </section>
 
-      <!-- 9 -->
-      <section class="slide" data-title="Stack">
-        <div class="eyebrow">Stack</div>
-        <h2>Por qué este stack tecnológico</h2>
-        <div class="grid-3">
-          <div class="card stack-item"><span class="tag">Frontend</span><h3>Vue 3 + Quasar</h3><p>PWA, componentes móviles, velocidad de entrega en equipo chico.</p></div>
-          <div class="card stack-item"><span class="tag">Estado</span><h3>Pinia + persistencia</h3><p>Estado de dominio + cola offline durable en el dispositivo.</p></div>
-          <div class="card stack-item"><span class="tag">Backend</span><h3>Supabase</h3><p>Postgres, Auth, RLS, Storage, Functions (mail, NDVI, MAG).</p></div>
-          <div class="card stack-item"><span class="tag">Mapas</span><h3>Leaflet + satélite</h3><p>Potreros GeoJSON y NDVI vía Planetary Computer (Sentinel-2).</p></div>
-          <div class="card stack-item"><span class="tag">Calidad</span><h3>Vitest + Cypress</h3><p>Unit + smoke + E2E sobre flujos que no pueden fallar en demo.</p></div>
-          <div class="card stack-item"><span class="tag">Ops</span><h3>Docker + CI</h3><p>Paridad de entornos y pipelines como hábito profesional.</p></div>
-        </div>
-        <div class="footer-bar">
-          <div class="brand">
-            <img class="utn" src="assets/utn-logo.png" alt="UTN" />
-            <img class="nutro" src="assets/nutrogan-logo.svg" alt="Nutrogan" />
-          </div>
-          <div class="footer-meta">Elegimos stack por <span>restricción de campo</span>, no por moda</div>
-        </div>
-      </section>
-
-      <!-- 10 -->
-      <section class="slide" data-title="Funciones">
-        <div class="eyebrow">Producto</div>
-        <h2>Por qué estas funciones (y no otras)</h2>
-        <div class="two-col-list">
-          <div class="card"><strong>Lotes &amp; movimientos</strong><p>Unidad operativa real del establecimiento.</p></div>
-          <div class="card"><strong>Pesos → GDPV</strong><p>Métrica que el productor entiende y audita.</p></div>
-          <div class="card"><strong>CC INTA 1–9</strong><p>Escala argentina; sin IA fingida en el teléfono.</p></div>
-          <div class="card"><strong>Agua &amp; pastura (NDVI)</strong><p>Recursos que limitan carga animal en el NEA.</p></div>
-          <div class="card"><strong>Inventario / despensa</strong><p>Costo visible; reportes con margen operativo.</p></div>
-          <div class="card"><strong>Alertas al equipo</strong><p>Cierra el loop: del dato al aviso (mail).</p></div>
-          <div class="card"><strong>Reportes</strong><p>Historia: peso, costos, salud, stock.</p></div>
-          <div class="card"><strong>Roles</strong><p>Admin / técnico / operario (modo campo).</p></div>
-        </div>
-        <p class="lead" style="margin-top:.8rem;">Criterio: cada pantalla debe sobrevivir <span class="hl">sin inventar sensores</span>.</p>
-        <div class="footer-bar">
-          <div class="brand">
-            <img class="utn" src="assets/utn-logo.png" alt="UTN" />
-            <img class="nutro" src="assets/nutrogan-logo.svg" alt="Nutrogan" />
-          </div>
-          <div class="footer-meta">Alcance MVP · <span>profundidad &gt; ornamento</span></div>
-        </div>
-      </section>
-
-      <!-- 11 -->
-      <section class="slide" data-title="Offline">
+      <!-- 9 OFFLINE SCHEMA -->
+      <section class="slide">
         <div class="eyebrow">Offline-first</div>
-        <h2>Sin señal, con datos</h2>
-        <div class="grid-2">
-          <div class="card accent">
-            <h3>Qué hace el dispositivo</h3>
-            <ul class="clean" style="margin-top:.7rem;">
-              <li>Encola altas (peso, CC, agua, movimientos)</li>
-              <li>Persiste en IndexedDB</li>
-              <li>Muestra pendientes / fallidos con claridad</li>
-              <li>Sincroniza al recuperar red</li>
+        <h2>Diseñado donde no hay 4G</h2>
+        <div class="schema">
+          <div class="box lime"><h3>Operario</h3><p>CC · Agua · Pesos · Movimientos</p></div>
+          <div class="flow-arrow">→</div>
+          <div class="box"><h3>Cola local</h3><p>IndexedDB · pendientes visibles</p></div>
+          <div class="flow-arrow">→</div>
+          <div class="box lime"><h3>Nube</h3><p>Supabase sync automático</p></div>
+        </div>
+        <div class="grid-2" style="margin-top:1rem;">
+          <div class="card">
+            <h3>Soberanía operativa</h3>
+            <ul class="clean" style="margin-top:.55rem;">
+              <li>Registrar sin esperar al servidor</li>
+              <li>UI optimista: feedback al instante</li>
+              <li>Reintentos y estado de sincronización claros</li>
+              <li>El establecimiento sigue trabajando</li>
             </ul>
           </div>
-          <div>
-            <p class="big-quote">Si el producto solo funciona en la oficina, no es software de campo.</p>
-            <p class="lead">
-              El operario ve “SINCRONIZADO” o “PENDIENTES”. No hay magia:
-              hay cola, reintentos y honestidad de estado.
-            </p>
+          <div class="card lime">
+            <p class="quote" style="max-width:none;font-size:1.35rem;">Si solo funciona en la oficina, <span class="hl">no es software de campo</span>.</p>
+            <p style="margin-top:.8rem;">Nutrogan nace de esa restricción del NEA — y la convierte en ventaja competitiva.</p>
           </div>
         </div>
         <div class="footer-bar">
-          <div class="brand">
-            <img class="utn" src="assets/utn-logo.png" alt="UTN" />
-            <img class="nutro" src="assets/nutrogan-logo.svg" alt="Nutrogan" />
-          </div>
-          <div class="footer-meta">Restricción del NEA → <span>decisión de arquitectura</span></div>
+          <div class="left"><img class="utn" src="assets/utn-logo.png" alt="UTN" /><span class="tag light">Offline-First Architecture</span></div>
+          <div class="right"><img class="cedeva" src="assets/cedeva-yema.png" alt="CEDEVA" /><img class="mark" src="assets/nutrogan-mark.png" alt="N" /><span class="tag">Sync</span></div>
         </div>
       </section>
 
-      <!-- 12 -->
-      <section class="slide" data-title="Campo">
+      <!-- 10 MODULOS -->
+      <section class="slide">
+        <div class="eyebrow">Módulos funcionales</div>
+        <h2>Todo el establecimiento, en un sistema</h2>
+        <div class="modules">
+          <div class="card"><strong>Lotes &amp; trazabilidad</strong><p>Movimientos, objetivos Cría/Recría/Engorde.</p></div>
+          <div class="card"><strong>GDPV &amp; CC INTA</strong><p>Performance y condición 1–9.</p></div>
+          <div class="card"><strong>Potreros GIS</strong><p>Polígonos, ha, asignación DnD.</p></div>
+          <div class="card"><strong>NDVI pastura</strong><p>Vigor forrajero por potrero.</p></div>
+          <div class="card"><strong>Agua</strong><p>Fuentes y análisis de calidad.</p></div>
+          <div class="card"><strong>Despensa</strong><p>Insumos, costos, stock mínimo.</p></div>
+          <div class="card"><strong>Clima / lluvias</strong><p>Registro pluviométrico.</p></div>
+          <div class="card"><strong>Alertas &amp; equipo</strong><p>Canales y avisos operativos.</p></div>
+        </div>
+        <div class="two-shot" style="margin-top:.7rem; flex: 0 0 38%;">
+          <div class="shot-frame"><img class="shot" src="assets/shots/ui-06.png" alt="Recursos" /><span class="cap">Gestión de recursos</span></div>
+          <div class="shot-frame"><img class="shot" src="assets/shots/ui-mapa.png" alt="Polígono" /><span class="cap">Dibujo de potrero · GIS</span></div>
+        </div>
+        <div class="footer-bar">
+          <div class="left"><img class="utn" src="assets/utn-logo.png" alt="UTN" /><span class="tag light">Alcance funcional completo</span></div>
+          <div class="right"><img class="cedeva" src="assets/cedeva-yema.png" alt="CEDEVA" /><img class="mark" src="assets/nutrogan-mark.png" alt="N" /><span class="tag">Módulos</span></div>
+        </div>
+      </section>
+
+      <!-- 11 REPORTES -->
+      <section class="slide">
+        <div class="eyebrow">Inteligencia de negocio</div>
+        <h2>Reportes que sostienen decisiones</h2>
+        <div class="grid-2">
+          <div class="shot-frame">
+            <img class="shot" src="assets/shots/live-reportes.jpg" alt="Reportes" />
+            <span class="cap">Reporte inteligente · live</span>
+          </div>
+          <div>
+            <div class="stat-row" style="grid-template-columns:1fr 1fr; margin-top:0;">
+              <div class="card lime"><div class="kpi" style="font-size:1.7rem;">$10.8M</div><p>Insumos valorizados</p></div>
+              <div class="card cyan"><div class="kpi" style="font-size:1.7rem;color:var(--cyan)">685</div><p>Cabezas en sistema</p></div>
+              <div class="card blue"><div class="kpi" style="font-size:1.7rem;color:var(--cyan)">GDPV</div><p>Serie histórica por lote</p></div>
+              <div class="card lime"><div class="kpi" style="font-size:1.7rem;">PDF</div><p>Informe técnico exportable</p></div>
+            </div>
+            <ul class="clean" style="margin-top:.8rem;">
+              <li>Margen operativo mes a mes</li>
+              <li>Evolución de peso y salud (CC)</li>
+              <li>Predicción de stock de insumos</li>
+              <li>Asistente de diagnóstico situacional</li>
+            </ul>
+          </div>
+        </div>
+        <div class="footer-bar">
+          <div class="left"><img class="utn" src="assets/utn-logo.png" alt="UTN" /><span class="tag light">Rentabilidad medible</span></div>
+          <div class="right"><img class="cedeva" src="assets/cedeva-yema.png" alt="CEDEVA" /><img class="mark" src="assets/nutrogan-mark.png" alt="N" /><span class="tag">Reportes</span></div>
+        </div>
+      </section>
+
+      <!-- 12 CAMPO -->
+      <section class="slide">
         <div class="eyebrow">UX de campo</div>
         <h2>Manos enguantadas</h2>
         <div class="grid-2">
           <div>
-            <p class="lead" style="margin-top:0;">
-              Modo campo pensado para trabajar a caballo, con guantes, sol y poco tiempo.
-              No es “responsive”: es otra interfaz.
-            </p>
+            <p class="quote">Interfaz para el sol, el polvo y el trabajo a caballo.</p>
             <ul class="clean" style="margin-top:1rem;">
-              <li>Botones XL, alto contraste</li>
+              <li>Botones XL · alto contraste neón</li>
               <li>Flujos cortos: CC, AGUA, pesos</li>
-              <li>Roles: el operario no se pierde en satélite/admin</li>
-              <li>Feedback inmediato + sync después</li>
+              <li>“Deslizar para Modo Campo”</li>
+              <li>Roles: operario ve lo esencial</li>
+              <li>Identidad táctica / Sci-Fi HUD</li>
             </ul>
+            <div class="chips" style="margin-top:1rem;">
+              <span class="pill">#39FF14</span>
+              <span class="pill">#004BFC</span>
+              <span class="pill">#00E5FF</span>
+              <span class="pill">Dark Mode nativo</span>
+            </div>
           </div>
-          <div class="card cyan">
-            <h3>Aprendizaje de diseño</h3>
-            <p style="margin-top:.7rem;">
-              En la facultad a veces diseñamos para pantallas perfectas.
-              En Formosa aprendimos a diseñar para <span class="hl">manos sucias y poca batería</span>.
-              Eso también es ingeniería de software.
-            </p>
+          <div class="shot-frame">
+            <img class="shot" src="assets/shots/ui-11.png" alt="Visión y tecnología" />
+            <span class="cap">Tecnología &amp; Edge AI · CC</span>
           </div>
         </div>
         <div class="footer-bar">
-          <div class="brand">
-            <img class="utn" src="assets/utn-logo.png" alt="UTN" />
-            <img class="nutro" src="assets/nutrogan-logo.svg" alt="Nutrogan" />
-          </div>
-          <div class="footer-meta">UI high-contrast · <span>Field-first</span></div>
+          <div class="left"><img class="utn" src="assets/utn-logo.png" alt="UTN" /><span class="tag light">Diseño Field-First</span></div>
+          <div class="right"><img class="cedeva" src="assets/cedeva-yema.png" alt="CEDEVA" /><img class="mark" src="assets/nutrogan-mark.png" alt="N" /><span class="tag">UX</span></div>
         </div>
       </section>
 
-      <!-- 13 -->
-      <section class="slide" data-title="Demo">
-        <div class="eyebrow">Estado actual</div>
-        <h2>Qué se puede mostrar hoy</h2>
+      <!-- 13 SEGURIDAD DATOS -->
+      <section class="slide">
+        <div class="eyebrow">Datos y seguridad</div>
+        <h2>El dato se protege a sí mismo</h2>
         <div class="grid-3">
-          <div class="card"><div class="kpi">MVP</div><h3>En producción</h3><p>PWA viva, establecimiento real, seed histórico para reportes densos.</p></div>
-          <div class="card"><div class="kpi">Loop</div><h3>Cerrado</h3><p>Dato → alerta → mail al equipo. GDPV y CC sin inventos.</p></div>
-          <div class="card"><div class="kpi">NEA</div><h3>Contexto</h3><p>NDVI real, agua orientativa, precio MAG/manual con categoría.</p></div>
+          <div class="card lime"><div class="kpi" style="font-size:1.6rem;">Postgres</div><h3>Modelo relacional</h3><p>Lotes, potreros, evaluaciones, movimientos, agua, inventario.</p></div>
+          <div class="card cyan"><div class="kpi" style="font-size:1.6rem;color:var(--cyan)">RLS</div><h3>Row Level Security</h3><p>Aislamiento multi-establecimiento desde la base.</p></div>
+          <div class="card blue"><div class="kpi" style="font-size:1.6rem;color:var(--cyan)">Sync</div><h3>IndexedDB ↔ API</h3><p>Historicidad y trazabilidad sin perder continuidad offline.</p></div>
         </div>
-        <div class="card accent" style="margin-top:1rem;">
-          <strong>Para la exposición:</strong>
-          Dashboard · Reportes con historia · Alertas · Modo campo · Mapa de potreros.
-          Framing honesto: MVP serio, no “enterprise cerrado”.
+        <div class="card" style="margin-top:.85rem;">
+          <strong class="hl">DER orientado a producción:</strong>
+          la unidad móvil es el lote; el recurso estático es el potrero georreferenciado;
+          las evaluaciones alimentan GDPV y reportes gerenciales.
         </div>
         <div class="footer-bar">
-          <div class="brand">
-            <img class="utn" src="assets/utn-logo.png" alt="UTN" />
-            <img class="nutro" src="assets/nutrogan-logo.svg" alt="Nutrogan" />
-          </div>
-          <div class="footer-meta"><span>www.nutrogan.site</span></div>
+          <div class="left"><img class="utn" src="assets/utn-logo.png" alt="UTN" /><span class="tag light">Seguridad por diseño</span></div>
+          <div class="right"><img class="cedeva" src="assets/cedeva-yema.png" alt="CEDEVA" /><img class="mark" src="assets/nutrogan-mark.png" alt="N" /><span class="tag">Datos</span></div>
         </div>
       </section>
 
-      <!-- 14 -->
-      <section class="slide center-slide" data-title="Cierre">
-        <div class="eyebrow">Para los alumnos de la TUP</div>
-        <h2 style="max-width:22ch;">Un TFI importa cuando sale del aula</h2>
-        <p class="lead">
-          Elegí un problema que duela en tu región. Buscá quien sepa del dominio (nosotros: CEDEVA).
-          Trabajá en equipo con roles. Medí calidad. No finjas datos.
-          <span class="hl">La UTN FRRE Extensión Formosa formó egresados 2025 que dejaron software corriendo.</span>
-        </p>
-        <div style="margin-top:1.4rem; display:flex; gap:.6rem; flex-wrap:wrap;">
-          <span class="pill">Duarte · Ascona · Amarilla</span>
-          <span class="pill">UTN FRRE Ext. Formosa</span>
-          <span class="pill">CEDEVA Formosa</span>
+      <!-- 14 METODOLOGIA -->
+      <section class="slide">
+        <div class="eyebrow">Ingeniería de software</div>
+        <h2>Cómo lo llevamos adelante</h2>
+        <div class="grid-3">
+          <div class="card lime"><h3>Scrum + Jira</h3><p>Backlog, épicas, story points. Entregas iterativas con foco en valor de campo.</p></div>
+          <div class="card cyan"><h3>GitFlow</h3><p>main / develop / feature / hotfix. Conventional Commits. Code review.</p></div>
+          <div class="card blue"><h3>QA basado en riesgos</h3><p>Vitest (negocio) · Cypress (E2E) · pipeline CI/CD de 5 etapas · Docker multi-stage.</p></div>
         </div>
-        <p class="mono" style="margin-top:1.2rem;">Gracias · ¿Preguntas?</p>
+        <div class="card lime" style="margin-top:.85rem;">
+          <strong>Roles claros, un solo producto:</strong>
+          Lead Frontend &amp; IA · Arquitectura de datos · DevOps/QA —
+          la misma disciplina que exige la industria, aplicada a un TFI con despliegue real.
+        </div>
         <div class="footer-bar">
-          <div class="brand">
-            <img class="utn" src="assets/utn-logo.png" alt="UTN" />
-            <img class="nutro" src="assets/nutrogan-logo.svg" alt="Nutrogan" />
+          <div class="left"><img class="utn" src="assets/utn-logo.png" alt="UTN" /><span class="tag light">Metodología profesional</span></div>
+          <div class="right"><img class="cedeva" src="assets/cedeva-yema.png" alt="CEDEVA" /><img class="mark" src="assets/nutrogan-mark.png" alt="N" /><span class="tag">Gestión</span></div>
+        </div>
+      </section>
+
+      <!-- 15 RESULTADOS -->
+      <section class="slide">
+        <div class="eyebrow">Resultados e impacto</div>
+        <h2>De TFI a plataforma en producción</h2>
+        <div class="grid-2">
+          <div class="shot-frame">
+            <img class="shot" src="assets/shots/ui-06.png" alt="Recursos" />
+            <span class="cap">Módulos de recursos</span>
           </div>
-          <div class="footer-meta">Exposición TFI · <span>UTN FRRE 2025</span></div>
+          <div>
+            <ul class="clean">
+              <li><strong class="hl">Logro técnico:</strong> PWA robusta con despliegue automatizado</li>
+              <li><strong class="hl">Impacto:</strong> democratizar tecnología para el productor del NEA</li>
+              <li><strong class="hl">Validación:</strong> CEDEVA Las Lomitas · Est. Santa Úrsula (Tatané)</li>
+              <li><strong class="hl">Futuro:</strong> IoT (crotales) y extensión a otras ganaderías</li>
+            </ul>
+            <div class="chips" style="margin-top:1rem;">
+              <span class="pill">www.nutrogan.site</span>
+              <span class="pill">MVP en producción</span>
+              <span class="pill">Formosa · Argentina</span>
+            </div>
+          </div>
+        </div>
+        <div class="footer-bar">
+          <div class="left"><img class="utn" src="assets/utn-logo.png" alt="UTN" /><span class="tag light">Impacto regional</span></div>
+          <div class="right"><img class="cedeva" src="assets/cedeva-yema.png" alt="CEDEVA" /><img class="mark" src="assets/nutrogan-mark.png" alt="N" /><span class="tag">Resultados</span></div>
+        </div>
+      </section>
+
+      <!-- 16 CIERRE -->
+      <section class="slide">
+        <div class="brand-row">
+          <img class="mark-lg" src="assets/nutrogan-mark.png" alt="Nutrogan" />
+          <div class="divider"></div>
+          <img class="utn-lg" src="assets/utn-logo.png" alt="UTN" />
+          <div class="divider"></div>
+          <img class="partner" src="assets/cedeva-yema.png" alt="CEDEVA" />
+        </div>
+        <div class="eyebrow">Mensaje a la Tecnicatura</div>
+        <h2 style="max-width:20ch;">Un TFI que corre en el campo</h2>
+        <p class="lead">
+          Elegimos un problema del NEA, nos aliamos con <span class="hl">CEDEVA</span>,
+          aplicamos ingeniería seria y dejamos software en producción.
+          Eso es lo que la UTN FRRE Extensión Formosa forma: egresados 2025 capaces de construir plataformas reales.
+        </p>
+        <div class="chips" style="margin-top:1.2rem;">
+          <span class="pill">Duarte · Ascona · Amarilla</span>
+          <span class="pill">G.21</span>
+          <span class="pill">¿Preguntas?</span>
+        </div>
+        <p style="margin-top:auto;font-family:IBM Plex Mono,monospace;color:var(--lime);letter-spacing:.12em;font-size:.95rem;">MUCHAS GRACIAS</p>
+        <div class="footer-bar">
+          <div class="left"><img class="utn" src="assets/utn-logo.png" alt="UTN" /><span class="tag light">UTN FRRE · Extensión Formosa · 2025</span></div>
+          <div class="right"><img class="cedeva" src="assets/cedeva-yema.png" alt="CEDEVA" /><img class="mark" src="assets/nutrogan-mark.png" alt="N" /><span class="tag">Gracias</span></div>
         </div>
       </section>
 
@@ -730,24 +778,17 @@
     const slides = [...document.querySelectorAll('#stage > .slide')]
     let idx = 0
     const progress = document.getElementById('progress')
-
     function show(i) {
       idx = (i + slides.length) % slides.length
       slides.forEach((s, n) => s.classList.toggle('active', n === idx))
       progress.textContent = `${idx + 1} / ${slides.length}`
     }
-
     document.getElementById('prev').onclick = () => show(idx - 1)
     document.getElementById('next').onclick = () => show(idx + 1)
     document.getElementById('btnPrint').onclick = () => window.print()
-
     window.addEventListener('keydown', (e) => {
-      if (e.key === 'ArrowRight' || e.key === 'PageDown' || e.key === ' ') {
-        e.preventDefault(); show(idx + 1)
-      }
-      if (e.key === 'ArrowLeft' || e.key === 'PageUp') {
-        e.preventDefault(); show(idx - 1)
-      }
+      if (['ArrowRight', 'PageDown', ' '].includes(e.key)) { e.preventDefault(); show(idx + 1) }
+      if (['ArrowLeft', 'PageUp'].includes(e.key)) { e.preventDefault(); show(idx - 1) }
       if (e.key === 'Home') show(0)
       if (e.key === 'End') show(slides.length - 1)
     })
@@ -756,45 +797,46 @@
       const btn = document.getElementById('btnPdf')
       const prev = btn.textContent
       btn.disabled = true
-      btn.textContent = 'Generando PDF…'
       const root = document.getElementById('pdf-root')
-      root.innerHTML = ''
       const { jsPDF } = window.jspdf
       const pdf = new jsPDF({ orientation: 'landscape', unit: 'px', format: [1920, 1080], compress: true })
-
       try {
         for (let i = 0; i < slides.length; i++) {
+          btn.textContent = `PDF ${i + 1}/${slides.length}…`
           const clone = slides[i].cloneNode(true)
           clone.classList.add('active')
-          root.appendChild(clone)
-          // wait fonts/images
-          await new Promise((r) => setTimeout(r, 80))
-          const canvas = await html2canvas(clone, {
-            scale: 1,
-            useCORS: true,
-            backgroundColor: '#0a0c0a',
-            width: 1920,
-            height: 1080,
-            windowWidth: 1920,
-            windowHeight: 1080,
+          const wrap = document.createElement('div')
+          wrap.className = 'stage'
+          wrap.style.width = '1920px'
+          wrap.style.height = '1080px'
+          wrap.style.borderRadius = '0'
+          wrap.appendChild(clone)
+          // recreate stage bg
+          const bg = document.createElement('div')
+          bg.style.cssText = 'position:absolute;inset:0;background:linear-gradient(180deg,rgba(5,5,5,.35),rgba(5,5,5,.82)),url(assets/bg-brand.png) center/cover;opacity:.55;z-index:0'
+          wrap.insertBefore(bg, clone)
+          clone.style.zIndex = '1'
+          root.appendChild(wrap)
+          await new Promise((r) => setTimeout(r, 120))
+          const canvas = await html2canvas(wrap, {
+            scale: 1, useCORS: true, backgroundColor: '#050505',
+            width: 1920, height: 1080, windowWidth: 1920, windowHeight: 1080,
           })
-          const img = canvas.toDataURL('image/jpeg', 0.92)
+          const img = canvas.toDataURL('image/jpeg', 0.9)
           if (i > 0) pdf.addPage([1920, 1080], 'landscape')
           pdf.addImage(img, 'JPEG', 0, 0, 1920, 1080)
           root.innerHTML = ''
-          btn.textContent = `PDF ${i + 1}/${slides.length}…`
         }
-        pdf.save('Nutrogan-TFI-2025-UTN-FRRE.pdf')
-      } catch (err) {
-        console.error(err)
-        alert('No se pudo generar el PDF automático. Usá “Imprimir / PDF del sistema” (orientación apaisada).')
+        pdf.save('Nutrogan-TFI-Expo-2025-UTN-FRRE.pdf')
+      } catch (e) {
+        console.error(e)
+        alert('Falló el PDF automático. Usá Imprimir → Guardar como PDF (apaisado).')
       } finally {
         root.innerHTML = ''
         btn.disabled = false
         btn.textContent = prev
       }
     }
-
     document.getElementById('btnPdf').onclick = downloadPdf
     show(0)
   </script>
