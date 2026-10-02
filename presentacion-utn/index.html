@@ -1,0 +1,1032 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>NUTROGAN — Ganadería de precisión</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@360;460;580;700;800&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --ink: #f3f7f6;
+    --muted: #c9d5dc;
+    --soft: #9aafb8;
+    --green: #b6ff3b;
+    --lime: #39ff14;
+    --cyan: #8ef6ff;
+    --blue: #3d7cff;
+    --line: rgba(255,255,255,.14);
+    --card: rgba(4, 12, 18, .9);
+    --danger: #ffb4a8;
+    --amber: #ffe08a;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; background: #000; color: var(--ink); font-family: Outfit, "Segoe UI", sans-serif; overflow: hidden; }
+  button, a { font-family: inherit; }
+  .viewport { position: fixed; inset: 0; background: #0a4ea8 url("assets/fondo.png") center/cover no-repeat; }
+  .stage {
+    width: 1600px; height: 900px;
+    position: absolute; left: 50%; top: 50%;
+    margin: -450px 0 0 -800px;
+    transform-origin: center center;
+    overflow: hidden;
+  }
+  .slide {
+    position: absolute; inset: 0;
+    display: none;
+    padding: 34px 72px 136px;
+    text-align: center;
+    overflow: hidden;
+  }
+  .slide.on { display: flex; flex-direction: column; align-items: center; animation: fly .62s cubic-bezier(.16,.84,.32,1); }
+  @keyframes fly { from { transform: scale(1.12); } to { transform: none; } }
+  .slide::before {
+    content: "";
+    position: absolute; inset: 0;
+    background: url("assets/fondo.png") center/cover no-repeat;
+    pointer-events: none;
+  }
+  .slide::after {
+    content: "";
+    position: absolute; inset: 0; z-index: 0;
+    pointer-events: none;
+    background: linear-gradient(
+      to bottom,
+      rgba(2, 8, 16, 0.08) 0%,
+      rgba(2, 8, 16, 0.28) 38%,
+      rgba(2, 8, 16, 0.72) 68%,
+      #020810 100%
+    );
+  }
+  .slide > * { position: relative; z-index: 1; }
+  .kicker {
+    letter-spacing: .22em; text-transform: uppercase;
+    font-size: 13px; font-weight: 700; color: #d6ff6a;
+    margin: 8px 0 10px;
+    background: rgba(2,10,22,.78);
+    padding: 6px 14px; border-radius: 999px;
+  }
+  h1, h2 { margin: 0; font-weight: 800; letter-spacing: -.035em; line-height: 1.05; }
+  h1 { font-size: 78px; background: rgba(2,10,22,.9); padding: 4px 28px 10px; border-radius: 18px; }
+  h2 { font-size: 44px; max-width: 1280px; background: rgba(2,10,22,.9); padding: 8px 22px 12px; border-radius: 16px; }
+  .rule {
+    width: 86px; height: 4px; border-radius: 4px; margin: 14px auto 16px;
+    background: linear-gradient(90deg, var(--blue), var(--lime));
+  }
+  .lead { max-width: 980px; margin: 0 auto; font-size: 24px; line-height: 1.35; color: #e7eef2; font-weight: 360; background: rgba(2,10,22,.88); padding: 10px 18px; border-radius: 14px; }
+  .lead strong { color: var(--ink); font-weight: 700; }
+  .body { width: 100%; flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 18px; min-height: 0; }
+  .def {
+    position: absolute;     left: 48px; right: 48px; bottom: 74px; z-index: 2;
+    height: 52px; border-radius: 14px;
+    display: flex; align-items: center; justify-content: center; gap: 16px;
+    padding: 0 28px;
+    background: rgba(0,0,0,.55);
+    border: 1px solid rgba(255,255,255,.12);
+    backdrop-filter: blur(10px);
+  }
+  .def b {
+    flex: none; font-size: 11px; letter-spacing: .2em; text-transform: uppercase;
+    color: #061208; background: var(--green); border-radius: 999px; padding: 6px 10px;
+  }
+  .def p { margin: 0; font-size: 16px; color: #e7eef2; line-height: 1.25; text-align: center; }
+  .row { display: flex; gap: 16px; justify-content: center; align-items: stretch; width: 100%; }
+  .card {
+    background: linear-gradient(180deg, rgba(6,16,28,.88), rgba(4,10,18,.82));
+    border: 1px solid rgba(182,255,59,.28);
+    border-radius: 22px;
+    padding: 18px 16px 16px;
+    box-shadow: 0 16px 40px rgba(0,0,0,.28);
+    cursor: pointer;
+    transition: transform .25s ease, border-color .25s ease, box-shadow .25s ease;
+  }
+  .card:hover { transform: translateY(-4px); border-color: rgba(182,255,59,.7); }
+  .card.focus {
+    transform: translateY(-6px) scale(1.03);
+    border-color: var(--lime);
+    box-shadow: 0 0 0 1px var(--lime), 0 18px 40px rgba(0,0,0,.4);
+  }
+  .glyph {
+    width: 54px; height: 54px; margin: 0 auto 8px; border-radius: 16px;
+    display: grid; place-items: center; font-size: 26px; font-weight: 800; color: #061208;
+    background: linear-gradient(135deg, #39ff14, #7dfff6);
+  }
+  .card h3 { margin: 8px 0 6px; font-size: 22px; letter-spacing: -.02em; }
+  .card p { margin: 0; color: var(--muted); font-size: 16px; line-height: 1.35; }
+  .num {
+    display: inline-block; font-size: 12px; letter-spacing: .16em; font-weight: 800;
+    color: #061208; background: linear-gradient(135deg, #39ff14, #7dfff6);
+    border-radius: 999px; padding: 5px 10px; margin-bottom: 6px;
+  }
+  .shot {
+    border-radius: 18px; overflow: hidden;
+    border: 1px solid rgba(182,255,59,.35);
+    box-shadow: 0 18px 50px rgba(0,0,0,.45), 0 0 0 1px rgba(0,0,0,.4);
+    background: rgba(0,0,0,.28);
+    display: flex; align-items: center; justify-content: center;
+  }
+  .shot img { display: block; width: 100%; height: auto; max-height: 440px; object-fit: contain; object-position: center; }
+  .logos { display: flex; align-items: center; justify-content: center; gap: 28px; }
+  .logos img { height: 78px; width: auto; }
+  .mark { height: 56px; width: 56px; object-fit: cover; margin-bottom: 4px; border-radius: 14px; box-shadow: 0 8px 24px rgba(0,0,0,.35); }
+  .chip {
+    display: inline-flex; align-items: center; gap: 8px;
+    border: 1px solid var(--line); border-radius: 999px;
+    padding: 8px 14px; color: var(--muted); font-size: 15px; background: rgba(0,0,0,.28);
+  }
+  .grid3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; width: 100%; }
+  .grid4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; width: 100%; }
+  .grid2 { display: grid; grid-template-columns: 1.05fr .95fr; gap: 18px; width: 100%; align-items: center; }
+  .flow { display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; flex-wrap: nowrap; }
+  .node {
+    min-width: 180px; padding: 16px 14px; border-radius: 18px;
+    background: rgba(4,14,22,.8); border: 1px solid var(--line); text-align: center;
+  }
+  .node b { display: block; font-size: 18px; margin-bottom: 4px; }
+  .node span { color: var(--soft); font-size: 14px; }
+  .arrow { color: var(--green); font-size: 28px; font-weight: 700; }
+  .why { color: var(--green); font-size: 14px; font-weight: 700; letter-spacing: .04em; margin-top: 8px; }
+  .stack { width: 980px; display: flex; flex-direction: column; gap: 8px; }
+  .layer {
+    display: grid; grid-template-columns: 230px 1fr; gap: 16px; align-items: center;
+    text-align: left; background: rgba(4,14,22,.82); border: 1px solid var(--line);
+    border-radius: 14px; padding: 10px 16px;
+  }
+  .layer b { color: var(--green); font-size: 16px; letter-spacing: .02em; }
+  .layer span { color: #e7eef2; font-size: 16px; }
+  .er { display: flex; align-items: stretch; justify-content: center; gap: 8px; width: 100%; }
+  .ent {
+    flex: 1; text-align: left; background: rgba(4,14,22,.86);
+    border: 1px solid rgba(182,255,59,.35); border-radius: 16px; padding: 12px 14px;
+  }
+  .ent em { display: block; font-style: normal; font-size: 11px; letter-spacing: .16em; font-weight: 800; color: #061208; background: var(--green); border-radius: 999px; padding: 3px 8px; width: fit-content; }
+  .ent h3 { margin: 8px 0 6px; font-size: 18px; }
+  .ent p { margin: 0; color: var(--muted); font-size: 14px; line-height: 1.35; }
+  .rel { align-self: center; color: var(--green); font-weight: 800; font-size: 22px; }
+  .mono {
+    width: 100%; text-align: left; font-family: Consolas, "Cascadia Mono", ui-monospace, monospace;
+    font-size: 16px; line-height: 1.45; color: #e7eef2;
+    background: rgba(0,0,0,.5); border: 1px solid rgba(182,255,59,.4);
+    border-radius: 14px; padding: 14px 18px; white-space: pre;
+  }
+  .mono i { font-style: normal; color: #9aafb8; }
+  .team { display: flex; gap: 22px; justify-content: center; }
+  .person { width: 280px; }
+  .person img { width: 112px; height: 112px; object-fit: cover; border-radius: 50%; border: 3px solid var(--lime); }
+  .person h3 { margin: 10px 0 2px; font-size: 22px; }
+  .person p { margin: 0; color: var(--muted); font-size: 15px; }
+  .formula {
+    font-size: 34px; font-weight: 800; letter-spacing: -.03em;
+    padding: 10px 22px; border-radius: 16px;
+    background: rgba(0,0,0,.4); border: 1px solid rgba(182,255,59,.4);
+  }
+  .phone {
+    width: 280px; height: 500px; border-radius: 32px; padding: 16px;
+    background: #070b10; border: 2px solid rgba(182,255,59,.7);
+    box-shadow: 0 0 40px rgba(57,255,20,.18);
+    display: flex; flex-direction: column; gap: 10px;
+  }
+  .phone .top { display: flex; justify-content: space-between; font-size: 12px; color: var(--soft); }
+  .vbtn {
+    flex: 1; border-radius: 16px; border: 2px solid #111; background: #fff; color: #111;
+    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px;
+    font-weight: 800; letter-spacing: .04em;
+  }
+  .vbtn small { font-weight: 600; letter-spacing: 0; color: #333; }
+  .vbtn.on { background: #111; color: var(--lime); border-color: var(--lime); }
+  .steps { display: flex; flex-direction: column; gap: 12px; text-align: left; }
+  .step { display: flex; gap: 14px; align-items: flex-start; background: var(--card); border: 1px solid var(--line); border-radius: 16px; padding: 12px 16px; }
+  .step i {
+    flex: none; width: 36px; height: 36px; border-radius: 50%;
+    display: grid; place-items: center; background: var(--green); color: #061208; font-style: normal; font-weight: 800;
+  }
+  .step b { display: block; font-size: 18px; }
+  .step span { color: var(--muted); font-size: 15px; }
+  .hub { position: relative; width: 100%; height: 460px; }
+  .core {
+    position: absolute; left: 50%; top: 50%; transform: translate(-50%,-50%);
+    width: 280px; padding: 22px 16px; border-radius: 24px;
+    background: #07140c; border: 2px solid var(--lime);
+    box-shadow: 0 0 40px rgba(57,255,20,.2);
+  }
+  .sat {
+    position: absolute; width: 230px; padding: 12px 12px;
+    background: var(--card); border: 1px solid var(--line); border-radius: 16px;
+  }
+  .agenda { width: 860px; display: flex; flex-direction: column; gap: 10px; }
+  .agenda .line {
+    display: grid; grid-template-columns: 120px 1fr; gap: 16px; align-items: center;
+    background: var(--card); border: 1px solid var(--line); border-radius: 16px; padding: 12px 18px;
+  }
+  .agenda b { color: var(--green); font-size: 20px; }
+  .foot-brand {
+    position: absolute; z-index: 7; left: 50%; bottom: 10px;
+    transform: translateX(-50%);
+    display: flex; align-items: center; gap: 10px;
+  }
+  .site-badge {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 5px 12px; border-radius: 10px;
+    border: 1px solid rgba(255,255,255,.32);
+    background: rgba(2,10,22,.86); color: #e7eef2;
+    font-size: 13px; font-weight: 650; letter-spacing: .02em;
+    text-decoration: none;
+  }
+  .site-badge svg { width: 14px; height: 14px; flex: none; }
+  .logos-badge {
+    display: inline-flex; align-items: center;
+    padding: 4px 10px; border-radius: 10px;
+    border: 1px solid rgba(255,255,255,.32);
+    background: rgba(2,10,22,.86);
+  }
+  .shots2 {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 18px;
+    width: 100%; align-items: start;
+  }
+  .shots2 .shot { height: 360px; }
+  .shots2 .shot img { width: 100%; height: 100%; max-height: none; object-fit: contain; }
+  .logos-badge img { height: 22px; width: auto; display: block; }
+  .demo {
+    display: flex; align-items: center; gap: 22px; margin-top: 6px;
+    background: rgba(2,10,22,.9); border-radius: 18px; padding: 14px 22px;
+  }
+  .demo img {
+    width: 148px; height: 148px; border-radius: 12px;
+    background: #fff; padding: 8px; object-fit: contain;
+  }
+  .demo .who { text-align: left; }
+  .demo .who span { display: block; color: var(--soft); font-size: 14px; letter-spacing: .12em; text-transform: uppercase; }
+  .demo .who b { display: block; margin-top: 4px; font-size: 32px; letter-spacing: .04em; }
+  .chrome {
+    position: fixed; z-index: 20; top: 14px; right: 16px;
+    display: flex; align-items: center; gap: 6px;
+    padding: 3px 8px; border-radius: 10px;
+    border: 1px solid rgba(255,255,255,.22);
+    background: rgba(2,10,22,.72);
+    pointer-events: none;
+  }
+  .chrome button, .count {
+    pointer-events: auto; border: 0; background: transparent; color: rgba(255,255,255,.88);
+    height: 22px; min-width: 16px; padding: 0 2px; cursor: pointer; font-size: 12px; letter-spacing: .04em;
+  }
+  .dots { display: flex; gap: 3px; pointer-events: auto; flex-wrap: nowrap; align-items: center; }
+  .dots button { width: 5px; height: 5px; min-width: 5px; padding: 0; border-radius: 99px; background: rgba(255,255,255,.38); border: 0; }
+  .dots button.on { background: var(--lime); width: 12px; }
+  .overview {
+    display: none; position: fixed; inset: 0; z-index: 30;
+    background: rgba(0,0,0,.92); overflow: auto; padding: 28px;
+  }
+  .overview.on { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; }
+  .overview button {
+    background: #0d1720; color: white; border: 1px solid rgba(255,255,255,.12);
+    border-radius: 12px; min-height: 92px; cursor: pointer; padding: 10px; text-align: center;
+  }
+  .overview button b { display: block; color: var(--green); font-size: 12px; margin-bottom: 6px; }
+  .logo-plate {
+    background: rgba(2,8,18,.94);
+    border: 1px solid rgba(255,255,255,.14);
+    border-radius: 18px;
+    padding: 8px 16px;
+    box-shadow: 0 12px 28px rgba(0,0,0,.35);
+  }
+  .logo-plate img { height: 52px; width: auto; display: block; }
+  .cover .body { gap: 8px; }
+  .cover h1 { font-size: 60px; }
+  .meta-row { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; align-items: center; }
+  .place, .docente {
+    display: inline-flex; align-items: center; gap: 8px;
+    background: rgba(2,10,22,.92);
+    border: 1px solid rgba(182,255,59,.4);
+    color: #f4f7f6;
+    border-radius: 999px;
+    padding: 8px 14px;
+    font-weight: 700;
+    font-size: 16px;
+  }
+  .place svg { width: 16px; height: 16px; flex: none; }
+  .inst { margin: 12px 0 0; color: #f4f7f6; font-size: 20px; font-weight: 650; line-height: 1.35; background: rgba(2,10,22,.9); padding: 10px 18px; border-radius: 14px; }
+  .names { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; margin-top: 8px; }
+  .names span {
+    background: rgba(2,10,22,.82); border: 1px solid rgba(182,255,59,.35);
+    border-radius: 999px; padding: 8px 16px; font-weight: 700; font-size: 18px;
+  }
+  .agenda .line { color: #e7eef2; font: inherit; text-align: left; cursor: pointer; width: 100%; transition: transform .2s ease, border-color .2s ease; }
+  .agenda .line:hover { border-color: rgba(182,255,59,.8); transform: translateX(8px); }
+  .lb {
+    display: none; position: absolute; inset: 28px 48px 78px; z-index: 8;
+    background: rgba(2,8,16,.92); border-radius: 22px; border: 1px solid rgba(182,255,59,.45);
+    align-items: center; justify-content: center; padding: 18px;
+  }
+  .lb.on { display: flex; }
+  .lb img { max-width: 100%; max-height: 100%; object-fit: contain; border-radius: 12px; }
+  .lb button {
+    position: absolute; top: 12px; right: 12px; border: 0; border-radius: 999px;
+    background: var(--green); color: #061208; font-weight: 800; padding: 8px 14px; cursor: pointer;
+  }
+  .shot { cursor: zoom-in; }
+  .sat { cursor: pointer; transition: transform .2s ease, border-color .2s ease; }
+  .sat.lit { border-color: var(--lime); transform: scale(1.05); box-shadow: 0 0 24px rgba(57,255,20,.35); }
+  .bigq { font-size: 58px; font-weight: 800; letter-spacing: -.04em; line-height: 1.05; max-width: 1200px; }
+  .pillrow { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; }
+  @media (prefers-reduced-motion: reduce) {
+    .slide.on { animation: none; }
+  }
+</style>
+</head>
+<body>
+<div class="viewport"><div class="stage" id="stage">
+
+<section class="slide cover on">
+  <div class="body">
+    <div class="logo-plate">
+      <img src="assets/logos-juntos.svg" alt="Universidad Tecnológica Nacional, CEDEVA y Nutrogan" />
+    </div>
+    <p class="inst">Universidad Tecnológica Nacional<br />Facultad Regional Resistencia · Extensión Áulica Formosa</p>
+    <div class="meta-row">
+      <span class="place" title="Formosa, Argentina">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="#b6ff3b" d="M12 2a7 7 0 0 0-7 7c0 5.25 7 13 7 13s7-7.75 7-13a7 7 0 0 0-7-7zm0 9.5A2.5 2.5 0 1 1 12 6a2.5 2.5 0 0 1 0 5.5z"/></svg>
+        Formosa
+      </span>
+      <span class="docente">Docente a cargo · Eduardo Roig</span>
+    </div>
+    <h1>NUTROGAN</h1>
+    <div class="rule"></div>
+    <p class="lead">Ganadería de precisión.<br />El dato se carga en el potrero. La decisión se toma con el número delante.</p>
+    <div class="kicker">Ex alumnos · Camada 2025 · Tecnicatura Universitaria en Programación</div>
+    <div class="names">
+      <span>Fabricio Nicolás Duarte</span>
+      <span>Enzo Ariel Ascona</span>
+      <span>Sebastián Emanuel Amarilla</span>
+    </div>
+  </div>
+</section>
+
+<section class="slide">
+  <img class="mark" src="assets/logo-nutrogan-azul.svg" alt="" />
+  <div class="kicker">La promesa</div>
+  <h2 class="bigq">Medir el campo,<br />aunque no haya señal.</h2>
+  <div class="rule"></div>
+  <p class="lead">En los campos de prueba de CEDEVA el pesaje ocurre sin señal. La aplicación lo guarda en el teléfono y lo sube cuando vuelve la red. Todo apunta a una pregunta: si el rodeo gana kilos, con qué pasto, con qué agua y a qué costo.</p>
+  <div class="body">
+    <div class="grid3">
+      <div class="card"><div class="num">01</div><h3>Se anota igual</h3><p>Peso, movimiento o lluvia quedan en el teléfono. Cerrar la aplicación no borra el día.</p></div>
+      <div class="card"><div class="num">02</div><h3>Dos pesos, un resultado</h3><p>Se pide el peso de hoy y el anterior. Con los días que pasaron, la aplicación calcula cuántos kilos gana por día. Si falta un peso, no lo inventa.</p></div>
+      <div class="card"><div class="num">03</div><h3>Un solo campo</h3><p>Mapa, pasto, agua y despensa son del mismo establecimiento. Lo que se carga en uno se ve en los otros.</p></div>
+    </div>
+  </div>
+  <footer class="def"><b>Definición</b><p>Ganadería de precisión: manejar el rodeo con mediciones, no solo con la memoria del recorrido.</p></footer>
+</section>
+
+<section class="slide">
+  <img class="mark" src="assets/logo-nutrogan-azul.svg" alt="" />
+  <div class="kicker">Recorrido · 15 minutos</div>
+  <h2>De la libreta al sistema</h2>
+  <div class="rule"></div>
+  <div class="body">
+    <div class="agenda">
+      <button class="line" type="button" data-go="3"><b>0 – 3</b><span>Por qué nació: el dato del potrero llega tarde a la oficina.</span></button>
+      <button class="line" type="button" data-go="6"><b>3 – 7</b><span>Qué busca la aplicación y por qué pide cada dato.</span></button>
+      <button class="line" type="button" data-go="13"><b>7 – 13</b><span>Cómo se conectan peso, pasto, agua, comida y la decisión del lote.</span></button>
+      <button class="line" type="button" data-go="26"><b>13 – 15</b><span>Quién lo construyó y cómo cerrar.</span></button>
+    </div>
+  </div>
+  <footer class="def"><b>Definición</b><p>Cada lámina cierra con esta franja: el término técnico, en una frase, antes de pasar a la siguiente.</p></footer>
+</section>
+
+<section class="slide">
+  <img class="mark" src="assets/logo-nutrogan-azul.svg" alt="" />
+  <div class="kicker">Origen</div>
+  <h2>Nació donde la libreta llega tarde</h2>
+  <div class="rule"></div>
+  <p class="lead">CEDEVA prueba tecnología en Las Lomitas, semiárido, y en Misión Tacaaglé, subtropical. El pesaje, el análisis de agua y el cambio de potrero ocurren ahí. La oficina se entera cuando la libreta vuelve.</p>
+  <div class="body">
+    <div class="grid3">
+      <div class="card"><h3>El evento</h3><p>Un pesaje, un análisis de agua o un cambio de parcela. Ocurre lejos de la computadora.</p></div>
+      <div class="card"><h3>La espera</h3><p>La libreta viaja. Rotar el pasto, tratar o vender ya se decidió sin ese número.</p></div>
+      <div class="card"><h3>La fuga</h3><p>Sin pesos seguidos, el ternero se vende sin terminar. No se puede saber si convenía dejarlo.</p></div>
+    </div>
+  </div>
+  <footer class="def"><b>Definición</b><p>Gestión a ciegas: producir sin conocer, a tiempo, peso, pasto, agua ni costo.</p></footer>
+</section>
+
+<section class="slide">
+  <img class="mark" src="assets/logo-nutrogan-azul.svg" alt="" />
+  <div class="kicker">El problema · tres fracturas</div>
+  <h2>Por qué el software de la ciudad no alcanza</h2>
+  <div class="rule"></div>
+  <div class="body">
+    <div class="grid3">
+      <div class="card">
+        <div class="num">SEÑAL</div>
+        <h3>El potrero no está online</h3>
+        <p>Si la aplicación solo guarda con internet, en el potrero se apaga. El operario vuelve al papel y ese día no entra al campo.</p>
+      </div>
+      <div class="card">
+        <div class="num">NÚMERO</div>
+        <h3>La rentabilidad aparece en la venta</h3>
+        <p>Sin pesos con fecha no se sabe cuánto gana por día. Sin el precio de la comida, el costo del kilo aparece recién cuando el animal se vende.</p>
+      </div>
+      <div class="card">
+        <div class="num">OJO</div>
+        <h3>La condición corporal es subjetiva</h3>
+        <p>La escala INTA va de 1 a 9. Dos personas anotan distinto, y la dieta y la reserva forrajera heredan ese número.</p>
+      </div>
+    </div>
+  </div>
+  <footer class="def"><b>Definición</b><p>Condición corporal: reserva de energía del animal, en la escala INTA de 1 (emaciado) a 9 (obeso).</p></footer>
+</section>
+
+<section class="slide">
+  <img class="mark" src="assets/logo-nutrogan-azul.svg" alt="" />
+  <div class="kicker">Qué es CEDEVA</div>
+  <h2>Centro de Validación de Tecnologías Agropecuarias</h2>
+  <div class="rule"></div>
+  <p class="lead">Organismo del Gobierno de Formosa. Prueba tecnología en el campo y la transfiere al productor. Asesoró este trabajo. Tutor: Ing. Zoot. Héctor Fabián Centurión, Las Lomitas.</p>
+  <div class="body">
+    <div class="kicker">Colaboradores</div>
+    <div class="grid4">
+      <div class="card">
+        <div class="glyph">01</div>
+        <h3>Leandro F. De Pedro</h3>
+        <p>Ing. Agr., CEDEVA. Puso nombre al problema y abrió los campos donde se probó la aplicación.</p>
+      </div>
+      <div class="card">
+        <div class="glyph">02</div>
+        <h3>Agostina A. Collavino</h3>
+        <p>Dra. Asesoría externa, CIT. Definió desde qué valor el agua pasa de apta a riesgosa. Eso es el semáforo de la pantalla.</p>
+      </div>
+      <div class="card">
+        <div class="glyph">03</div>
+        <h3>Iván Filip</h3>
+        <p>Dr. Asesoría externa, CIT. Aportó cómo se calcula la ganancia de peso y la nutrición. La pantalla muestra el resultado; no lo inventa.</p>
+      </div>
+      <div class="card">
+        <div class="glyph">04</div>
+        <h3>Jorge Levingston</h3>
+        <p>Dr., Secretaría de Ciencia y Tecnología de Formosa. Revisó si el proyecto era viable para llevarlo a un productor.</p>
+      </div>
+    </div>
+  </div>
+  <footer class="def"><b>Definición</b><p>CEDEVA valida tecnologías agropecuarias en condiciones reales, en Las Lomitas y en Misión Tacaaglé, antes de llevarlas al productor.</p></footer>
+</section>
+
+<section class="slide">
+  <img class="mark" src="assets/logo-nutrogan-azul.svg" alt="" />
+  <div class="kicker">Objetivo</div>
+  <h2>Una plataforma que decida con el campo abierto</h2>
+  <div class="rule"></div>
+  <p class="lead">El objetivo es anotar el ciclo del animal <strong>aunque no haya señal</strong>, y que con esos datos se pueda decidir si conviene seguirlo en el campo.</p>
+  <div class="body">
+    <div class="grid4">
+      <div class="card"><h3>Anotar</h3><p>Peso, movimiento, lluvia o sanidad se guardan en el momento. La señal no es condición.</p></div>
+      <div class="card"><h3>Confirmar</h3><p>La cámara se abre y propone la condición, una anomalía o la lectura fecal. Quien está en el campo acepta o corrige antes de guardar.</p></div>
+      <div class="card"><h3>Ubicar</h3><p>Se dibuja el potrero para saber las hectáreas y dónde está cada grupo. No se pide un número de memoria.</p></div>
+      <div class="card"><h3>Decidir</h3><p>Kilos por día, comida que queda y margen salen de lo cargado. Si falta un dato, se ve que falta.</p></div>
+    </div>
+  </div>
+  <footer class="def"><b>Definición</b><p>Sistema de soporte a la decisión: el software no reemplaza al productor; le ordena la evidencia para que elija.</p></footer>
+</section>
+
+<section class="slide">
+  <img class="mark" src="assets/logo-nutrogan-azul.svg" alt="" />
+  <div class="kicker">Todo sirve a una pregunta</div>
+  <h2>¿Este rodeo está ganando, y a qué costo?</h2>
+  <div class="rule"></div>
+  <div class="body" style="justify-content:flex-start">
+    <div class="hub">
+      <div class="sat" style="left:40px;top:18px"><b>Peso</b><p>Se pide para saber cuántos kilos gana por día. Sin dos fechas, esa cuenta no existe.</p></div>
+      <div class="sat" style="right:40px;top:18px"><b>Condición</b><p>La cámara se abre y propone cómo está el grupo. Si está bajo, explica por qué dejó de ganar. No diagnostica.</p></div>
+      <div class="sat" style="left:40px;bottom:18px"><b>Pasto</b><p>El dibujo del potrero dice dónde está y cuántas hectáreas tiene. El satélite avisa si el verde baja.</p></div>
+      <div class="sat" style="right:40px;bottom:18px"><b>Agua y comida</b><p>Un análisis malo o una bolsa que se acaba pueden frenar esa ganancia antes de la venta.</p></div>
+      <div class="core"><div class="num">OBJETIVO</div><h3 style="margin:8px 0">Cerrar el ciclo</h3><p>Decidir si el animal se termina en el campo, con pasto, agua y comida medidos.</p></div>
+    </div>
+  </div>
+  <footer class="def"><b>Definición</b><p>Ganancia diaria de peso: (peso final − peso inicial) ÷ días. Si falta un peso, el resultado no se inventa.</p></footer>
+</section>
+
+<section class="slide">
+  <img class="mark" src="assets/logo-nutrogan-azul.svg" alt="" />
+  <div class="kicker">Arquitectura</div>
+  <h2>Primero el potrero. Después la nube.</h2>
+  <div class="rule"></div>
+  <p class="lead">Se anota en el potrero <strong>aunque no haya internet</strong>. Cuando vuelve la señal, esos mismos datos aparecen en la oficina.</p>
+  <div class="body">
+    <div class="stack">
+      <div class="layer"><b>1. Se anota</b><span>Peso, cambio de parcela, foto, lluvia o análisis de agua.</span></div>
+      <div class="layer"><b>2. Queda en el teléfono</b><span>Si no hay señal, no se pierde. Cerrar la aplicación no borra lo cargado.</span></div>
+      <div class="layer"><b>3. Sube solo</b><span>Al volver la red, el teléfono envía lo pendiente al servidor del campo.</span></div>
+      <div class="layer"><b>4. Se ve junto</b><span>En la oficina, el mapa, la alerta y el reporte usan exactamente lo que se cargó en el potrero.</span></div>
+    </div>
+  </div>
+  <footer class="def"><b>Definición</b><p>Pensada sin señal: anotar no depende de internet. Conectarse sirve para que la oficina vea lo mismo.</p></footer>
+</section>
+
+<section class="slide">
+  <img class="mark" src="assets/logo-nutrogan-azul.svg" alt="" />
+  <div class="kicker">Por qué esta arquitectura</div>
+  <h2>Cuatro razones que vienen del campo</h2>
+  <div class="rule"></div>
+  <div class="body">
+    <div class="grid4">
+      <div class="card"><div class="num">01</div><h3>El lugar de trabajo</h3><p>Quien carga está en un potrero. Si el guardado depende de la señal, el día se pierde.</p></div>
+      <div class="card"><div class="num">02</div><h3>Una sola aplicación</h3><p>Se instala desde el navegador. La misma sirve para anotar en el teléfono y para mirar el mapa en la oficina.</p></div>
+      <div class="card"><div class="num">03</div><h3>Memoria del teléfono</h3><p>Lo pendiente espera ahí. Cerrar la aplicación no obliga a cargar de nuevo.</p></div>
+      <div class="card"><div class="num">04</div><h3>Cada campo, el suyo</h3><p>Entrar a un establecimiento no muestra los animales ni los costos del vecino.</p></div>
+    </div>
+  </div>
+  <footer class="def"><b>Definición</b><p>Se instala desde el navegador, abre en pantalla completa y sigue disponible cuando no hay señal.</p></footer>
+</section>
+
+<section class="slide">
+  <img class="mark" src="assets/logo-nutrogan-azul.svg" alt="" />
+  <div class="kicker">Stack</div>
+  <h2>Cada pieza tiene un porqué</h2>
+  <div class="rule"></div>
+  <div class="body">
+    <div class="grid4">
+      <div class="card"><h3>Vue</h3><p>Arma la pantalla por partes. Cambiar el aviso del agua no obliga a rehacer el mapa.</p><div class="why">Para mantenerla</div></div>
+      <div class="card"><h3>Quasar</h3><p>Botones grandes, gestos y la instalación como aplicación, en el teléfono y en la computadora.</p><div class="why">Para el campo</div></div>
+      <div class="card"><h3>Pinia</h3><p>Un solo lugar calcula los kilos por día y el color del agua. La pantalla solo muestra.</p><div class="why">Para no repetir cuentas</div></div>
+      <div class="card"><h3>Leaflet</h3><p>El mapa satelital donde se dibuja el potrero y se ven las hectáreas.</p><div class="why">Para ubicar</div></div>
+      <div class="card"><h3>PostgreSQL</h3><p>El lote, el potrero, la comida y la persona quedan relacionados. Un peso no queda suelto.</p><div class="why">Para que cierre</div></div>
+      <div class="card"><h3>Supabase</h3><p>Guarda esos datos en la nube, recuerda quién entró y no mezcla un campo con otro.</p><div class="why">Para compartir</div></div>
+      <div class="card"><h3>Cámara e informe</h3><p>La cámara se abre y propone un dato. El informe redactado se pide aparte, solo con lo ya cargado.</p><div class="why">Para no adivinar</div></div>
+      <div class="card"><h3>Docker y GitLab</h3><p>La misma aplicación en las tres máquinas. Si un cambio rompe algo, no se publica.</p><div class="why">Para el equipo</div></div>
+    </div>
+  </div>
+  <footer class="def"><b>Definición</b><p>Cada herramienta está porque el trabajo es en el potrero: sin señal, con mapa, y con datos que tienen que quedar relacionados.</p></footer>
+</section>
+
+<section class="slide">
+  <img class="mark" src="assets/logo-nutrogan-azul.svg" alt="" />
+  <div class="kicker">Base de datos</div>
+  <h2>Por qué el dato de un lado sirve en el otro</h2>
+  <div class="rule"></div>
+  <p class="lead">Un grupo de animales no está suelto: vive en un campo, ocupa un potrero y acumula lo que se le carga. Por eso el peso, el agua y la comida se pueden leer juntos.</p>
+  <div class="body">
+    <div class="er">
+      <div class="ent"><em>1</em><h3>El campo</h3><p>Todo lo demás es de ese establecimiento. No se mezcla con otro.</p></div>
+      <div class="rel">1—N</div>
+      <div class="ent"><em>varios</em><h3>Los potreros</h3><p>Dibujo, hectáreas, tipo de pasto y qué tan verde está.</p></div>
+      <div class="rel">1—N</div>
+      <div class="ent"><em>varios</em><h3>Los grupos</h3><p>Cuántas cabezas hay y de qué categoría. Ahí se ve la ganancia por día.</p></div>
+      <div class="rel">1—N</div>
+      <div class="ent"><em>hechos</em><h3>Lo que les pasa</h3><p>Peso, condición, sanidad, cría, lo que se puso y lo que sobró.</p></div>
+    </div>
+    <div class="er">
+      <div class="ent"><em>agua</em><h3>Las aguadas</h3><p>Están en un potrero. El análisis dice si el agua está apta, en duda o en riesgo.</p></div>
+      <div class="ent"><em>comida</em><h3>La despensa</h3><p>Cada bolsa tiene precio. Cada uso baja el stock y suma costo al kilo.</p></div>
+      <div class="ent"><em>lluvia</em><h3>Los milímetros</h3><p>Se cargan a mano. Si no hay, se usa una estimación de grilla y se aclara que no es el pluviómetro.</p></div>
+    </div>
+  </div>
+  <footer class="def"><b>Definición</b><p>Relación: el grupo de animales pertenece a un potrero, y el potrero a un campo. Por eso un dato cargado en uno se puede usar en el otro.</p></footer>
+</section>
+
+<section class="slide">
+  <img class="mark" src="assets/logo-nutrogan-azul.svg" alt="" />
+  <div class="kicker">Seguridad</div>
+  <h2>Cada productor ve solamente su campo</h2>
+  <div class="rule"></div>
+  <div class="body">
+    <div class="grid4">
+      <div class="card"><div class="num">01</div><h3>Superadmin</h3><p>Ve todo el campo y la bitácora: quién cargó, cambió o borró, y a qué hora. El primero entra con ese rol.</p></div>
+      <div class="card"><div class="num">02</div><h3>Administrador</h3><p>Maneja el establecimiento, el equipo y los costos. No ve esa bitácora ni puede crear otro superadmin.</p></div>
+      <div class="card"><div class="num">03</div><h3>Técnico</h3><p>Veterinario o ingeniero: mapas, agua, reportes y la decisión del lote. No arma el equipo ni la despensa de costos.</p></div>
+      <div class="card"><div class="num">04</div><h3>Peón</h3><p>Solo carga en el potrero: peso, movimiento, comida, lluvia, agua, visión y situación.</p></div>
+    </div>
+  </div>
+  <footer class="def"><b>Definición</b><p>Cada usuario ve solamente el establecimiento al que pertenece. Entrar a uno no abre el del vecino.</p></footer>
+</section>
+
+<section class="slide">
+  <img class="mark" src="assets/logo-nutrogan-azul.svg" alt="" />
+  <div class="kicker">Dos interfaces · un producto</div>
+  <h2>Oficina de noche. Potrero de mediodía.</h2>
+  <div class="rule"></div>
+  <div class="body">
+    <div class="shots2">
+      <div>
+        <div class="shot"><img src="assets/capturas/nutrogan-dashboard.png" alt="Panel de control con mapa satelital de potreros en Formosa" /></div>
+        <p class="lead" style="font-size:18px;margin-top:10px">Oficina: el mapa muestra lo que ya se cargó en el campo. Sirve para mirar, no para anotar apurado.</p>
+      </div>
+      <div>
+        <div class="shot"><img src="assets/capturas/nutrogan-campo.png" alt="Modo campo con botones grandes de acción" /></div>
+        <p class="lead" style="font-size:18px;margin-top:10px">Potrero: botones grandes para cargar. Quien puede decidir ve ese botón. El peón no.</p>
+      </div>
+    </div>
+  </div>
+  <footer class="def"><b>Definición</b><p>Modo campo: pantalla clara y botones enormes para quien carga con prisa, con guante o con el sol de frente.</p></footer>
+</section>
+
+<section class="slide">
+  <img class="mark" src="assets/logo-nutrogan-azul.svg" alt="" />
+  <div class="kicker">Botonera y experiencia</div>
+  <h2>Los verbos del potrero. Ningún menú escondido.</h2>
+  <div class="rule"></div>
+  <div class="body">
+    <div class="row" style="align-items:center">
+      <div class="phone" aria-hidden="true">
+        <div class="top"><span>SINCRONIZADO</span><span>SALIR</span></div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;flex:1">
+          <div class="vbtn">MOVER<small>de potrero</small></div>
+          <div class="vbtn">PESAR<small>kilos por día</small></div>
+          <div class="vbtn">SANIDAD<small>evento</small></div>
+          <div class="vbtn">DESPENSA<small>puesto y sobra</small></div>
+          <div class="vbtn">LLUVIA<small>milímetros</small></div>
+          <div class="vbtn on">VISIÓN<small>abre la cámara</small></div>
+          <div class="vbtn">SITUACIÓN<small>lo que falta</small></div>
+          <div class="vbtn">AGUA<small>el análisis</small></div>
+        </div>
+      </div>
+      <div class="steps" style="flex:1">
+        <div class="step"><i>1</i><div><b>Cada botón pide un dato</b><span>Mover dice a qué parcela pasó el grupo. Pesar alimenta los kilos por día. Comida anota cuánto se puso y cuánto sobró.</span></div></div>
+        <div class="step"><i>2</i><div><b>Se lee con sol</b><span>Letra grande y fondo claro. El mapa oscuro queda para la oficina.</span></div></div>
+        <div class="step"><i>3</i><div><b>Hay que deslizar para entrar</b><span>Así un toque en el bolsillo no abre un registro sin querer.</span></div></div>
+        <div class="step"><i>4</i><div><b>Sin señal, igual guarda</b><span>El botón no espera internet. Lo cargado queda pendiente y sube cuando hay red.</span></div></div>
+      </div>
+    </div>
+  </div>
+  <footer class="def"><b>Definición</b><p>En el potrero hay pocos botones, grandes y claros. El mapa oscuro es para mirar; la pantalla clara es para cargar.</p></footer>
+</section>
+
+<section class="slide">
+  <img class="mark" src="assets/logo-nutrogan-azul.svg" alt="" />
+  <div class="kicker">Panel de control</div>
+  <h2>El establecimiento, visto desde arriba</h2>
+  <div class="rule"></div>
+  <div class="body">
+    <div class="grid2">
+      <div class="shot"><img src="assets/capturas/nutrogan-dashboard.png" alt="Mapa del establecimiento con lotes y potreros" /></div>
+      <div class="steps">
+        <div class="step"><i>↗</i><div><b>Las cabezas, sobre el mapa</b><span>Se pide dónde está cada grupo para saber cuántos comen pasto y cuántos están en el corral.</span></div></div>
+        <div class="step"><i>◎</i><div><b>El potrero se dibuja</b><span>Con el dibujo la aplicación calcula las hectáreas. No hay que recordarlas.</span></div></div>
+        <div class="step"><i>⇄</i><div><b>Mover deja constancia</b><span>Cambiar un grupo de parcela queda fechado. Después se puede ver si el pasto alcanzó.</span></div></div>
+      </div>
+    </div>
+  </div>
+  <footer class="def"><b>Definición</b><p>Mapa del campo: la hacienda y los recursos se ven sobre la imagen satelital, no en una lista suelta.</p></footer>
+</section>
+
+<section class="slide">
+  <img class="mark" src="assets/logo-nutrogan-azul.svg" alt="" />
+  <div class="kicker">Lotes · el corazón numérico</div>
+  <h2>El kilo diario sale de dos pesajes</h2>
+  <div class="rule"></div>
+  <div class="body">
+    <div class="grid2">
+      <div class="shot"><img src="assets/capturas/nutrogan-lote.png" alt="Detalle de un lote con el historial de peso" /></div>
+      <div style="display:flex;flex-direction:column;gap:14px;align-items:center">
+        <div class="formula">kilos por día = (peso final − peso inicial) / días</div>
+        <div class="card" style="width:100%"><h3>Dos pesajes, un resultado</h3><p>Sale del peso de hoy menos el anterior, dividido los días. Si falta un peso, no se completa. Si se carga tarde, se ordena por fecha.</p></div>
+        <div class="card" style="width:100%"><h3>Comida, cría, sanidad</h3><p>Lo que se comió entra al costo del kilo. Un tacto vacío o un aborto reciente pide revisión. El servicio y el parto quedan en la historia y no inventan kilos.</p></div>
+      </div>
+    </div>
+  </div>
+  <footer class="def"><b>Definición</b><p>Ganancia diaria: kilos que el grupo suma por día, a partir de dos pesos reales. Si falta uno, no se completa con un promedio.</p></footer>
+</section>
+
+<section class="slide">
+  <img class="mark" src="assets/logo-nutrogan-azul.svg" alt="" />
+  <div class="kicker">Visión artificial</div>
+  <h2>La cámara propone. La persona confirma.</h2>
+  <div class="rule"></div>
+  <div class="body">
+    <div class="grid4">
+      <div class="card"><div class="num">01</div><h3>Se abre la cámara</h3><p>Pide permiso y muestra la imagen. La foto se saca ahí. Si no hay permiso, se puede elegir una imagen o anotar a mano.</p></div>
+      <div class="card" style="border-color:rgba(182,255,59,.55)"><div class="num">02</div><h3>Condición</h3><p>Propone un número del 1 al 9. Quien está ahí acepta o corrige. Recién entonces queda en el grupo.</p></div>
+      <div class="card"><div class="num">03</div><h3>Algo raro</h3><p>Una lesión, el pasto o una instalación. Avisa qué vio y qué tan grave parece, para revisar en el momento.</p></div>
+      <div class="card"><div class="num">04</div><h3>Lectura fecal</h3><p>Mira consistencia y color. Orienta el recorrido. No reemplaza al veterinario.</p></div>
+    </div>
+    <p class="lead" style="font-size:20px">Sin señal, la foto espera igual que un pesaje. La sugerencia llega cuando el teléfono vuelve a tener red.</p>
+  </div>
+  <footer class="def"><b>Definición</b><p>Visión artificial: un modelo interpreta una imagen y devuelve un dato. En Nutrogan ese dato no se guarda solo: lo confirma quien está en el campo.</p></footer>
+</section>
+
+<section class="slide">
+  <img class="mark" src="assets/logo-nutrogan-azul.svg" alt="" />
+  <div class="kicker">Visión · por qué está</div>
+  <h2>Objetivar lo que antes dependía del ojo</h2>
+  <div class="rule"></div>
+  <div class="body">
+    <div class="flow">
+      <div class="node"><b>1. Se saca la foto</b><span>En el potrero</span></div>
+      <div class="arrow">→</div>
+      <div class="node"><b>2. Espera si no hay red</b><span>No se pierde</span></div>
+      <div class="arrow">→</div>
+      <div class="node"><b>3. Propone</b><span>Número, lesión o lectura</span></div>
+      <div class="arrow">→</div>
+      <div class="node"><b>4. La persona confirma</b><span>Ahí se guarda</span></div>
+    </div>
+    <div class="grid3">
+      <div class="card"><h3>Explica el peso</h3><p>Si el animal está flaco, se entiende por qué dejó de ganar kilos. La foto no es una pantalla aparte.</p></div>
+      <div class="card"><h3>Mismo camino</h3><p>Si no hay señal, la foto espera junto con el pesaje. No hay un trámite distinto.</p></div>
+      <div class="card"><h3>La persona decide</h3><p>La cámara no guarda sola. Quien está en el campo corrige el número antes de dejarlo asentado.</p></div>
+    </div>
+  </div>
+  <footer class="def"><b>Definición</b><p>Escala INTA 1–9: estándar argentino de condición corporal. 1 es emaciado, 5 es moderado, 9 es obeso.</p></footer>
+</section>
+
+<section class="slide">
+  <img class="mark" src="assets/logo-nutrogan-azul.svg" alt="" />
+  <div class="kicker">Potreros</div>
+  <h2>Cada potrero con nombre, forma y vigor</h2>
+  <div class="rule"></div>
+  <div class="body">
+    <div class="grid2">
+      <div class="shot"><img src="assets/capturas/nutrogan-potreros.png" alt="Inventario de potreros con superficie y vigor NDVI" /></div>
+      <div class="steps">
+        <div class="step"><i>9</i><div><b>Se dibuja para medir</b><span>Cada potrero tiene forma. Las hectáreas salen de ese dibujo, no de la memoria.</span></div></div>
+        <div class="step"><i>ha</i><div><b>Se pide el tipo de pasto</b><span>Verdeo, campo natural o reserva no se leen igual. El mismo verde significa otra cosa.</span></div></div>
+        <div class="step"><i>!</i><div><b>Pasto y animales juntos</b><span>Si el verde baja y hay muchas cabezas, aparece el aviso. Sirve para sacarlas antes de que dejen de ganar.</span></div></div>
+      </div>
+    </div>
+  </div>
+  <footer class="def"><b>Definición</b><p>Polígono: el dibujo del potrero sobre el mapa. Con ese dibujo se calculan las hectáreas.</p></footer>
+</section>
+
+<section class="slide">
+  <img class="mark" src="assets/logo-nutrogan-azul.svg" alt="" />
+  <div class="kicker">Satélite</div>
+  <h2>Sentinel-2 mira el pasto entre recorridas</h2>
+  <div class="rule"></div>
+  <div class="body">
+    <div class="grid2">
+      <div class="shot"><img src="assets/capturas/nutrogan-satelital.png" alt="Monitoreo satelital NDVI por potrero" /></div>
+      <div class="steps">
+        <div class="step"><i>S2</i><div><b>Para no esperar la recorrida</b><span>Una imagen satelital abierta mira el potrero entre visitas. No hace falta pagar una clave.</span></div></div>
+        <div class="step"><i>0–1</i><div><b>Dice si está verde</b><span>No dice cuántos kilos de pasto hay. Sirve para comparar una parcela con otra y con ella misma.</span></div></div>
+        <div class="step"><i>↺</i><div><b>Sirve para rotar</b><span>Si un potrero viene en baja, se puede descansar antes de que la balanza muestre que los animales dejaron de ganar.</span></div></div>
+      </div>
+    </div>
+  </div>
+  <footer class="def"><b>Definición</b><p>NDVI: índice de vegetación. Compara luz que la planta refleja. Más alto, en general, más vigor. No es una balanza de pasto.</p></footer>
+</section>
+
+<section class="slide">
+  <img class="mark" src="assets/logo-nutrogan-azul.svg" alt="" />
+  <div class="kicker">Agua y clima</div>
+  <h2>Agua de bebida y lluvia del mes</h2>
+  <div class="rule"></div>
+  <div class="body">
+    <div class="shots2">
+      <div>
+        <div class="shot"><img src="assets/capturas/nutrogan-agua.png" alt="Gestión hídrica con mapa y pH" /></div>
+        <p style="color:var(--muted);margin:8px 0 0">Se pide el análisis porque el agua mala frena la ganancia. El color sale de ese resultado, no de un sensor en vivo.</p>
+      </div>
+      <div>
+        <div class="shot"><img src="assets/capturas/nutrogan-lluvias.png" alt="Central de clima con lluvias acumuladas" /></div>
+        <p style="color:var(--muted);margin:8px 0 0">Se anotan los milímetros del día. Si no hay carga, entra una estimación de grilla y se aclara que no es el pluviómetro.</p>
+      </div>
+    </div>
+  </div>
+  <footer class="def"><b>Definición</b><p>Semáforo hídrico: óptimo, precaución o peligro según el análisis cargado. Orienta en el campo. El laboratorio sigue siendo la autoridad.</p></footer>
+</section>
+
+<section class="slide">
+  <img class="mark" src="assets/logo-nutrogan-azul.svg" alt="" />
+  <div class="kicker">Despensa</div>
+  <h2>Cada bolsa tiene precio y cada uso descuenta</h2>
+  <div class="rule"></div>
+  <div class="body">
+    <div class="grid2">
+      <div class="shot"><img src="assets/capturas/nutrogan-despensa.png" alt="Mi Despensa con valuación de insumos" /></div>
+      <div class="steps">
+        <div class="step"><i>$</i><div><b>Se pide el precio</b><span>Para ver cuánta plata hay quieta en el galpón, no solo cuántas bolsas quedan.</span></div></div>
+        <div class="step"><i>−</i><div><b>Se anota lo puesto y lo que sobró</b><span>Lo que se comió baja el stock y entra al costo del kilo. Si sobró, pide revisión. El plan de dieta no descuenta solo.</span></div></div>
+        <div class="step"><i>●</i><div><b>Avisa antes de quedarse sin</b><span>Según lo que queda y el mínimo, marca si está bien, justo o agotado.</span></div></div>
+      </div>
+    </div>
+  </div>
+  <footer class="def"><b>Definición</b><p>La despensa conecta biología y plata: lo que el lote consume es, al mismo tiempo, un costo del kilo producido.</p></footer>
+</section>
+
+<section class="slide">
+  <img class="mark" src="assets/logo-nutrogan-azul.svg" alt="" />
+  <div class="kicker">El circuito se cierra</div>
+  <h2>Cada lote dice si seguir, rotar o revisar</h2>
+  <div class="rule"></div>
+  <div class="body">
+    <div class="grid2">
+      <div class="shot"><img src="assets/capturas/nutrogan-decisiones.png" alt="Decisión de cada lote: seguir, rotar o revisar" /></div>
+      <div class="steps">
+        <div class="step"><i>1</i><div><b>Cada lote tiene un veredicto</b><span>Seguir, rotar, revisar, el kilo no cierra, o faltan datos. Junta peso, condición, carga, pasto, agua, sanidad y comida.</span></div></div>
+        <div class="step"><i>2</i><div><b>Solo con lo cargado</b><span>Si falta un peso, no inventa kilos. El satélite no se convierte en pasto. La foto no diagnostica.</span></div></div>
+        <div class="step"><i>3</i><div><b>La alerta es ese aviso</b><span>Pasto débil, condición baja, agua en riesgo o comida que sobró. Si es grave, se puede avisar una vez por día.</span></div></div>
+        <div class="step"><i>4</i><div><b>El texto se pide aparte</b><span>El informe redactado no se arma al abrir. Sale solo si alguien lo pide, con los números que ya están.</span></div></div>
+      </div>
+    </div>
+  </div>
+  <footer class="def"><b>Definición</b><p>Dos inteligencias distintas: la visión mira una foto; el asistente lee los registros y contesta en castellano. Ninguna sustituye el criterio profesional.</p></footer>
+</section>
+
+<section class="slide">
+  <img class="mark" src="assets/logo-nutrogan-azul.svg" alt="" />
+  <div class="kicker">Reportes</div>
+  <h2>La reunión se hace con el número del campo</h2>
+  <div class="rule"></div>
+  <div class="body">
+    <div class="grid2">
+      <div class="shot"><img src="assets/capturas/nutrogan-reportes.png" alt="Reporte inteligente con margen operativo" /></div>
+      <div class="steps">
+        <div class="step"><i>1</i><div><b>Primero, qué hacer</b><span>Muestra cuántos lotes hay que mirar y por qué: revisar, rotar, el kilo o un dato que falta.</span></div></div>
+        <div class="step"><i>2</i><div><b>El precio viene del mercado</b><span>Por defecto usa el novillo del Mercado Agroganadero. Se puede cargar a mano. Si no hay precio, el margen no se inventa.</span></div></div>
+        <div class="step"><i>3</i><div><b>El informe es otro botón</b><span>Curvas, stock y margen están siempre. El texto redactado se pide solo cuando hace falta.</span></div></div>
+      </div>
+    </div>
+  </div>
+  <footer class="def"><b>Definición</b><p>Honestidad del dato: un indicador vacío se muestra vacío. Inventar un kilo o un precio haría ver eficiente a un campo que no se midió.</p></footer>
+</section>
+
+<section class="slide">
+  <img class="mark" src="assets/logo-nutrogan-azul.svg" alt="" />
+  <div class="kicker">Lotes, recursos, campo</div>
+  <h2>La misma hacienda, en tres escalas</h2>
+  <div class="rule"></div>
+  <div class="body">
+    <div class="grid3">
+      <div>
+        <div class="shot"><img src="assets/capturas/nutrogan-lotes.png" alt="Gestión de lotes" /></div>
+        <p style="margin:8px 0 0;color:var(--muted)">Los grupos: de acá sale el peso y la ganancia</p>
+      </div>
+      <div>
+        <div class="shot"><img src="assets/capturas/nutrogan-recursos.png" alt="Gestión de recursos" /></div>
+        <p style="margin:8px 0 0;color:var(--muted)">Pasto, comida, agua y lluvia del mismo campo</p>
+      </div>
+      <div>
+        <div class="shot"><img src="assets/capturas/nutrogan-about.png" alt="Identidad del producto" /></div>
+        <p style="margin:8px 0 0;color:var(--muted)">Se usa sin señal, en el mapa y con el margen a la vista</p>
+      </div>
+    </div>
+  </div>
+  <footer class="def"><b>Definición</b><p>Los botones de abajo quedan siempre a la vista: inicio, grupos, recursos y reportes. El pulgar llega sin abrir un menú.</p></footer>
+</section>
+
+<section class="slide">
+  <img class="mark" src="assets/logo-nutrogan-azul.svg" alt="" />
+  <div class="kicker">Trabajo final integrador</div>
+  <h2>Equipo de desarrollo</h2>
+  <div class="rule"></div>
+  <div class="body">
+    <div class="team">
+      <div class="person card">
+        <img src="assets/team/duarte.jpg" alt="Fabricio Duarte" />
+        <h3>Fabricio Duarte</h3>
+        <p>Legajo 29.154. La aplicación en el teléfono, el modo campo y que el dato no se pierda sin señal.</p>
+      </div>
+      <div class="person card">
+        <img src="assets/team/ascona.jpg" alt="Enzo Ascona" />
+        <h3>Enzo Ascona</h3>
+        <p>Legajo 29.134. Cómo se relacionan los datos y que cada campo vea solo lo suyo.</p>
+      </div>
+      <div class="person card">
+        <img src="assets/team/amarilla.jpg" alt="Sebastián Amarilla" />
+        <h3>Sebastián Amarilla</h3>
+        <p>Legajo 29.132. Que la misma aplicación llegue a las tres máquinas y que un cambio roto no se publique.</p>
+      </div>
+    </div>
+  </div>
+  <footer class="def"><b>Definición</b><p>Cada parte se hace aparte, se revisa, y recién entonces pasa a la versión que usa todo el equipo.</p></footer>
+</section>
+
+<section class="slide thanks">
+  <div class="body">
+    <div class="logo-plate">
+      <img src="assets/logos-juntos.svg" alt="Universidad Tecnológica Nacional, CEDEVA y Nutrogan" />
+    </div>
+    <h2 class="bigq">Gracias</h2>
+    <div class="rule"></div>
+    <p class="lead">Para obtener demo del proyecto, comunicate con el equipo</p>
+    <div class="demo">
+      <img src="assets/qr-contacto.png" alt="Código QR para llamar al 3704022201" />
+      <div class="who"><span>Teléfono</span><b>3704022201</b></div>
+    </div>
+    <p class="inst">Universidad Tecnológica Nacional<br />Facultad Regional Resistencia · Extensión Áulica Formosa</p>
+  </div>
+</section>
+
+<div class="lb" id="lb"><img alt="" /><button type="button" id="lbx">Cerrar</button></div>
+<div class="foot-brand">
+<a class="site-badge" href="https://nutrogan.site" target="_blank" rel="noopener">
+  <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="1.7"/><ellipse cx="12" cy="12" rx="4.2" ry="9" fill="none" stroke="currentColor" stroke-width="1.7"/><path d="M3.2 12h17.6M4.8 7.6h14.4M4.8 16.4h14.4" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>
+  nutrogan.site
+</a>
+<div class="logos-badge">
+  <img src="assets/logos-juntos.svg" alt="Universidad Tecnológica Nacional, CEDEVA y Nutrogan" />
+</div>
+</div>
+</div></div>
+<div class="chrome">
+  <button type="button" id="prev" aria-label="Anterior">←</button>
+  <div class="dots" id="dots"></div>
+  <span class="count" id="count">1</span>
+  <button type="button" id="next" aria-label="Siguiente">→</button>
+</div>
+<div class="overview" id="overview"></div>
+
+<script>
+  const slides = [...document.querySelectorAll(".slide")];
+  const dots = document.getElementById("dots");
+  const count = document.getElementById("count");
+  const overview = document.getElementById("overview");
+  let i = 0;
+
+  slides.forEach((s, idx) => {
+    const b = document.createElement("button");
+    b.type = "button";
+    b.addEventListener("click", () => go(idx));
+    dots.appendChild(b);
+    const g = document.createElement("button");
+    g.type = "button";
+    const title = s.querySelector("h1, h2");
+    g.innerHTML = "<b>" + String(idx + 1).padStart(2, "0") + "</b>" + (title ? title.textContent.replace(/\s+/g, " ").trim() : "Lámina");
+    g.addEventListener("click", () => { overview.classList.remove("on"); go(idx); });
+    overview.appendChild(g);
+  });
+
+  function go(n) {
+    i = Math.max(0, Math.min(slides.length - 1, n));
+    slides.forEach((s, idx) => s.classList.toggle("on", idx === i));
+    [...dots.children].forEach((d, idx) => d.classList.toggle("on", idx === i));
+    count.textContent = (i + 1) + " / " + slides.length;
+  }
+
+  function fit() {
+    const sx = window.innerWidth / 1600;
+    const sy = window.innerHeight / 900;
+    document.getElementById("stage").style.transform = "scale(" + Math.min(sx, sy) + ")";
+  }
+
+  const glyphs = ["01","02","03","04","05","06","07","08"];
+  document.querySelectorAll(".grid3, .grid4").forEach((grid) => {
+    [...grid.children].filter((el) => el.classList.contains("card")).forEach((card, n) => {
+    if (!card.querySelector("img") && !card.querySelector(".glyph") && !card.querySelector(".num")) {
+      const g = document.createElement("div");
+      g.className = "glyph";
+      g.textContent = glyphs[n % glyphs.length];
+      card.prepend(g);
+    }
+    card.addEventListener("click", (e) => {
+      e.stopPropagation();
+      const siblings = card.parentElement.querySelectorAll(".card");
+      const on = card.classList.contains("focus");
+      siblings.forEach((s) => s.classList.remove("focus"));
+      if (!on) card.classList.add("focus");
+    });
+    });
+  });
+
+  document.querySelectorAll(".sat").forEach((sat) => {
+    sat.addEventListener("click", (e) => {
+      e.stopPropagation();
+      sat.parentElement.querySelectorAll(".sat").forEach((s) => s.classList.remove("lit"));
+      sat.classList.add("lit");
+    });
+  });
+
+  document.querySelectorAll("[data-go]").forEach((el) => {
+    el.addEventListener("click", (e) => {
+      e.stopPropagation();
+      go(Number(el.dataset.go));
+    });
+  });
+
+  const lb = document.getElementById("lb");
+  document.querySelectorAll(".shot img").forEach((img) => {
+    img.addEventListener("click", (e) => {
+      e.stopPropagation();
+      lb.querySelector("img").src = img.src;
+      lb.querySelector("img").alt = img.alt || "";
+      lb.classList.add("on");
+    });
+  });
+  document.getElementById("lbx").onclick = (e) => { e.stopPropagation(); lb.classList.remove("on"); };
+
+  document.getElementById("prev").onclick = () => go(i - 1);
+  document.getElementById("next").onclick = () => go(i + 1);
+  window.addEventListener("resize", fit);
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "ArrowRight" || e.key === "PageDown" || e.key === " ") { e.preventDefault(); go(i + 1); }
+    if (e.key === "ArrowLeft" || e.key === "PageUp") { e.preventDefault(); go(i - 1); }
+    if (e.key === "Home") go(0);
+    if (e.key === "End") go(slides.length - 1);
+    if (e.key === "g" || e.key === "G") overview.classList.toggle("on");
+    if (e.key === "f" || e.key === "F") {
+      if (!document.fullscreenElement) document.documentElement.requestFullscreen();
+      else document.exitFullscreen();
+    }
+    if (e.key === "Escape") { overview.classList.remove("on"); lb.classList.remove("on"); }
+  });
+  document.getElementById("stage").addEventListener("click", (e) => {
+    if (e.target.closest("a, button, .card, .shot, .sat, .lb")) return;
+    const x = e.clientX / window.innerWidth;
+    if (x > 0.78) go(i + 1);
+    else if (x < 0.22) go(i - 1);
+  });
+  fit();
+  const params = new URLSearchParams(location.search);
+  const start = params.has("n") ? Number(params.get("n")) : 0;
+  go(Number.isFinite(start) ? start : 0);
+</script>
+</body>
+</html>

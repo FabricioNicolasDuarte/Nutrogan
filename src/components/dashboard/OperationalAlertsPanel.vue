@@ -25,7 +25,7 @@
     <div v-else class="row items-center justify-between q-mb-md">
       <div class="text-caption text-grey-5">
         {{ activeAlerts.length }} activas · {{ archivedList.length }} archivadas · semáforo R/A/V ·
-        evaluación en dispositivo (sin cron servidor)
+        evaluación en el teléfono y, una vez por día, aviso del servidor si hay algo crítico
       </div>
       <q-btn
         flat
@@ -375,6 +375,15 @@ function recompute() {
     fuentesAgua: dataStore.fuentesAgua || [],
     inventarioItems: dataStore.inventarioItems || [],
     evaluaciones: dataStore.evaluaciones || [],
+    registrosVision: dataStore.registrosVision || [],
+    movimientos: dataStore.movimientos || [],
+    registrosLluvia: dataStore.registrosLluvia || [],
+    inventarioMovimientos: dataStore.inventarioMovimientos || [],
+    eventosReproductivos: dataStore.eventosReproductivos || [],
+    situaciones: dataStore.situaciones || [],
+    lecturasNdvi: dataStore.lecturasNdvi || [],
+    lluviaEstimada: dataStore.lluviaEstimada || {},
+    precioKg: dataStore.marketPrice?.value,
   })
   bumpArchive()
   markRead()
@@ -421,6 +430,7 @@ async function refresh() {
       dataStore.fetchPotreros?.(),
       dataStore.fetchLotes?.(),
       dataStore.fetchAllEvaluaciones?.(),
+      dataStore.fetchAllRegistrosVision?.(),
       dataStore.fetchNotifications?.(),
       dataStore.fetchMiembrosEquipo?.(),
     ])
@@ -524,6 +534,14 @@ watch(
     dataStore.fuentesAgua?.length,
     dataStore.inventarioItems?.length,
     dataStore.evaluaciones?.length,
+    dataStore.movimientos?.length,
+    dataStore.registrosLluvia?.length,
+    dataStore.inventarioMovimientos?.length,
+    dataStore.eventosReproductivos?.length,
+    dataStore.situaciones?.length,
+    dataStore.lecturasNdvi?.length,
+    dataStore.lluviaEstimada,
+    dataStore.marketPrice?.value,
   ],
   recompute,
   { immediate: true },
@@ -532,6 +550,7 @@ watch(
 onMounted(async () => {
   await Promise.all([
     !(dataStore.evaluaciones || []).length ? dataStore.fetchAllEvaluaciones?.() : null,
+    !(dataStore.eventosReproductivos || []).length ? dataStore.fetchAllEventosReproductivos?.() : null,
     dataStore.fetchNotifications?.(),
     !(dataStore.miembrosEquipo || []).length ? dataStore.fetchMiembrosEquipo?.() : null,
   ])

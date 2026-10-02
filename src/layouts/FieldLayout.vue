@@ -47,6 +47,7 @@
     <q-page-container>
       <router-view :is-online="isOnline" @sync-status-change="actualizarEstadoSync" />
     </q-page-container>
+    <VisionPropuestasHost />
 
     <q-dialog v-model="showSyncPanel">
       <q-card class="bg-white text-black" style="min-width: 320px; max-width: 420px">
@@ -126,6 +127,7 @@ import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useQuasar } from 'quasar'
 import { syncService } from 'src/services/SyncService'
+import VisionPropuestasHost from 'src/components/decision/VisionPropuestasHost.vue'
 
 const router = useRouter()
 const $q = useQuasar()

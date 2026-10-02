@@ -440,10 +440,11 @@ function eliminarRegistro(row) {
     dark: true,
     cancel: true,
   }).onOk(async () => {
-    // await dataStore.deleteRegistro('registros_lluvia', row.id)
+    await dataStore.deleteRegistro('registros_lluvia', row.id)
     $q.notify({
-      type: 'info',
-      message: 'Función de eliminar pendiente de implementación en Store',
+      type: 'positive',
+      message: 'Lluvia eliminada',
+      caption: 'El acumulado del mes usa lo que quedó cargado.',
     })
   })
 }

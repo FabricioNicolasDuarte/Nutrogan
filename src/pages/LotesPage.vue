@@ -248,15 +248,14 @@
             </div>
             <div class="col-4">
               <q-btn
-                v-if="lote.objetivo === 'Cría'"
                 flat
                 color="white"
-                icon="camera_alt"
+                icon="photo_camera"
                 size="sm"
                 class="full-width"
                 @click.stop="$router.push(`/lote/${lote.id}/scan_cc`)"
               >
-                <q-tooltip class="bg-dark">Scan CC</q-tooltip>
+                <q-tooltip class="bg-dark">Visión del lote</q-tooltip>
               </q-btn>
             </div>
           </q-card-actions>

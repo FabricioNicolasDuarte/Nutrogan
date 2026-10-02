@@ -9,6 +9,10 @@ import routes from './routes'
 import { useAuthStore } from 'stores/auth-store'
 import { Notify } from 'quasar'
 
+function rutaDeCarga(path) {
+  return path === '/field' || path === '/profile' || path === '/support' || path.includes('/scan_cc')
+}
+
 export default route(function (/* { store, ssrContext } */) {
   const createHistory = process.env.SERVER
     ? createMemoryHistory
@@ -60,16 +64,20 @@ export default route(function (/* { store, ssrContext } */) {
             message: 'No tienes permisos para acceder a esta sección.',
             position: 'top',
           })
-          // Redirigir al home o dashboard según rol
-          next('/')
+          next(authStore.isPeon ? '/field' : '/')
           return
         }
+      }
+
+      if (authStore.isPeon && !rutaDeCarga(to.path)) {
+        next('/field')
+        return
       }
     }
 
     // Evitar ir al login si ya está logueado
     if (to.path === '/login' && authStore.isAuthenticated) {
-      next('/')
+      next(authStore.isPeon ? '/field' : '/')
       return
     }
 

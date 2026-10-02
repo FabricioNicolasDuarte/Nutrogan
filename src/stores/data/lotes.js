@@ -10,6 +10,9 @@ export function createLotesModule({ supabase, authStore, crud }) {
   const eventosSanitarios = ref([])
   const eventosReproductivos = ref([])
   const consumos = ref([])
+  const registrosVision = ref([])
+  const situaciones = ref([])
+  const lecturasNdvi = ref([])
 
   const getPotreroById = (id) => potreros.value.find((p) => p.id === id)
 
@@ -66,7 +69,74 @@ export function createLotesModule({ supabase, authStore, crud }) {
       fetchEventosSanitarios(loteId),
       fetchEventosReproductivos(loteId),
       fetchConsumos(loteId),
+      fetchRegistrosVision(loteId),
+      fetchSituaciones(loteId),
     ])
+  }
+
+  async function fetchSituaciones(loteId) {
+    const { data } = await supabase
+      .from('situaciones_lote')
+      .select('*')
+      .eq('lote_id', loteId)
+      .order('fecha', { ascending: false })
+    const rest = situaciones.value.filter((r) => r.lote_id !== loteId)
+    situaciones.value = [...(data || []), ...rest]
+  }
+
+  async function fetchAllSituaciones() {
+    if (lotes.value.length === 0) await fetchLotes()
+    const ids = lotes.value.map((l) => l.id)
+    if (ids.length === 0) {
+      situaciones.value = []
+      return
+    }
+    const { data } = await supabase
+      .from('situaciones_lote')
+      .select('*')
+      .in('lote_id', ids)
+      .order('fecha', { ascending: false })
+    situaciones.value = data || []
+  }
+
+  async function fetchLecturasNdvi() {
+    if (potreros.value.length === 0) await fetchPotreros()
+    const ids = potreros.value.map((p) => p.id)
+    if (!ids.length) {
+      lecturasNdvi.value = []
+      return
+    }
+    const { data } = await supabase
+      .from('lecturas_ndvi')
+      .select('potrero_id, fecha, ndvi, fuente')
+      .in('potrero_id', ids)
+      .order('fecha', { ascending: true })
+    lecturasNdvi.value = data || []
+  }
+
+  async function fetchRegistrosVision(loteId) {
+    const { data } = await supabase
+      .from('registros_vision')
+      .select('*')
+      .eq('lote_id', loteId)
+      .order('fecha', { ascending: false })
+    const rest = registrosVision.value.filter((r) => r.lote_id !== loteId)
+    registrosVision.value = [...(data || []), ...rest]
+  }
+
+  async function fetchAllRegistrosVision() {
+    if (lotes.value.length === 0) await fetchLotes()
+    const ids = lotes.value.map((l) => l.id)
+    if (ids.length === 0) {
+      registrosVision.value = []
+      return
+    }
+    const { data } = await supabase
+      .from('registros_vision')
+      .select('*')
+      .in('lote_id', ids)
+      .order('fecha', { ascending: false })
+    registrosVision.value = data || []
   }
 
   async function fetchEvaluaciones(loteId) {
@@ -244,6 +314,9 @@ export function createLotesModule({ supabase, authStore, crud }) {
     eventosSanitarios,
     eventosReproductivos,
     consumos,
+    registrosVision,
+    situaciones,
+    lecturasNdvi,
     getPotreroById,
     fetchLotes,
     fetchPotreros,
@@ -253,6 +326,11 @@ export function createLotesModule({ supabase, authStore, crud }) {
     fetchEventosSanitarios,
     fetchEventosReproductivos,
     fetchConsumos,
+    fetchRegistrosVision,
+    fetchAllRegistrosVision,
+    fetchSituaciones,
+    fetchAllSituaciones,
+    fetchLecturasNdvi,
     fetchAllEvaluaciones,
     fetchAllEventosSanitarios,
     fetchAllEventosReproductivos,

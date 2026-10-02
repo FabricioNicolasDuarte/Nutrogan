@@ -170,6 +170,9 @@ const recursosEnriquecidos = computed(() => {
     })
   }
 
+  if (!authStore.canViewFinancials) {
+    return cards.filter((c) => c.link !== '/recursos/despensa')
+  }
   return cards
 })
 </script>

@@ -35,11 +35,8 @@ export const useDataStore = defineStore(
       await bag.fetchPotreros()
       await bag.fetchLotes()
 
-      if (bag.marketPrice.value.mode === 'auto') {
-        bag.fetchMarketPriceAuto()
-      }
-
       await Promise.all([
+        bag.ensureMarketPrice(),
         bag.fetchInventarioItems(),
         bag.fetchFuentesAgua(),
         bag.fetchDietas(),
@@ -49,6 +46,11 @@ export const useDataStore = defineStore(
         bag.fetchInventarioMovimientos(),
         bag.fetchRegistrosLluvia(),
         bag.fetchAllEvaluaciones(),
+        bag.fetchAllRegistrosVision(),
+        bag.fetchAllSituaciones(),
+        bag.fetchAllEventosReproductivos(),
+        bag.fetchLecturasNdvi(),
+        bag.fetchLluviaEstimada(),
       ])
     }
 
@@ -69,11 +71,16 @@ export const useDataStore = defineStore(
       eventosSanitarios: bag.eventosSanitarios,
       eventosReproductivos: bag.eventosReproductivos,
       consumos: bag.consumos,
+      registrosVision: bag.registrosVision,
+      situaciones: bag.situaciones,
+      lecturasNdvi: bag.lecturasNdvi,
+      lluviaEstimada: bag.lluviaEstimada,
       establecimientoActual: bag.establecimientoActual,
 
       marketPrice: bag.marketPrice,
       setManualPrice: bag.setManualPrice,
       fetchMarketPriceAuto: bag.fetchMarketPriceAuto,
+      ensureMarketPrice: bag.ensureMarketPrice,
       setCategoriaPreferida: bag.setCategoriaPreferida,
 
       getPotreroById: bag.getPotreroById,
@@ -101,6 +108,12 @@ export const useDataStore = defineStore(
       fetchEventosSanitarios: bag.fetchEventosSanitarios,
       fetchEventosReproductivos: bag.fetchEventosReproductivos,
       fetchConsumos: bag.fetchConsumos,
+      fetchRegistrosVision: bag.fetchRegistrosVision,
+      fetchAllRegistrosVision: bag.fetchAllRegistrosVision,
+      fetchSituaciones: bag.fetchSituaciones,
+      fetchAllSituaciones: bag.fetchAllSituaciones,
+      fetchLecturasNdvi: bag.fetchLecturasNdvi,
+      fetchLluviaEstimada: bag.fetchLluviaEstimada,
       fetchAllEvaluaciones: bag.fetchAllEvaluaciones,
       fetchAllEventosSanitarios: bag.fetchAllEventosSanitarios,
       fetchAllEventosReproductivos: bag.fetchAllEventosReproductivos,
@@ -108,6 +121,7 @@ export const useDataStore = defineStore(
       createRegistro: crud.createRegistro,
       updateRegistro: crud.updateRegistro,
       deactivateRegistro: crud.deactivateRegistro,
+      deleteRegistro: crud.deleteRegistro,
       moverLote: bag.moverLote,
       moverLoteACorral: bag.moverLoteACorral,
       getGDPV: bag.getGDPV,

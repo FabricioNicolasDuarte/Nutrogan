@@ -45,8 +45,9 @@
         <template #avatar>
           <q-icon name="info" color="grey-5" />
         </template>
-        Reportes usan solo datos cargados. NDVI = vigor relativo (no kg MS). Alertas se evalúan en
-        el dispositivo (sin cron servidor). Umbrales de agua son orientativos de campo.
+        Reportes usan solo datos cargados. NDVI = vigor relativo (no kg MS). Las alertas se ven al
+        abrir la aplicación y, si hay algo crítico, el servidor avisa una vez por día. Umbrales de
+        agua son orientativos de campo.
       </q-banner>
 
       <div class="row q-col-gutter-md q-mb-lg">
@@ -93,16 +94,57 @@
           </q-card>
         </div>
         <div class="col-12 col-sm-6 col-md-3">
-          <q-card flat class="kpi-card relative-position overflow-hidden border-blue-left">
+          <q-card
+            flat
+            class="kpi-card relative-position overflow-hidden border-blue-left cursor-pointer"
+            @click="$router.push('/decisiones')"
+          >
             <q-card-section>
               <div class="text-caption text-grey-4 text-uppercase font-mono tracking-wide">
-                Clima
+                A mirar hoy
               </div>
               <div class="text-h4 text-weight-bold text-blue-13 font-numeric">
-                {{ dataStore.clima?.current?.temperature_2m || '-' }}°C
+                {{ decisionesAMirar.length }}
+                <span class="text-subtitle2 text-grey-5">lotes</span>
               </div>
+              <div class="text-caption text-grey-5 q-mt-xs">Revisar, rotar, el kilo o datos que faltan</div>
             </q-card-section>
           </q-card>
+        </div>
+      </div>
+
+      <div class="glass-card q-pa-md q-mb-lg">
+        <div class="row items-center justify-between q-mb-sm">
+          <div>
+            <div class="text-subtitle1 text-white">Qué hacer con cada lote</div>
+            <div class="text-caption text-grey-5">
+              Sale de los pesos, la condición, el potrero, el agua, la sanidad y la comida ya cargados.
+            </div>
+          </div>
+          <q-btn
+            flat
+            color="primary"
+            label="Abrir decisiones"
+            no-caps
+            @click="$router.push('/decisiones')"
+          />
+        </div>
+        <q-list v-if="decisionesAMirar.length" separator dark>
+          <q-item
+            v-for="fila in decisionesAMirar"
+            :key="fila.id"
+            clickable
+            @click="$router.push('/decisiones')"
+          >
+            <q-item-section>
+              <q-item-label class="text-white">{{ fila.nombre }}</q-item-label>
+              <q-item-label caption class="text-grey-5">{{ fila.titulo }}</q-item-label>
+            </q-item-section>
+            <q-item-section side class="text-primary">{{ fila.etiqueta }}</q-item-section>
+          </q-item>
+        </q-list>
+        <div v-else class="text-grey-5 q-py-sm">
+          Con lo cargado, ningún lote pide cambiar el manejo.
         </div>
       </div>
 
@@ -141,15 +183,15 @@
         </div>
       </div>
 
-      <div class="row q-mb-lg">
-        <div class="col-12">
-          <GlobalAiReport ref="aiReportRef" class="glass-card" />
-        </div>
-      </div>
-
       <div class="row">
         <div class="col-12">
           <LotMetricsTable ref="lotMetricsTableRef" class="glass-card" />
+        </div>
+      </div>
+
+      <div class="row q-mt-lg">
+        <div class="col-12">
+          <GlobalAiReport ref="aiReportRef" class="glass-card" />
         </div>
       </div>
     </div>
@@ -180,6 +222,7 @@ import {
 } from 'src/utils/livestockKpis'
 import { evaluateOperationalAlerts } from 'src/utils/operationalAlerts'
 import { estadoForrajeNdviTitle } from 'src/utils/ndviBands'
+import { decisionDesdeContexto } from 'src/utils/decisionLote'
 
 const dataStore = useDataStore()
 const $q = useQuasar()
@@ -217,6 +260,15 @@ const kpiData = computed(() => {
     fuentesAgua: dataStore.fuentesAgua || [],
     inventarioItems: items,
     evaluaciones: dataStore.evaluaciones || [],
+    registrosVision: dataStore.registrosVision || [],
+    movimientos: dataStore.movimientos || [],
+    registrosLluvia: dataStore.registrosLluvia || [],
+    inventarioMovimientos: dataStore.inventarioMovimientos || [],
+    eventosReproductivos: dataStore.eventosReproductivos || [],
+    situaciones: dataStore.situaciones || [],
+    lecturasNdvi: dataStore.lecturasNdvi || [],
+    lluviaEstimada: dataStore.lluviaEstimada || {},
+    precioKg: dataStore.marketPrice?.value,
   }).length
 
   return {
@@ -225,6 +277,44 @@ const kpiData = computed(() => {
     cabezas,
     alertas,
   }
+})
+
+const ETIQUETA_DECISION = {
+  revisar: 'Revisar',
+  rotar: 'Rotar',
+  el_kilo_no_cierra: 'El kilo no cierra',
+  faltan_datos: 'Faltan datos',
+}
+
+const decisionesAMirar = computed(() => {
+  const ctx = {
+    lotes: dataStore.lotes || [],
+    potreros: dataStore.potreros || [],
+    evaluaciones: dataStore.evaluaciones || [],
+    movimientos: dataStore.movimientos || [],
+    registrosLluvia: dataStore.registrosLluvia || [],
+    fuentesAgua: dataStore.fuentesAgua || [],
+    registrosVision: dataStore.registrosVision || [],
+    inventarioMovimientos: dataStore.inventarioMovimientos || [],
+    eventosReproductivos: dataStore.eventosReproductivos || [],
+    situaciones: dataStore.situaciones || [],
+    lecturasNdvi: dataStore.lecturasNdvi || [],
+    lluviaEstimada: dataStore.lluviaEstimada || {},
+    precioKg: dataStore.marketPrice?.value,
+  }
+  return (dataStore.lotes || [])
+    .filter((lote) => lote.activo !== false)
+    .map((lote) => {
+      const decision = decisionDesdeContexto(lote, ctx)
+      return {
+        id: lote.id,
+        nombre: lote.identificacion,
+        veredicto: decision.veredicto,
+        titulo: decision.titulo,
+        etiqueta: ETIQUETA_DECISION[decision.veredicto] || '',
+      }
+    })
+    .filter((fila) => fila.veredicto && fila.veredicto !== 'seguir')
 })
 
 onMounted(async () => {

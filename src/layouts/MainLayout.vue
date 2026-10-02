@@ -172,6 +172,23 @@
 
           <q-list class="nav-clean-list q-gutter-y-sm">
             <q-item
+              v-if="authStore.canViewDecisions"
+              clickable
+              v-ripple
+              to="/decisiones"
+              active-class="nav-active"
+              @click="rightDrawerOpen = false"
+            >
+              <q-item-section avatar>
+                <q-icon name="account_tree" size="22px" color="green-13" />
+              </q-item-section>
+              <q-item-section class="text-body2">Qué decidir</q-item-section>
+              <q-item-section side>
+                <q-icon name="chevron_right" size="xs" color="grey-8" />
+              </q-item-section>
+            </q-item>
+
+            <q-item
               clickable
               v-ripple
               to="/alertas"
@@ -194,6 +211,20 @@
             <q-item clickable v-ripple to="/profile" active-class="nav-active">
               <q-item-section avatar><q-icon name="person_outline" size="22px" /></q-item-section>
               <q-item-section class="text-body2">Mi Perfil</q-item-section>
+              <q-item-section side
+                ><q-icon name="chevron_right" size="xs" color="grey-8"
+              /></q-item-section>
+            </q-item>
+
+            <q-item
+              v-if="authStore.canViewAudit"
+              clickable
+              v-ripple
+              to="/auditoria"
+              active-class="nav-active"
+            >
+              <q-item-section avatar><q-icon name="fact_check" size="22px" /></q-item-section>
+              <q-item-section class="text-body2">Auditoría</q-item-section>
               <q-item-section side
                 ><q-icon name="chevron_right" size="xs" color="grey-8"
               /></q-item-section>
@@ -263,6 +294,8 @@
         :class="hasUnreadAlertsDot ? 'notch-dot--alert' : 'notch-dot--ok'"
       ></div>
     </div>
+
+    <VisionPropuestasHost />
 
     <q-page-container
       class="page-padding-fix"
@@ -338,6 +371,7 @@ import { useRouter, useRoute } from 'vue-router'
 import { useQuasar } from 'quasar'
 import LivingLogo from 'components/ui/LivingLogo.vue'
 import { evaluateOperationalAlerts } from 'src/utils/operationalAlerts'
+import VisionPropuestasHost from 'src/components/decision/VisionPropuestasHost.vue'
 import { filterActiveAlerts, hasUnreadAlerts } from 'src/utils/alertsAck'
 
 const tab = ref('inicio')
@@ -360,6 +394,15 @@ const operationalAlerts = computed(() => {
     fuentesAgua: dataStore.fuentesAgua || [],
     inventarioItems: dataStore.inventarioItems || [],
     evaluaciones: dataStore.evaluaciones || [],
+    registrosVision: dataStore.registrosVision || [],
+    movimientos: dataStore.movimientos || [],
+    registrosLluvia: dataStore.registrosLluvia || [],
+    inventarioMovimientos: dataStore.inventarioMovimientos || [],
+    eventosReproductivos: dataStore.eventosReproductivos || [],
+    situaciones: dataStore.situaciones || [],
+    lecturasNdvi: dataStore.lecturasNdvi || [],
+    lluviaEstimada: dataStore.lluviaEstimada || {},
+    precioKg: dataStore.marketPrice?.value,
   })
   return filterActiveAlerts(raw, authStore.profile?.establecimiento_id)
 })

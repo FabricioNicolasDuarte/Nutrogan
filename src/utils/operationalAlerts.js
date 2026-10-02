@@ -5,6 +5,7 @@
 
 import { calcGdpv } from './gdpv.js'
 import { calcularCalidadAgua } from './waterQuality.js'
+import { decidirLote } from './decisionLote.js'
 
 export const ALERT_THRESHOLDS = {
   ndviCritico: 0.3,
@@ -30,6 +31,15 @@ export function evaluateOperationalAlerts({
   fuentesAgua = [],
   inventarioItems = [],
   evaluaciones = [],
+  registrosVision = [],
+  movimientos = [],
+  registrosLluvia = [],
+  inventarioMovimientos = [],
+  situaciones = [],
+  lecturasNdvi = [],
+  lluviaEstimada = {},
+  eventosReproductivos = [],
+  precioKg = null,
 } = {}) {
   const alerts = []
   const now = Date.now()
@@ -175,6 +185,120 @@ export function evaluateOperationalAlerts({
           entityId: lote.id,
         })
       }
+    }
+
+    const vision = (registrosVision || [])
+      .filter((r) => r.lote_id === lote.id)
+      .sort((a, b) => new Date(b.fecha) - new Date(a.fecha))
+    const fecal = vision.find((r) => r.modo === 'fecal')
+    if (fecal?.presencia_parasitos) {
+      alerts.push({
+        id: `fecal-${lote.id}`,
+        severity: 'critical',
+        category: 'sanidad',
+        title: `Signos de parásitos: ${lote.identificacion}`,
+        message: `Última lectura fecal: ${fecal.consistencia || 'sin consistencia'}, ${fecal.color || 'sin color'}. Conviene revisarlo con el veterinario.`,
+        entityType: 'lote',
+        entityId: lote.id,
+      })
+    }
+    const anomalia = vision.find((r) => r.modo === 'anomalia')
+    if (anomalia?.gravedad === 'seria') {
+      alerts.push({
+        id: `anomalia-${lote.id}`,
+        severity: 'warn',
+        category: 'sanidad',
+        title: `Anomalía seria: ${lote.identificacion}`,
+        message: anomalia.texto_confirmado || 'La última foto marcó algo serio en el lote.',
+        entityType: 'lote',
+        entityId: lote.id,
+      })
+    }
+
+    const decision = decidirLote({
+      lote,
+      lotes,
+      potrero: potreros.find((p) => p.id === lote.potrero_actual_id) || null,
+      evaluaciones: evs,
+      movimientos,
+      registrosLluvia,
+      fuentesAgua,
+      registrosVision: vision,
+      inventarioMovimientos,
+      situaciones,
+      lecturasNdvi,
+      eventosReproductivos,
+      lluviaEstimadaMm: lluviaEstimada?.[lote.potrero_actual_id],
+      precioKg,
+    })
+    const ocupacion = decision.lineas.find((l) => l.id === 'ocupacion')
+    if (ocupacion?.estado === 'atencion') {
+      alerts.push({
+        id: `rotar-${lote.id}`,
+        severity: 'warn',
+        category: 'forraje',
+        title: `Rotar o aliviar: ${lote.identificacion}`,
+        message: ocupacion.lectura,
+        entityType: 'lote',
+        entityId: lote.id,
+      })
+    }
+    const situacion = decision.lineas.find((l) => l.id === 'situacion')
+    if (situacion?.estado === 'atencion') {
+      const marcada = [...(situaciones || [])]
+        .filter((s) => s.lote_id === lote.id && s.pedir_revision)
+        .sort((a, b) => String(b.fecha).localeCompare(String(a.fecha)))[0]
+      const categoria = {
+        sanidad: 'sanidad',
+        agua: 'agua',
+        potrero: 'forraje',
+        comida: 'stock',
+      }[marcada?.ambito] || 'general'
+      alerts.push({
+        id: `situacion-${lote.id}`,
+        severity: 'warn',
+        category: categoria,
+        title: `Situación a revisar: ${lote.identificacion}`,
+        message: situacion.lectura,
+        entityType: 'lote',
+        entityId: lote.id,
+      })
+    }
+    const sobra = decision.lineas.find((l) => l.id === 'sobra')
+    if (sobra?.estado === 'atencion') {
+      alerts.push({
+        id: `sobra-${lote.id}`,
+        severity: 'warn',
+        category: 'stock',
+        title: `Dejaron comida: ${lote.identificacion}`,
+        message: sobra.lectura,
+        entityType: 'lote',
+        entityId: lote.id,
+      })
+    }
+    const reproduccion = decision.lineas.find((l) => l.id === 'reproduccion')
+    if (reproduccion?.estado === 'atencion') {
+      alerts.push({
+        id: `repro-${lote.id}`,
+        severity: 'warn',
+        category: 'sanidad',
+        title: `Reproducción a revisar: ${lote.identificacion}`,
+        message: reproduccion.lectura,
+        entityType: 'lote',
+        entityId: lote.id,
+      })
+    }
+    const comida = decision.lineas.find((l) => l.id === 'comida')
+    if (comida?.estado === 'atencion') {
+      alerts.push({
+        id: `comida-${lote.id}`,
+        severity: 'warn',
+        category: 'stock',
+        title: `El kilo no cierra: ${lote.identificacion}`,
+        message: comida.lectura,
+        entityType: 'lote',
+        entityId: lote.id,
+      })
     }
   }
 

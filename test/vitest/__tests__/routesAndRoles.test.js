@@ -27,25 +27,41 @@ function flattenRoutes(list, base = '') {
 }
 
 describe('roleCapabilities', () => {
-  it('admin tiene equipo y reportes', () => {
-    const c = roleCapabilities('admin')
+  it('superadmin tiene equipo, reportes y auditoría', () => {
+    const c = roleCapabilities('superadmin')
     expect(c.canManageTeam).toBe(true)
+    expect(c.canAssignSuperadmin).toBe(true)
+    expect(c.canViewAudit).toBe(true)
     expect(c.canViewReports).toBe(true)
-    expect(c.canEditMaps).toBe(true)
+    expect(c.canViewFinancials).toBe(true)
+  })
+
+  it('administrador tiene todo el establecimiento menos la auditoría', () => {
+    const c = roleCapabilities('administrador')
+    expect(c.canManageTeam).toBe(true)
+    expect(c.canAssignSuperadmin).toBe(false)
+    expect(c.canViewAudit).toBe(false)
+    expect(c.canViewReports).toBe(true)
+    expect(c.canViewFinancials).toBe(true)
   })
 
   it('tecnico no gestiona equipo pero sí satelital/reportes', () => {
     const c = roleCapabilities('tecnico')
     expect(c.canManageTeam).toBe(false)
+    expect(c.canViewFinancials).toBe(false)
+    expect(c.canViewAudit).toBe(false)
     expect(c.canViewReports).toBe(true)
     expect(c.canEditMaps).toBe(true)
+    expect(c.canViewDecisions).toBe(true)
   })
 
-  it('operario solo operativa / campo', () => {
-    const c = roleCapabilities('operario')
+  it('peon solo carga en modo campo', () => {
+    const c = roleCapabilities('peon')
     expect(c.canManageTeam).toBe(false)
     expect(c.canViewReports).toBe(false)
+    expect(c.canViewDecisions).toBe(false)
     expect(c.canEditMaps).toBe(false)
+    expect(c.canViewFinancials).toBe(false)
     expect(c.canAccessFieldMode).toBe(true)
     expect(c.canAccessOperational).toBe(true)
   })
@@ -74,6 +90,7 @@ describe('router — inventario de funcionalidades', () => {
       '/recursos/lluvias',
       '/recursos/satelital',
       '/reportes',
+      '/auditoria',
       '/alertas',
       '/profile',
       '/support',
@@ -84,17 +101,32 @@ describe('router — inventario de funcionalidades', () => {
     }
   })
 
-  it('protege rutas técnicas con admin|tecnico', () => {
+  it('protege rutas técnicas y deja la auditoría al superadmin', () => {
     const sat = flat.find((r) => r.path.includes('satelital'))
-    expect(sat?.requiresRole).toEqual(['admin', 'tecnico'])
+    expect(sat?.requiresRole).toEqual(['superadmin', 'administrador', 'admin', 'tecnico'])
     const rep = flat.find((r) => r.path === '/reportes')
-    expect(rep?.requiresRole).toEqual(['admin', 'tecnico'])
+    expect(rep?.requiresRole).toEqual(['superadmin', 'administrador', 'admin', 'tecnico'])
+    const aud = flat.find((r) => r.path === '/auditoria')
+    expect(aud?.requiresRole).toEqual(['superadmin'])
+    const despensa = flat.find((r) => r.path === '/recursos/despensa')
+    expect(despensa?.requiresRole).toEqual(['superadmin', 'administrador', 'admin'])
   })
 
   it('matriz PROTECTED_ROUTE_ROLES alineada', () => {
-    expect(PROTECTED_ROUTE_ROLES['/recursos/satelital']).toEqual(['admin', 'tecnico'])
-    expect(PROTECTED_ROUTE_ROLES['/reportes']).toEqual(['admin', 'tecnico'])
-    expect(PROTECTED_ROUTE_ROLES['/equipo']).toEqual(['admin'])
+    expect(PROTECTED_ROUTE_ROLES['/recursos/satelital']).toEqual([
+      'superadmin',
+      'administrador',
+      'admin',
+      'tecnico',
+    ])
+    expect(PROTECTED_ROUTE_ROLES['/reportes']).toEqual([
+      'superadmin',
+      'administrador',
+      'admin',
+      'tecnico',
+    ])
+    expect(PROTECTED_ROUTE_ROLES['/equipo']).toEqual(['superadmin', 'administrador', 'admin'])
+    expect(PROTECTED_ROUTE_ROLES['/auditoria']).toEqual(['superadmin'])
   })
 
   it('equipo redirige a profile?tab=team', () => {

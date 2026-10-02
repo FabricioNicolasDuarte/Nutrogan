@@ -17,11 +17,16 @@ export const useAuthStore = defineStore('auth', () => {
 
   // Roles exactos para la lógica interna
   const isOperario = computed(() => caps.value.isOperario)
+  const isPeon = computed(() => caps.value.isPeon)
   const isTecnico = computed(() => caps.value.isTecnico)
   const isAdmin = computed(() => caps.value.isAdmin)
+  const isSuperadmin = computed(() => caps.value.isSuperadmin)
 
   // --- CAPABILITIES (Permisos Semánticos) ---
   const canManageTeam = computed(() => caps.value.canManageTeam)
+  const canAssignSuperadmin = computed(() => caps.value.canAssignSuperadmin)
+  const canViewAudit = computed(() => caps.value.canViewAudit)
+  const canViewDecisions = computed(() => caps.value.canViewDecisions)
   const canViewEstablishmentData = computed(() => caps.value.canViewEstablishmentData)
   const canViewFinancials = computed(() => caps.value.canViewFinancials)
   const canConfigureEstablishment = computed(() => caps.value.canConfigureEstablishment)
@@ -98,6 +103,7 @@ export const useAuthStore = defineStore('auth', () => {
       if (error) throw error
       user.value = data.user
       await fetchProfile()
+      supabase.rpc('registrar_acceso', { p_accion: 'login' }).then(() => {})
       return { success: true }
     } catch (error) {
       return { success: false, error: error.message }
@@ -123,6 +129,7 @@ export const useAuthStore = defineStore('auth', () => {
 
   async function logout() {
     try {
+      await supabase.rpc('registrar_acceso', { p_accion: 'logout' })
       await supabase.auth.signOut()
     } catch (error) {
       console.error('Error logout:', error)
@@ -186,11 +193,16 @@ export const useAuthStore = defineStore('auth', () => {
 
     // Getters de Rol
     isOperario,
+    isPeon,
     isTecnico,
     isAdmin,
+    isSuperadmin,
 
     // Permisos (Capabilities)
     canManageTeam,
+    canAssignSuperadmin,
+    canViewAudit,
+    canViewDecisions,
     canViewEstablishmentData,
     canViewFinancials,
     canConfigureEstablishment,

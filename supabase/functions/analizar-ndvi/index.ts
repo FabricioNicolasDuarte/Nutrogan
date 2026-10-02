@@ -206,6 +206,7 @@ async function fetchNdviHistorialPc(
   lat: number,
   lng: number,
   geoRing: number[][],
+  maxPuntos = 12,
 ): Promise<{ date: string; ndvi: number; ndmi: null }[]> {
   const bbox = bboxFromRing(geoRing)
   const end = new Date()
@@ -256,6 +257,7 @@ async function fetchNdviHistorialPc(
         const valid = Number(stats?.valid_percent ?? 100)
         if (Number.isFinite(mean) && valid >= 15 && mean > -0.2 && mean < 1) {
           out.push({ date, ndvi: parseFloat(mean.toFixed(3)), ndmi: null })
+          if (out.length >= maxPuntos) return out.sort((a, b) => a.date.localeCompare(b.date))
           continue
         }
       }
@@ -278,13 +280,38 @@ async function fetchNdviHistorialPc(
       const mean = (nir - red) / (nir + red)
       if (mean > -0.2 && mean < 1) {
         out.push({ date, ndvi: parseFloat(mean.toFixed(3)), ndmi: null })
+        if (out.length >= maxPuntos) break
       }
     } catch {
       /* skip */
     }
   }
 
-  return out
+  return out.sort((a, b) => a.date.localeCompare(b.date))
+}
+
+async function guardarSerie(
+  supabaseAdmin: ReturnType<typeof createClient>,
+  potreroId: string,
+  puntos: { date: string; ndvi: number }[],
+) {
+  const filas = puntos
+    .map((p) => ({
+      potrero_id: potreroId,
+      fecha: String(p.date).slice(0, 10),
+      ndvi: p.ndvi,
+      fuente: 'sentinel2-pc',
+    }))
+    .filter((p) => /^\d{4}-\d{2}-\d{2}$/.test(p.fecha))
+  if (!filas.length) return null
+  await supabaseAdmin.from('lecturas_ndvi').upsert(filas, { onConflict: 'potrero_id,fecha' })
+  const ultima = [...filas].sort((a, b) => a.fecha.localeCompare(b.fecha)).at(-1)
+  if (!ultima) return null
+  await supabaseAdmin
+    .from('potreros')
+    .update({ ultimo_ndvi: ultima.ndvi, fecha_ultimo_ndvi: ultima.fecha })
+    .eq('id', potreroId)
+  return ultima
 }
 
 /** AgroMonitoring opcional (misma idea SIGAG). */
@@ -369,7 +396,7 @@ serve(async (req) => {
     const supabaseAdmin = createClient(Deno.env.get('SUPABASE_URL') ?? '', serviceKey ?? '')
 
     const body = await req.json()
-    const { establecimiento_id, potrero_id, potrero_ids } = body
+    const { establecimiento_id, potrero_id, potrero_ids, guardar_serie, max_potreros } = body
 
     // CASO 1: historial (gráfico)
     if (potrero_id) {
@@ -381,7 +408,8 @@ serve(async (req) => {
       if (error || !potrero?.geometria) throw new Error('Potrero sin geometría.')
 
       const { ring, lat, lng } = parsePotreroGeometry(potrero.geometria)
-      const historial = await fetchNdviHistorialPc(lat, lng, ring)
+      const historial = await fetchNdviHistorialPc(lat, lng, ring, 12)
+      await guardarSerie(supabaseAdmin, potrero_id, historial)
 
       return json({
         potrero: potrero.nombre,
@@ -406,6 +434,9 @@ serve(async (req) => {
 
     const { data: potreros } = await query
     if (!potreros || potreros.length === 0) throw new Error('No hay potreros con geometría.')
+    const lotePotreros = guardar_serie
+      ? potreros.slice(0, Number(max_potreros) > 0 ? Number(max_potreros) : 6)
+      : potreros
 
     const resultados: {
       id: string
@@ -416,9 +447,19 @@ serve(async (req) => {
       reason?: string
     }[] = []
 
-    for (const p of potreros) {
+    for (const p of lotePotreros) {
       try {
         const { ring, lat, lng } = parsePotreroGeometry(p.geometria)
+        if (guardar_serie) {
+          const serie = await fetchNdviHistorialPc(lat, lng, ring, 6)
+          const ultima = await guardarSerie(supabaseAdmin, p.id, serie)
+          resultados.push(
+            ultima
+              ? { id: p.id, estado: 'exitoso', ndvi: ultima.ndvi, fecha: ultima.fecha, fuente: 'sentinel2-pc' }
+              : { id: p.id, estado: 'fallido', reason: 'sin_serie', fuente: 'sentinel2-pc' },
+          )
+          continue
+        }
         const hit = await resolveNdvi(lat, lng, ring)
         const fecha = new Date().toISOString()
 

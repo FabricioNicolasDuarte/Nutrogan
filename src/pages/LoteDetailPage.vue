@@ -22,6 +22,8 @@
         </div>
       </div>
 
+      <DecisionLotePanel v-if="decision" class="q-mt-md" :decision="decision" @cargar="cargarDato" />
+
       <div class="row q-col-gutter-md q-mt-md">
         <div class="col-12 col-sm-6 col-md-6">
           <q-card flat class="kpi-card">
@@ -52,8 +54,10 @@
         >
           <q-tab name="evaluacion" label="Evaluación" icon="straighten" />
           <q-tab name="sanidad" label="Sanidad" icon="vaccines" />
+          <q-tab name="vision" label="Visión" icon="photo_camera" />
           <q-tab name="reproduccion" label="Reproducción" icon="pets" />
           <q-tab name="consumo" label="Consumo" icon="restaurant" />
+          <q-tab name="situacion" label="Situación" icon="edit_note" />
         </q-tabs>
 
         <q-separator dark />
@@ -126,6 +130,32 @@
             </q-list>
           </q-tab-panel>
 
+          <q-tab-panel name="vision">
+            <div class="flex justify-between items-center q-mb-md">
+              <div class="text-h6">Lecturas de visión</div>
+              <q-btn
+                label="Nueva lectura"
+                color="primary"
+                icon="photo_camera"
+                :to="`/lote/${dataStore.loteActual.id}/scan_cc`"
+              />
+            </div>
+            <q-list bordered separator dark class="rounded-borders">
+              <q-item v-if="!visionDelLote.length" class="text-grey-6">
+                <q-item-section class="text-center q-pa-md">Todavía no hay fotos confirmadas.</q-item-section>
+              </q-item>
+              <q-item v-for="row in visionDelLote" :key="row.id">
+                <q-item-section avatar v-if="fotosVision[row.id]">
+                  <q-img :src="fotosVision[row.id]" width="72px" height="72px" fit="contain" />
+                </q-item-section>
+                <q-item-section>
+                  <q-item-label>{{ etiquetaVision(row.modo) }} · {{ formatearFecha(row.fecha) }}</q-item-label>
+                  <q-item-label caption class="text-grey-4">{{ resumenVision(row) }}</q-item-label>
+                </q-item-section>
+              </q-item>
+            </q-list>
+          </q-tab-panel>
+
           <q-tab-panel name="reproduccion">
             <div class="flex justify-between items-center q-mb-md">
               <div class="text-h6">Historial Reproductivo</div>
@@ -160,8 +190,28 @@
           </q-tab-panel>
 
           <q-tab-panel name="consumo">
+            <div class="text-h6 q-mb-sm">Lo que salió de la despensa</div>
+            <q-list bordered separator dark class="rounded-borders q-mb-lg">
+              <q-item v-if="comidasDelLote.length === 0" class="text-grey-6">
+                <q-item-section class="text-center q-pa-md">
+                  Todavía no hay una comida con puesto y sobrante.
+                </q-item-section>
+              </q-item>
+              <q-item v-for="m in comidasDelLote" :key="m.id">
+                <q-item-section>
+                  <q-item-label>{{ m.inventario_items?.nombre || 'Insumo' }}</q-item-label>
+                  <q-item-label caption class="text-grey-4">
+                    Se pusieron {{ m.cantidad_puesta ?? '—' }} y sobraron {{ m.cantidad_sobrante ?? '—' }}.
+                    Se descontaron {{ Math.abs(Number(m.cantidad) || 0) }}.
+                  </q-item-label>
+                </q-item-section>
+                <q-item-section side top>
+                  <q-item-label caption class="text-grey-4">{{ formatearFecha(m.fecha) }}</q-item-label>
+                </q-item-section>
+              </q-item>
+            </q-list>
             <div class="flex justify-between items-center q-mb-md">
-              <div class="text-h6">Historial de Consumo</div>
+              <div class="text-h6">Plan de dieta</div>
               <q-btn
                 label="Registrar Consumo"
                 color="primary"
@@ -190,6 +240,34 @@
                   <q-item-label class="text-weight-medium"
                     >${{ c.costo_total_periodo || 0 }}</q-item-label
                   >
+                </q-item-section>
+              </q-item>
+            </q-list>
+          </q-tab-panel>
+
+          <q-tab-panel name="situacion">
+            <div class="flex justify-between items-center q-mb-md">
+              <div class="text-h6">Situaciones del lote</div>
+              <q-btn label="Anotar situación" color="primary" icon="add" @click="abrirDialogo('situacion')" />
+            </div>
+            <p class="text-caption text-grey-4 q-mb-md">
+              Cualquier hecho que los otros registros no cubren: destete, mortandad, barro, un tipo nuevo.
+              Si pedís revisión, entra en la decisión y en las alertas. Si no, queda como contexto.
+            </p>
+            <q-list bordered separator dark class="rounded-borders">
+              <q-item v-if="!situacionesDelLote.length" class="text-grey-6">
+                <q-item-section class="text-center q-pa-md">Todavía no hay situaciones.</q-item-section>
+              </q-item>
+              <q-item v-for="row in situacionesDelLote" :key="row.id">
+                <q-item-section>
+                  <q-item-label>{{ row.tipo }} · {{ etiquetaAmbito(row.ambito) }}</q-item-label>
+                  <q-item-label caption class="text-grey-4">{{ row.detalle || 'Sin detalle' }}</q-item-label>
+                </q-item-section>
+                <q-item-section side>
+                  <q-item-label caption>{{ formatearFecha(row.fecha) }}</q-item-label>
+                  <q-item-label caption :class="row.pedir_revision ? 'text-orange-4' : 'text-grey-5'">
+                    {{ row.pedir_revision ? 'Pide revisión' : 'Solo contexto' }}
+                  </q-item-label>
                 </q-item-section>
               </q-item>
             </q-list>
@@ -336,6 +414,8 @@
               label="Tipo de Evento"
               color="white"
               :options="['Servicio', 'Tacto (Preñada)', 'Tacto (Vacía)', 'Parto', 'Aborto']"
+              use-input
+              new-value-mode="add-unique"
               :rules="[(val) => !!val || 'Requerido']"
             />
             <q-input
@@ -362,9 +442,9 @@
         </q-card-section>
         <q-card-section>
           <p>Este módulo se gestiona desde "Mi Despensa" (Inventario).</p>
-          <p>
-            Para registrar un consumo, ve a la despensa, selecciona un alimento y haz clic en
-            "Usar", asignándolo a este lote.
+            <p>
+            En la despensa, al usar un insumo, anotá cuánto se puso y cuánto sobró. Lo comido se
+            descuenta del stock y queda en este lote.
           </p>
         </q-card-section>
         <q-card-actions align="right">
@@ -377,20 +457,98 @@
         </q-card-actions>
       </q-card>
     </q-dialog>
+
+    <q-dialog v-model="dialogos.situacion" persistent>
+      <q-card class="glass-dialog-form" style="width: 480px; max-width: 92vw">
+        <q-card-section>
+          <div class="text-h6">Anotar situación</div>
+        </q-card-section>
+        <q-form @submit.prevent="guardarSituacion" class="q-gutter-md">
+          <q-card-section class="q-pt-none q-gutter-md">
+            <q-input filled dark v-model="newSituacion.fecha" type="date" stack-label color="white" :rules="[(val) => !!val || 'Requerido']" />
+            <q-select
+              filled
+              dark
+              v-model="newSituacion.ambito"
+              :options="ambitosSituacion"
+              emit-value
+              map-options
+              label="De qué se trata"
+              color="white"
+            />
+            <q-select
+              filled
+              dark
+              v-model="newSituacion.tipo"
+              :options="tiposSituacion"
+              use-input
+              input-debounce="0"
+              new-value-mode="add-unique"
+              label="Tipo (podés escribir uno nuevo)"
+              color="white"
+              @filter="filtrarTipos"
+              :rules="[(val) => !!String(val || '').trim() || 'Requerido']"
+            />
+            <q-input filled dark v-model="newSituacion.detalle" type="textarea" label="Qué pasó" color="white" />
+            <q-toggle v-model="newSituacion.pedir_revision" color="primary" label="Pedir revisión en la decisión y en las alertas" />
+          </q-card-section>
+          <q-card-actions align="right" class="q-pa-md">
+            <q-btn flat label="Cancelar" v-close-popup />
+            <q-btn label="Guardar" type="submit" color="primary" :loading="loading.guardar" />
+          </q-card-actions>
+        </q-form>
+      </q-card>
+    </q-dialog>
   </q-page>
 </template>
 
 <script setup>
-import { ref, reactive, onMounted, computed } from 'vue'
+import { ref, reactive, onMounted, computed, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useQuasar } from 'quasar'
 import { useDataStore } from 'stores/data-store'
+import { supabase } from 'boot/supabase'
+import { AMBITOS_SITUACION, decisionDesdeContexto } from 'src/utils/decisionLote'
+import DecisionLotePanel from 'src/components/decision/DecisionLotePanel.vue'
 
 const route = useRoute()
 const router = useRouter()
 const $q = useQuasar()
 const dataStore = useDataStore()
 const loteId = route.params.id
+const visionDelLote = computed(() =>
+  (dataStore.registrosVision || []).filter((row) => row.lote_id === loteId),
+)
+const comidasDelLote = computed(() =>
+  (dataStore.inventarioMovimientos || []).filter(
+    (m) => m.lote_id === loteId && String(m.tipo_movimiento || '').toLowerCase() === 'uso',
+  ),
+)
+const situacionesDelLote = computed(() =>
+  (dataStore.situaciones || []).filter((row) => row.lote_id === loteId),
+)
+const ambitosSituacion = AMBITOS_SITUACION
+const tiposBase = ['Destete', 'Mortandad', 'Barro', 'Falta de sombra', 'Suplementación', 'Cambio de dieta']
+const tiposSituacion = ref(tiposBase)
+const fotosVision = ref({})
+const decision = computed(() => {
+  if (!dataStore.loteActual) return null
+  return decisionDesdeContexto(dataStore.loteActual, {
+    lotes: dataStore.lotes || [],
+    potreros: dataStore.potreros || [],
+    evaluaciones: dataStore.evaluaciones || [],
+    movimientos: dataStore.movimientos || [],
+    registrosLluvia: dataStore.registrosLluvia || [],
+    fuentesAgua: dataStore.fuentesAgua || [],
+    registrosVision: dataStore.registrosVision || [],
+    inventarioMovimientos: dataStore.inventarioMovimientos || [],
+    eventosReproductivos: dataStore.eventosReproductivos || [],
+    situaciones: dataStore.situaciones || [],
+    lecturasNdvi: dataStore.lecturasNdvi || [],
+    lluviaEstimada: dataStore.lluviaEstimada || {},
+    precioKg: dataStore.marketPrice?.value,
+  })
+})
 
 const loading = reactive({ lote: true, guardar: false })
 const tab = ref('evaluacion')
@@ -402,6 +560,7 @@ const dialogos = reactive({
   sanidad: false,
   reproduccion: false,
   consumo: false,
+  situacion: false,
 })
 
 // --- Modelos de Formularios (Sin cambios) ---
@@ -428,6 +587,68 @@ const getNewReproductivo = () => ({
 const newEvaluacion = reactive(getNewEvaluacion())
 const newSanitario = reactive(getNewSanitario())
 const newReproductivo = reactive(getNewReproductivo())
+const newSituacion = reactive({
+  fecha: fechaHoy,
+  ambito: 'otro',
+  tipo: '',
+  detalle: '',
+  pedir_revision: false,
+})
+
+function filtrarTipos(val, update) {
+  update(() => {
+    const conocidos = [
+      ...tiposBase,
+      ...situacionesDelLote.value.map((s) => s.tipo).filter(Boolean),
+    ]
+    const q = String(val || '').toLowerCase()
+    tiposSituacion.value = q
+      ? [...new Set(conocidos)].filter((t) => t.toLowerCase().includes(q))
+      : [...new Set(conocidos)]
+  })
+}
+
+function etiquetaAmbito(id) {
+  return AMBITOS_SITUACION.find((a) => a.id === id)?.label || 'Otro'
+}
+
+function cargarDato(id) {
+  if (id === 'pesos') abrirDialogo('evaluacion')
+  else if (id === 'condicion') router.push(`/lote/${loteId}/scan_cc`)
+  else if (id === 'carga') router.push('/recursos/potreros')
+  else if (id === 'ocupacion') router.push('/recursos/lluvias')
+  else if (id === 'agua') router.push('/recursos/agua')
+  else if (id === 'sanidad') router.push(`/lote/${loteId}/scan_cc`)
+  else if (id === 'comida') router.push('/recursos/despensa')
+  else if (id === 'situacion') {
+    tab.value = 'situacion'
+    abrirDialogo('situacion')
+  }
+}
+
+async function guardarSituacion() {
+  loading.guardar = true
+  try {
+    await dataStore.createRegistro('situaciones_lote', {
+      lote_id: loteId,
+      fecha: newSituacion.fecha,
+      ambito: newSituacion.ambito || 'otro',
+      tipo: String(newSituacion.tipo || '').trim(),
+      detalle: String(newSituacion.detalle || '').trim() || null,
+      pedir_revision: !!newSituacion.pedir_revision,
+      created_by: null,
+    })
+    $q.notify({ type: 'positive', message: 'Situación guardada' })
+    dialogos.situacion = false
+    newSituacion.tipo = ''
+    newSituacion.detalle = ''
+    newSituacion.pedir_revision = false
+  } catch (error) {
+    $q.notify({ color: 'negative', message: 'Error: ' + error.message })
+  } finally {
+    loading.guardar = false
+  }
+}
 
 // --- Funciones de Reset (Sin cambios) ---
 const resetEvaluacion = () => Object.assign(newEvaluacion, getNewEvaluacion())
@@ -445,10 +666,36 @@ function abrirDialogo(tipo) {
 }
 
 // --- Carga de Datos (Sin cambios) ---
+async function cargarFotosVision() {
+  const next = {}
+  for (const row of visionDelLote.value) {
+    if (!row.foto_path || String(row.id).startsWith('local-')) continue
+    const { data, error } = await supabase.storage.from('vision').createSignedUrl(row.foto_path, 3600)
+    if (!error && data?.signedUrl) next[row.id] = data.signedUrl
+  }
+  fotosVision.value = next
+}
+
+watch(visionDelLote, () => {
+  cargarFotosVision()
+})
+
 onMounted(async () => {
   loading.lote = true
   try {
+    if (!dataStore.lotes?.length) await dataStore.fetchLotes()
+    await Promise.all([
+      dataStore.ensureMarketPrice(),
+      dataStore.fetchPotreros(),
+      dataStore.fetchMovimientos(),
+      dataStore.fetchRegistrosLluvia(),
+      dataStore.fetchFuentesAgua(),
+      dataStore.fetchInventarioMovimientos(),
+      dataStore.fetchLecturasNdvi(),
+      dataStore.fetchLluviaEstimada(),
+    ])
     await dataStore.fetchLoteDetalle(loteId)
+    await cargarFotosVision()
   } catch (error) {
     $q.notify({ color: 'negative', message: 'Error al cargar el lote: ' + error.message })
     router.back()
@@ -473,6 +720,23 @@ async function handleCreate(tabla, dataObject, resetFunction, dialogTipo) {
 }
 
 // --- Helper de Fecha (Ajuste UTC) ---
+function etiquetaVision(modo) {
+  if (modo === 'condicion') return 'Condición corporal'
+  if (modo === 'anomalia') return 'Anomalía'
+  if (modo === 'fecal') return 'Análisis fecal'
+  return 'Lectura'
+}
+
+function resumenVision(row) {
+  if (row.modo === 'condicion') return `CC ${row.condicion_corporal ?? 'sin número'}`
+  if (row.modo === 'anomalia') return row.texto_confirmado || row.gravedad || 'Sin nota'
+  if (row.modo === 'fecal') {
+    const par = row.presencia_parasitos ? 'con signos de parásitos' : 'sin signos de parásitos'
+    return `${row.consistencia || '—'}, ${row.color || '—'}, ${par}`
+  }
+  return row.texto_confirmado || ''
+}
+
 function formatearFecha(fechaISO) {
   if (!fechaISO) return 'N/A'
   const date = new Date(fechaISO + 'T00:00:00-03:00') // Asumir hora local

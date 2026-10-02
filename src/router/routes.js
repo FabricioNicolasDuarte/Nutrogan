@@ -1,3 +1,5 @@
+import { ROLES_GESTORES, ROLES_TECNICOS } from 'src/utils/roleCapabilities'
+
 const routes = [
   {
     path: '/',
@@ -12,6 +14,11 @@ const routes = [
 
       // --- ZONA OPERATIVA (Todos tienen acceso) ---
       { path: 'lotes', component: () => import('pages/LotesPage.vue') },
+      {
+        path: 'decisiones',
+        component: () => import('pages/DecisionesPage.vue'),
+        meta: { requiresRole: [...ROLES_TECNICOS] },
+      },
       { path: 'lote/:id', component: () => import('pages/LoteDetailPage.vue') },
       {
         path: 'lote/:id/scan_cc',
@@ -22,7 +29,11 @@ const routes = [
       // --- RECURSOS (Lectura para todos) ---
       { path: 'recursos', component: () => import('pages/RecursosPage.vue') },
       { path: 'recursos/potreros', component: () => import('pages/PotrerosPage.vue') },
-      { path: 'recursos/despensa', component: () => import('pages/DespensaPage.vue') },
+      {
+        path: 'recursos/despensa',
+        component: () => import('pages/DespensaPage.vue'),
+        meta: { requiresRole: [...ROLES_GESTORES] },
+      },
       { path: 'recursos/agua', component: () => import('pages/AguaPage.vue') },
       { path: 'recursos/lluvias', component: () => import('pages/LluviasPage.vue') },
 
@@ -30,16 +41,16 @@ const routes = [
       {
         path: 'recursos/potreros/draw/:id?',
         component: () => import('pages/PotreroDrawPage.vue'),
-        meta: { mapPage: true, requiresRole: ['admin', 'tecnico'] },
+        meta: { mapPage: true, requiresRole: [...ROLES_TECNICOS] },
       },
       {
         path: 'recursos/satelital',
         component: () => import('pages/AnalisisSatelitalPage.vue'),
-        meta: { mapPage: true, requiresRole: ['admin', 'tecnico'] },
+        meta: { mapPage: true, requiresRole: [...ROLES_TECNICOS] },
       },
       { path: 'reportes',
         component: () => import('pages/ReportesPage.vue'),
-        meta: { requiresRole: ['admin', 'tecnico'] },
+        meta: { requiresRole: [...ROLES_TECNICOS] },
       },
       {
         path: 'alertas',
@@ -51,18 +62,23 @@ const routes = [
       {
         path: 'equipo',
         redirect: (to) => ({ path: '/profile', query: { tab: 'team', ...to.query } }),
-        meta: { requiresRole: ['admin'] },
+        meta: { requiresRole: [...ROLES_GESTORES] },
       },
       // Legacy: founders
       {
         path: 'team',
         redirect: '/fundadores',
-        meta: { requiresRole: ['admin'] },
+        meta: { requiresRole: [...ROLES_GESTORES] },
       },
       {
         path: 'fundadores',
         component: () => import('pages/DeveloperTeamPage.vue'),
-        meta: { requiresRole: ['admin'] },
+        meta: { requiresRole: [...ROLES_GESTORES] },
+      },
+      {
+        path: 'auditoria',
+        component: () => import('pages/AuditoriaPage.vue'),
+        meta: { requiresRole: ['superadmin'] },
       },
 
       // --- COMUNES ---

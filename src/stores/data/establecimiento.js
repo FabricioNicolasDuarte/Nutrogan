@@ -7,9 +7,9 @@ export function createEstablecimientoModule({ supabase, authStore }) {
     value: null,
     currency: 'ARS',
     unit: 'kg',
-    mode: 'manual',
+    mode: 'auto',
     lastUpdated: null,
-    source: 'Sin definir',
+    source: 'Mercado Agroganadero',
     esEstimado: false,
     categoria: null,
     categoriaPreferida: 'novillo',
@@ -64,12 +64,12 @@ export function createEstablecimientoModule({ supabase, authStore }) {
           categoria: data.categoria || (data.match_categoria ? categoria : null),
           categoriaPreferida: categoria,
         }
-      } else {
-        // Sin inventar número: dejar valor previo / pedir manual
+      } else if (!(Number(marketPrice.value.value) > 0)) {
         marketPrice.value = {
           ...marketPrice.value,
-          mode: marketPrice.value.value ? marketPrice.value.mode : 'manual',
-          source: data?.fuente || 'Sin dato MAG — fijá precio manual',
+          mode: 'auto',
+          value: null,
+          source: 'Sin dato del Mercado Agroganadero',
           esEstimado: true,
           lastUpdated: data?.fecha || new Date().toISOString(),
           categoriaPreferida: categoria,
@@ -77,7 +77,21 @@ export function createEstablecimientoModule({ supabase, authStore }) {
       }
     } catch (e) {
       console.error('Error obteniendo precio de mercado:', e)
+      if (!(Number(marketPrice.value.value) > 0)) {
+        marketPrice.value = {
+          ...marketPrice.value,
+          mode: 'auto',
+          source: 'Sin dato del Mercado Agroganadero',
+          esEstimado: true,
+        }
+      }
     }
+  }
+
+  async function ensureMarketPrice() {
+    const actual = marketPrice.value
+    if (actual.mode === 'manual' && Number(actual.value) > 0) return
+    await fetchMarketPriceAuto()
   }
 
   function setCategoriaPreferida(categoria) {
@@ -103,6 +117,7 @@ export function createEstablecimientoModule({ supabase, authStore }) {
     fetchEstablecimiento,
     setManualPrice,
     fetchMarketPriceAuto,
+    ensureMarketPrice,
     setCategoriaPreferida,
     updateConfigEmergencia,
   }

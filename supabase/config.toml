@@ -28,6 +28,23 @@ import_map = "./functions/generar-snapshot-potrero/deno.json"
 # Uncomment to specify a custom file path to the entrypoint.
 # Supported file extensions are: .ts, .js, .mjs, .jsx, .tsx
 entrypoint = "./functions/generar-snapshot-potrero/index.ts"
+
+[functions.analizar-vision]
+enabled = true
+verify_jwt = true
+entrypoint = "./functions/analizar-vision/index.ts"
+
+[functions.alertas-diarias]
+enabled = true
+verify_jwt = false
+entrypoint = "./functions/alertas-diarias/index.ts"
+
+[functions.parte-decision]
+enabled = true
+verify_jwt = true
+entrypoint = "./functions/parte-decision/index.ts"
+
+
 # Specifies static files to be bundled with the function. Supports glob patterns.
 # For example, if you want to serve static HTML pages in your function:
 # static_files = [ "./functions/generar-snapshot-potrero/*.html" ]

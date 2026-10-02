@@ -3,19 +3,20 @@
     <q-card-section class="row items-center justify-between">
       <div class="row items-center">
         <q-icon name="psychology" color="cyan-accent-3" size="2em" class="q-mr-sm" />
-        <div class="text-h6 text-white">Informe Estratégico & Predicciones</div>
+        <div>
+          <div class="text-h6 text-white">Informe redactado</div>
+          <div class="text-caption text-grey-5">Se arma solo si lo pedís, con los números de este reporte.</div>
+        </div>
       </div>
       <q-btn
-        flat
-        round
-        dense
-        icon="refresh"
-        color="white"
+        unelevated
+        color="primary"
+        text-color="black"
+        no-caps
+        :label="reportResult ? 'Volver a redactar' : 'Redactar informe'"
         @click="generarReporte"
         :loading="loading"
-      >
-        <q-tooltip>Regenerar análisis con datos actuales</q-tooltip>
-      </q-btn>
+      />
     </q-card-section>
 
     <q-separator dark inset />
@@ -41,13 +42,16 @@
         />
       </div>
 
-      <div v-else class="ai-content q-pa-sm" v-html="reportResult"></div>
+      <div v-else-if="reportResult" class="ai-content q-pa-sm" v-html="reportResult"></div>
+      <div v-else class="text-grey-5 q-pa-md">
+        Todavía no hay un texto. El botón de arriba lo pide y no se dispara al entrar.
+      </div>
     </q-card-section>
   </q-card>
 </template>
 
 <script setup>
-import { ref, onMounted, computed } from 'vue'
+import { ref, computed } from 'vue'
 import { useDataStore } from 'stores/data-store'
 import { supabase } from 'boot/supabase'
 import { formatGdpv } from 'src/utils/gdpv'
@@ -176,10 +180,6 @@ async function generarReporte() {
   }
 }
 
-onMounted(() => {
-  if (dataStore.lotes.length > 0) generarReporte()
-})
-
 defineExpose({ structuredReport })
 </script>
 
@@ -189,7 +189,6 @@ defineExpose({ structuredReport })
   backdrop-filter: blur(10px);
   border: 1px solid rgba(57, 255, 20, 0.3);
   border-radius: 12px;
-  min-height: 300px;
 }
 .ai-content {
   line-height: 1.8;

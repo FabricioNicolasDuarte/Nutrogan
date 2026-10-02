@@ -49,7 +49,7 @@
                   :color="getRoleBadgeColor(miembro.rol)"
                   class="text-uppercase text-caption"
                 >
-                  {{ miembro.rol }}
+                  {{ ROLE_LABELS[miembro.rol] || miembro.rol }}
                 </q-badge>
                 <span class="text-caption text-grey-6">• {{ miembro.email }}</span>
               </div>
@@ -66,14 +66,21 @@
                 </q-item>
                 <q-separator dark />
                 <q-item-label header class="text-grey-5 text-uppercase">Permisos</q-item-label>
-                <q-item clickable v-close-popup @click="cambiarRol(miembro, 'admin')"
-                  ><q-item-section>Admin</q-item-section></q-item
+                <q-item
+                  v-if="authStore.canAssignSuperadmin"
+                  clickable
+                  v-close-popup
+                  @click="cambiarRol(miembro, 'superadmin')"
+                  ><q-item-section>Superadmin</q-item-section></q-item
+                >
+                <q-item clickable v-close-popup @click="cambiarRol(miembro, 'administrador')"
+                  ><q-item-section>Administrador</q-item-section></q-item
                 >
                 <q-item clickable v-close-popup @click="cambiarRol(miembro, 'tecnico')"
                   ><q-item-section>Técnico</q-item-section></q-item
                 >
-                <q-item clickable v-close-popup @click="cambiarRol(miembro, 'operario')"
-                  ><q-item-section>Operario</q-item-section></q-item
+                <q-item clickable v-close-popup @click="cambiarRol(miembro, 'peon')"
+                  ><q-item-section>Peón</q-item-section></q-item
                 >
                 <q-separator dark />
                 <q-item clickable v-close-popup class="text-red-4" @click="eliminar(miembro)">
@@ -305,7 +312,9 @@
             />
             <q-select
               v-model="newUser.rol"
-              :options="['admin', 'tecnico', 'operario']"
+              :options="rolesAsignables"
+              emit-value
+              map-options
               label="Rol Asignado"
               filled
               dark
@@ -358,7 +367,8 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted } from 'vue'
+import { ref, reactive, computed, onMounted } from 'vue'
+import { ROLE_LABELS } from 'src/utils/roleCapabilities'
 import { useDataStore } from 'stores/data-store'
 import { useAuthStore } from 'stores/auth-store'
 import { useQuasar } from 'quasar'
@@ -376,7 +386,18 @@ const loading = ref(false)
 const loadingAlert = ref(false)
 const createMode = ref('create')
 
-const newUser = reactive({ email: '', nombre: '', rol: 'operario', password: '' })
+const newUser = reactive({ email: '', nombre: '', rol: 'peon', password: '' })
+const rolesAsignables = computed(() => {
+  const base = [
+    { label: 'Administrador', value: 'administrador' },
+    { label: 'Técnico', value: 'tecnico' },
+    { label: 'Peón', value: 'peon' },
+  ]
+  if (authStore.canAssignSuperadmin) {
+    base.unshift({ label: 'Superadmin', value: 'superadmin' })
+  }
+  return base
+})
 const editForm = reactive({ usuario_id: null, nombre_completo: '', telefono: '' })
 
 // Alerta "Pro" con soporte para Resend
@@ -405,10 +426,13 @@ const prioridades = [
 
 // --- HELPERS ---
 function getRoleColor(r) {
-  return r === 'admin' ? 'primary' : 'grey-4'
+  return r === 'superadmin' || r === 'administrador' || r === 'admin' ? 'primary' : 'grey-4'
 }
 function getRoleBadgeColor(r) {
-  return r === 'admin' ? 'green-9' : r === 'tecnico' ? 'cyan-9' : 'grey-8'
+  if (r === 'superadmin') return 'green-9'
+  if (r === 'administrador' || r === 'admin') return 'green-8'
+  if (r === 'tecnico') return 'cyan-9'
+  return 'grey-8'
 }
 function getColorCode(prio) {
   if (prio === 'urgente') return 'red-8'
@@ -567,6 +591,10 @@ async function guardarEdit() {
 }
 
 async function cambiarRol(m, rol) {
+  if (m.usuario_id && m.usuario_id === authStore.user?.id && rol !== 'superadmin') {
+    $q.notify({ type: 'warning', message: 'No podés quitarte el rol de superadmin a vos mismo.' })
+    return
+  }
   await dataStore.updateMiembroRol(m.id, rol)
   $q.notify({ type: 'positive', message: 'Permisos actualizados a ' + rol.toUpperCase() })
 }

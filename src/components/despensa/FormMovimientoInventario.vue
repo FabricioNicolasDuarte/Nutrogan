@@ -10,7 +10,7 @@
 
       <q-card-section class="q-gutter-md">
         <div class="row q-col-gutter-md">
-          <div class="col-6">
+          <div class="col-6" v-if="esCompra">
             <q-input
               v-model.number="form.cantidad"
               type="number"
@@ -23,6 +23,35 @@
               autofocus
             />
           </div>
+          <div class="col-6" v-else>
+            <q-input
+              v-model.number="form.puesta"
+              type="number"
+              step="0.1"
+              :label="`Cuánto se puso (${item.unidad})`"
+              outlined
+              dark
+              color="white"
+              :rules="[(val) => val > 0 || 'Debe ser mayor a 0']"
+              autofocus
+            />
+          </div>
+          <div class="col-6" v-if="!esCompra">
+            <q-input
+              v-model.number="form.sobrante"
+              type="number"
+              step="0.1"
+              :label="`Cuánto sobró (${item.unidad})`"
+              hint="Si se terminó, poné 0"
+              outlined
+              dark
+              color="white"
+              :rules="[
+                (val) => val === 0 || val > 0 || 'Si se terminó, poné 0',
+                (val) => val <= form.puesta || 'No puede sobrar más de lo puesto',
+              ]"
+            />
+          </div>
           <div class="col-6">
             <q-input
               v-model.number="form.costo_total"
@@ -33,7 +62,7 @@
               outlined
               dark
               color="white"
-              :rules="[(val) => val >= 0 || 'No puede ser negativo']"
+              :rules="[(val) => val === null || val === '' || val >= 0 || 'No puede ser negativo']"
             />
           </div>
         </div>
@@ -115,6 +144,8 @@ const opcionesLotes = computed(() =>
 const form = reactive({
   fecha: new Date().toISOString().split('T')[0],
   cantidad: null,
+  puesta: null,
+  sobrante: 0,
   costo_total: null,
   lote_id: null,
   observaciones: '',
@@ -125,17 +156,20 @@ async function registrarMovimiento() {
 
   // Asegurar que es un número float
   const cantidadInput = parseFloat(form.cantidad)
-
-  // Si es "uso", enviamos negativo. Si es "compra", positivo.
-  const cantidadMovimiento = esCompra.value ? cantidadInput : -cantidadInput
+  const puesta = parseFloat(form.puesta)
+  const sobrante = form.sobrante === '' || form.sobrante == null ? 0 : parseFloat(form.sobrante)
+  const comido = esCompra.value ? cantidadInput : puesta - sobrante
+  const cantidadMovimiento = esCompra.value ? cantidadInput : -comido
 
   const rpcParams = {
     p_item_id: props.item.id,
     p_lote_id: form.lote_id,
     p_tipo_movimiento: esCompra.value ? 'Compra' : 'Uso',
     p_cantidad: cantidadMovimiento,
-    p_costo_total: form.costo_total,
+    p_costo_total: form.costo_total === '' || form.costo_total == null ? null : form.costo_total,
     p_observaciones: form.observaciones,
+    p_cantidad_puesta: esCompra.value ? null : puesta,
+    p_cantidad_sobrante: esCompra.value ? null : sobrante,
   }
 
   try {

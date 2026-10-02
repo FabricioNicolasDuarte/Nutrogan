@@ -55,6 +55,11 @@ export function parseMagPrice(html, categoriaIdOrLabel = 'novillo') {
     .replace(/&nbsp;/gi, ' ')
     .replace(/\s+/g, ' ')
 
+  const deTabla = promedioDeCategoria(raw, cat)
+  if (deTabla != null) {
+    return { precio: deTabla, categoria: cat.label, matched: true }
+  }
+
   for (const pattern of cat.patterns) {
     const re = new RegExp(
       `(${pattern.source}).{0,100}?(\\$?\\s*\\d{1,2}[.,]?\\d{3}(?:[.,]\\d{2})?)`,
@@ -79,4 +84,42 @@ export function parseMagPrice(html, categoriaIdOrLabel = 'novillo') {
   }
 
   return { precio: null, categoria: null, matched: false }
+}
+
+function textoCelda(html) {
+  return String(html || '')
+    .replace(/<[^>]+>/g, ' ')
+    .replace(/&nbsp;/gi, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
+}
+
+/**
+ * En la planilla del MAG cada fila trae mínimo, máximo y promedio.
+ * El promedio ponderado por cabezas es la referencia. Si la fila tiene un solo
+ * precio, se usa ese.
+ */
+function promedioDeCategoria(html, cat) {
+  const filas = []
+  const re = /<tr\b[^>]*>([\s\S]*?)<\/tr>/gi
+  let fila
+  while ((fila = re.exec(html))) {
+    const celdas = []
+    const td = /<td\b[^>]*>([\s\S]*?)<\/td>/gi
+    let celda
+    while ((celda = td.exec(fila[1]))) celdas.push(textoCelda(celda[1]))
+    if (!celdas.length) continue
+    if (!cat.patterns.some((p) => p.test(celdas[0]))) continue
+    const precios = celdas.slice(1).map(extractPriceFromText).filter((n) => n != null)
+    if (!precios.length) continue
+    const promedio = precios.length >= 3 ? precios[2] : precios[0]
+    const cabezasCrudas = parseInt(String(celdas[5] || '').replace(/\./g, '').replace(/,.*/, ''), 10)
+    const cabezas = Number.isFinite(cabezasCrudas) && cabezasCrudas > 0 && cabezasCrudas < 1500 ? cabezasCrudas : 1
+    filas.push({ promedio, cabezas })
+  }
+  if (!filas.length) return null
+  if (filas.length === 1) return filas[0].promedio
+  const cabezas = filas.reduce((s, f) => s + f.cabezas, 0)
+  const valor = filas.reduce((s, f) => s + f.promedio * f.cabezas, 0) / cabezas
+  return Math.round(valor)
 }

@@ -20,9 +20,33 @@ serve(async (req) => {
     )
 
     const { email, rol, establecimiento_id } = await req.json()
-
     if (!email || !establecimiento_id) {
       throw new Error('Faltan datos (email o establecimiento_id)')
+    }
+    const token = (req.headers.get('Authorization') ?? '').replace('Bearer ', '')
+    const { data: callerData, error: callerError } = await supabaseAdmin.auth.getUser(token)
+    if (callerError || !callerData.user) throw new Error('No autenticado')
+
+    const { data: callerMemb } = await supabaseAdmin
+      .from('miembros_establecimiento')
+      .select('rol')
+      .eq('usuario_id', callerData.user.id)
+      .eq('establecimiento_id', establecimiento_id)
+      .maybeSingle()
+
+    const rolCaller = callerMemb?.rol
+    if (!['superadmin', 'administrador', 'admin'].includes(rolCaller)) {
+      throw new Error('No autorizado para invitar')
+    }
+
+    let rolFinal = rol || 'peon'
+    if (rolFinal === 'operario') rolFinal = 'peon'
+    if (rolFinal === 'admin') rolFinal = 'administrador'
+    if (!['superadmin', 'administrador', 'tecnico', 'peon'].includes(rolFinal)) {
+      throw new Error('Rol no válido')
+    }
+    if (rolFinal === 'superadmin' && rolCaller !== 'superadmin') {
+      throw new Error('Solo un superadmin puede asignar ese rol')
     }
 
     // 2. Buscar el ID del usuario por su email
@@ -46,7 +70,7 @@ serve(async (req) => {
     const { error: insertError } = await supabaseAdmin.from('miembros_establecimiento').insert({
       usuario_id: user.id,
       establecimiento_id: establecimiento_id,
-      rol: rol || 'operario',
+      rol: rolFinal,
     })
 
     if (insertError) {

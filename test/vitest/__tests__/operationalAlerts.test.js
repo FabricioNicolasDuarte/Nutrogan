@@ -62,6 +62,79 @@ describe('evaluateOperationalAlerts', () => {
     expect(alerts.some((a) => a.id === 'cc-l1')).toBe(true)
   })
 
+  it('alerta la última lectura fecal con parásitos y la anomalía seria', () => {
+    const alerts = evaluateOperationalAlerts({
+      lotes: [{ id: 'l1', identificacion: 'Lote C', activo: true }],
+      registrosVision: [
+        {
+          lote_id: 'l1',
+          modo: 'fecal',
+          fecha: '2026-04-02',
+          presencia_parasitos: false,
+          consistencia: 'Normal',
+          color: 'Marrón',
+        },
+        {
+          lote_id: 'l1',
+          modo: 'fecal',
+          fecha: '2026-04-01',
+          presencia_parasitos: true,
+          consistencia: 'Diarrea',
+          color: 'Sanguinolento',
+        },
+        {
+          lote_id: 'l1',
+          modo: 'anomalia',
+          fecha: '2026-04-03',
+          gravedad: 'seria',
+          texto_confirmado: 'Herida abierta',
+        },
+      ],
+    })
+    expect(alerts.some((a) => a.id === 'fecal-l1')).toBe(false)
+    expect(alerts.some((a) => a.id === 'anomalia-l1')).toBe(true)
+
+    const conParasitos = evaluateOperationalAlerts({
+      lotes: [{ id: 'l1', identificacion: 'Lote C', activo: true }],
+      registrosVision: [
+        {
+          lote_id: 'l1',
+          modo: 'fecal',
+          fecha: '2026-04-02',
+          presencia_parasitos: true,
+          consistencia: 'Diarrea',
+          color: 'Sanguinolento',
+        },
+      ],
+    })
+    expect(conParasitos.some((a) => a.id === 'fecal-l1' && a.severity === 'critical')).toBe(true)
+  })
+
+  it('avisa rotar solo con días, vigor bajo y poca lluvia', () => {
+    const alerts = evaluateOperationalAlerts({
+      lotes: [
+        {
+          id: 'l1',
+          identificacion: 'L1',
+          activo: true,
+          potrero_actual_id: 'p1',
+          cantidad_animales: 10,
+        },
+      ],
+      potreros: [{ id: 'p1', nombre: 'Norte', activo: true, ultimo_ndvi: 0.25, superficie_ha: 10 }],
+      movimientos: [{ lote_id: 'l1', potrero_id: 'p1', fecha_entrada: '2026-08-01' }],
+      registrosLluvia: [{
+        fecha: `${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, '0')}-${String(new Date().getDate()).padStart(2, '0')}`,
+        milimetros: 4,
+      }],
+      evaluaciones: [
+        { lote_id: 'l1', fecha_evaluacion: '2026-08-01', peso_promedio_kg: 200, condicion_corporal: 5 },
+        { lote_id: 'l1', fecha_evaluacion: '2026-09-01', peso_promedio_kg: 220, condicion_corporal: 5 },
+      ],
+    })
+    expect(alerts.some((a) => a.id === 'rotar-l1')).toBe(true)
+  })
+
   it('fieldPastureWarnings solo forraje', () => {
     const w = fieldPastureWarnings(
       [{ id: 'p1', nombre: 'P1', activo: true, ultimo_ndvi: 0.15 }],

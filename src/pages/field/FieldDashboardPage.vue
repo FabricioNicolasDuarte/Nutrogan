@@ -27,7 +27,7 @@
 
     <div v-if="currentView === 'menu'" class="q-pa-md q-pb-xl">
       <div
-        v-if="pastureWarnings.length"
+        v-if="authStore.canViewDecisions && pastureWarnings.length"
         class="pasture-banner q-mb-md q-pa-md"
         style="border: 3px solid #c62828; background: #ffebee"
       >
@@ -86,8 +86,22 @@
 
         <div class="col-6 col-md-4">
           <button class="industrial-btn bg-white full-width" @click="iniciarFlujo('scan_cc')">
-            <q-icon name="fitness_center" size="3em" class="q-mb-xs" />
-            <span class="btn-label">CC INTA</span>
+            <q-icon name="photo_camera" size="3em" class="q-mb-xs" />
+            <span class="btn-label">VISIÓN</span>
+          </button>
+        </div>
+
+        <div class="col-6 col-md-4">
+          <button class="industrial-btn bg-white full-width" @click="iniciarFlujo('situacion')">
+            <q-icon name="edit_note" size="3em" class="q-mb-xs" />
+            <span class="btn-label">SITUACIÓN</span>
+          </button>
+        </div>
+
+        <div v-if="authStore.canViewDecisions" class="col-6 col-md-4">
+          <button class="industrial-btn bg-white full-width" @click="iniciarFlujo('decision')">
+            <q-icon name="account_tree" size="3em" class="q-mb-xs" />
+            <span class="btn-label">DECIDIR</span>
           </button>
         </div>
 
@@ -104,6 +118,33 @@
       </div>
 
       <div style="height: 120px"></div>
+    </div>
+
+    <div v-if="currentView === 'decision'" class="q-pa-md">
+      <DecisionLotePanel v-if="decisionCampo" :decision="decisionCampo" tone="light" @cargar="cargarDesdeCampo" />
+    </div>
+
+    <div v-if="currentView === 'situacion'" class="q-pa-md column q-gutter-md">
+      <div class="text-h6 text-weight-bolder">{{ selectedLote?.identificacion }}</div>
+      <q-select
+        v-model="situacionAmbito"
+        :options="ambitosCampo"
+        emit-value
+        map-options
+        outlined
+        label="De qué se trata"
+      />
+      <q-input v-model="situacionTipo" outlined label="Tipo (escribí el que haga falta)" />
+      <q-input v-model="situacionDetalle" outlined type="textarea" label="Qué pasó" />
+      <q-toggle v-model="situacionRevision" label="Pedir revisión en la decisión" />
+      <q-btn
+        unelevated
+        color="black"
+        text-color="white"
+        label="GUARDAR"
+        :disable="!situacionTipo.trim()"
+        @click="guardarSituacionCampo"
+      />
     </div>
 
     <div v-if="esVistaLista" class="column q-pb-xl">
@@ -211,6 +252,14 @@
         >
           <q-icon name="radio_button_unchecked" size="2em" class="q-mr-md text-black" />
           <span class="text-h6 text-weight-bold text-black">{{ opt }}</span>
+        </button>
+        <button
+          class="industrial-btn bg-white full-width text-left q-mb-md"
+          style="flex-direction: row; justify-content: flex-start; padding: 20px; min-height: 80px"
+          @click="abrirSituacionLibre"
+        >
+          <q-icon name="edit" size="2em" class="q-mr-md text-black" />
+          <span class="text-h6 text-weight-bold text-black">OTRO TIPO</span>
         </button>
       </div>
       <div style="height: 120px"></div>
@@ -344,8 +393,10 @@
 <script setup>
 import { ref, computed, onMounted, onUnmounted, nextTick } from 'vue'
 import { useDataStore } from 'stores/data-store'
+import { useAuthStore } from 'stores/auth-store'
 import { syncService } from 'src/services/SyncService'
 import { useQuasar } from 'quasar'
+import { useRouter } from 'vue-router'
 import {
   CC_INTA_DEFAULT,
   clampCcInta,
@@ -354,18 +405,29 @@ import {
 } from 'src/utils/ccInta'
 import { fieldPastureWarnings } from 'src/utils/operationalAlerts'
 import { calcularCalidadAgua } from 'src/utils/waterQuality'
+import { AMBITOS_SITUACION, decisionDesdeContexto } from 'src/utils/decisionLote'
+import DecisionLotePanel from 'src/components/decision/DecisionLotePanel.vue'
 
 const dataStore = useDataStore()
+const authStore = useAuthStore()
+const router = useRouter()
 const $q = useQuasar()
 
 // Estados UI
 const currentView = ref('menu')
 const currentFlow = ref(null)
 const selectedLote = ref(null)
+const situacionTipo = ref('')
+const situacionDetalle = ref('')
+const situacionAmbito = ref('otro')
+const situacionRevision = ref(false)
+const ambitosCampo = AMBITOS_SITUACION
 const selectedItem = ref(null)
 const selectedFuente = ref(null)
 const aguaPh = ref(null)
 const aguaStep = ref('ph') // ph | tds
+const comidaPaso = ref('puesto')
+const comidaPuesta = ref(null)
 const numpadValue = ref('')
 const numpadLabel = ref('')
 const numpadUnit = ref('')
@@ -383,6 +445,25 @@ const pastureWarnings = computed(() =>
   fieldPastureWarnings(dataStore.potreros || [], dataStore.lotes || []),
 )
 
+const decisionCampo = computed(() => {
+  if (!selectedLote.value) return null
+  return decisionDesdeContexto(selectedLote.value, {
+    lotes: dataStore.lotes || [],
+    potreros: dataStore.potreros || [],
+    evaluaciones: dataStore.evaluaciones || [],
+    movimientos: dataStore.movimientos || [],
+    registrosLluvia: dataStore.registrosLluvia || [],
+    fuentesAgua: dataStore.fuentesAgua || [],
+    registrosVision: dataStore.registrosVision || [],
+    inventarioMovimientos: dataStore.inventarioMovimientos || [],
+    eventosReproductivos: dataStore.eventosReproductivos || [],
+    situaciones: dataStore.situaciones || [],
+    lecturasNdvi: dataStore.lecturasNdvi || [],
+    lluviaEstimada: dataStore.lluviaEstimada || {},
+    precioKg: dataStore.marketPrice?.value,
+  })
+})
+
 // Helpers Vista
 const esVistaLista = computed(() =>
   ['select_lote', 'select_destino', 'select_item', 'select_option', 'select_fuente'].includes(
@@ -396,6 +477,8 @@ const getTitle = computed(() => {
   if (currentView.value === 'select_item') return 'INSUMO'
   if (currentView.value === 'select_fuente') return 'FUENTE DE AGUA'
   if (currentView.value === 'numpad') return 'INGRESAR DATO'
+  if (currentView.value === 'decision') return 'QUÉ DECIDIR'
+  if (currentView.value === 'situacion') return 'SITUACIÓN'
   return 'MODO CAMPO'
 })
 
@@ -408,6 +491,8 @@ function volverMenu() {
   selectedFuente.value = null
   aguaPh.value = null
   aguaStep.value = 'ph'
+  comidaPaso.value = 'puesto'
+  comidaPuesta.value = null
 }
 
 function iniciarFlujo(flujo) {
@@ -416,13 +501,13 @@ function iniciarFlujo(flujo) {
   selectedFuente.value = null
   aguaPh.value = null
   aguaStep.value = 'ph'
+  comidaPaso.value = 'puesto'
+  comidaPuesta.value = null
   numpadValue.value = ''
 
   if (flujo === 'lluvia') {
     configNumpad('REGISTRO DE LLUVIA', 'mm')
     currentView.value = 'numpad'
-  } else if (flujo === 'consumo') {
-    currentView.value = 'select_item'
   } else if (flujo === 'analisis_agua') {
     currentView.value = 'select_fuente'
   } else {
@@ -444,21 +529,30 @@ function seleccionarLote(lote) {
     configNumpad(`PESO: ${lote.identificacion}`, 'KG')
     currentView.value = 'numpad'
   } else if (currentFlow.value === 'scan_cc') {
-    // Registro manual escala INTA — sin simulación de IA
-    ccResult.value = CC_INTA_DEFAULT
-    showResultDialog.value = true
+    router.push(`/lote/${lote.id}/scan_cc`)
+  } else if (currentFlow.value === 'decision') {
+    currentView.value = 'decision'
+  } else if (currentFlow.value === 'situacion') {
+    situacionTipo.value = ''
+    situacionDetalle.value = ''
+    situacionRevision.value = false
+    currentView.value = 'situacion'
+  } else if (currentFlow.value === 'consumo') {
+    currentView.value = 'select_item'
   } else if (currentFlow.value === 'evento_sanitario') {
     currentOptions.value = ['Vacunación', 'Desparasitación', 'Tratamiento', 'Otro']
     currentView.value = 'select_option'
   } else if (currentFlow.value === 'evento_reproductivo') {
-    currentOptions.value = ['Servicio', 'Tacto (Preñada)', 'Tacto (Vacía)', 'Parto']
+    currentOptions.value = ['Servicio', 'Tacto (Preñada)', 'Tacto (Vacía)', 'Parto', 'Aborto']
     currentView.value = 'select_option'
   }
 }
 
 function seleccionarItem(item) {
   selectedItem.value = item
-  configNumpad(`USO DE: ${item.nombre}`, item.unidad)
+  comidaPaso.value = 'puesto'
+  comidaPuesta.value = null
+  configNumpad(`CUÁNTO SE PUSO: ${item.nombre}`, item.unidad)
   currentView.value = 'numpad'
 }
 
@@ -546,16 +640,67 @@ async function confirmarMovimiento(potrero) {
   volverMenu()
 }
 
+function cargarDesdeCampo(id) {
+  if (!selectedLote.value) return
+  if (id === 'pesos') {
+    currentFlow.value = 'evaluacion'
+    configNumpad(`PESO: ${selectedLote.value.identificacion}`, 'KG')
+    currentView.value = 'numpad'
+  } else if (id === 'condicion' || id === 'sanidad') {
+    router.push(`/lote/${selectedLote.value.id}/scan_cc`)
+  } else if (id === 'ocupacion') {
+    currentFlow.value = 'lluvia'
+    configNumpad('REGISTRO DE LLUVIA', 'mm')
+    currentView.value = 'numpad'
+  } else if (id === 'agua') {
+    currentFlow.value = 'analisis_agua'
+    currentView.value = 'select_fuente'
+  } else if (id === 'comida') {
+    currentFlow.value = 'consumo'
+    currentView.value = 'select_item'
+  } else if (id === 'carga') {
+    currentFlow.value = 'mover_lote'
+    currentView.value = 'select_destino'
+  } else if (id === 'situacion') {
+    currentFlow.value = 'situacion'
+    currentView.value = 'situacion'
+  }
+}
+
+function abrirSituacionLibre() {
+  situacionAmbito.value = currentFlow.value === 'evento_sanitario' ? 'sanidad' : 'hacienda'
+  situacionTipo.value = ''
+  situacionDetalle.value = ''
+  situacionRevision.value = true
+  currentView.value = 'situacion'
+}
+
+async function guardarSituacionCampo() {
+  const tipo = situacionTipo.value.trim()
+  if (!tipo || !selectedLote.value) return
+  await syncService.addAction('situacion', {
+    lote_id: selectedLote.value.id,
+    fecha: new Date().toISOString().split('T')[0],
+    ambito: situacionAmbito.value || 'otro',
+    tipo,
+    detalle: situacionDetalle.value.trim() || null,
+    pedir_revision: !!situacionRevision.value,
+  })
+  notificarExito('SITUACIÓN GUARDADA')
+  volverMenu()
+}
+
 async function confirmarNumpad() {
-  if (!numpadValue.value) return
-  const val = parseFloat(numpadValue.value)
+  const sobraSinTocar = currentFlow.value === 'consumo' && comidaPaso.value === 'sobra' && !numpadValue.value
+  if (!numpadValue.value && !sobraSinTocar) return
+  const val = sobraSinTocar ? 0 : parseFloat(numpadValue.value)
 
   if (currentFlow.value === 'evaluacion') {
     await syncService.addAction('evaluacion', {
       lote_id: selectedLote.value.id,
       fecha_evaluacion: new Date().toISOString().split('T')[0],
       peso_promedio_kg: val,
-      condicion_corporal: 5,
+      condicion_corporal: null,
     })
     notificarExito(`PESO GUARDADO: ${val} KG`)
   } else if (currentFlow.value === 'lluvia') {
@@ -565,11 +710,33 @@ async function confirmarNumpad() {
     })
     notificarExito(`LLUVIA: ${val} mm`)
   } else if (currentFlow.value === 'consumo') {
+    if (comidaPaso.value === 'puesto') {
+      if (!(val > 0)) {
+        $q.notify({ type: 'warning', message: 'Anotá cuánto se puso', position: 'center' })
+        return
+      }
+      comidaPuesta.value = val
+      comidaPaso.value = 'sobra'
+      numpadValue.value = ''
+      configNumpad(`CUÁNTO SOBRÓ: ${selectedItem.value.nombre}`, selectedItem.value.unidad)
+      return
+    }
+    const sobro = numpadValue.value === '' ? 0 : val
+    if (!(sobro >= 0) || sobro > comidaPuesta.value) {
+      $q.notify({ type: 'warning', message: 'No puede sobrar más de lo que se puso', position: 'center' })
+      return
+    }
+    const comido = comidaPuesta.value - sobro
     await syncService.addAction('consumo', {
       p_item_id: selectedItem.value.id,
-      p_cantidad: -val,
+      p_lote_id: selectedLote.value?.id || null,
+      p_cantidad: -comido,
+      p_tipo_movimiento: 'Uso',
+      p_cantidad_puesta: comidaPuesta.value,
+      p_cantidad_sobrante: sobro,
+      p_observaciones: `Se pusieron ${comidaPuesta.value} y sobraron ${sobro}.`,
     })
-    notificarExito('CONSUMO REGISTRADO')
+    notificarExito(sobro > 0 ? `COMIDO ${comido}. SOBRÓ ${sobro}` : `COMIDO ${comido}`)
   } else if (currentFlow.value === 'analisis_agua') {
     if (aguaStep.value === 'ph') {
       if (!(val >= 0 && val <= 14)) {
@@ -632,7 +799,7 @@ const updatePendientes = () => {
 onMounted(() => {
   window.addEventListener('queue-updated', updatePendientes)
   updatePendientes()
-  if (dataStore.lotes.length === 0 && navigator.onLine) dataStore.fetchAll()
+  if (navigator.onLine) dataStore.fetchAll()
 })
 
 onUnmounted(() => {

@@ -30,6 +30,8 @@ export function createCrudModule({ supabase, authStore, bag }) {
       'consumos_de_dieta',
       'analisis_de_agua',
       'movimientos_de_lotes',
+      'registros_vision',
+      'situaciones_lote',
     ]
     if (!registro.establecimiento_id && !tablasSinEstablecimiento.includes(tabla)) {
       registro.establecimiento_id = authStore.profile?.establecimiento_id
@@ -64,6 +66,9 @@ export function createCrudModule({ supabase, authStore, bag }) {
       registro.lote_id === bag.loteActual.value.id
     )
       bag.consumos.value.unshift(nuevoRegistro)
+    if (tabla === 'situaciones_lote' && bag.situaciones) {
+      bag.situaciones.value.unshift(nuevoRegistro)
+    }
     return nuevoRegistro
   }
 
@@ -79,6 +84,16 @@ export function createCrudModule({ supabase, authStore, bag }) {
     if (tabla === 'lotes' && bag.loteActual?.value && bag.loteActual.value.id === id)
       Object.assign(bag.loteActual.value, registroActualizado)
     return registroActualizado
+  }
+
+  async function deleteRegistro(tabla, id) {
+    const { error } = await supabase.from(tabla).delete().eq('id', id)
+    if (error) throw error
+    if (tabla === 'registros_lluvia' && bag.registrosLluvia) {
+      bag.registrosLluvia.value = (bag.registrosLluvia.value || []).filter((row) => row.id !== id)
+    }
+    const listaLocal = getLocalListByTableName(tabla)
+    if (listaLocal) listaLocal.value = listaLocal.value.filter((item) => item.id !== id)
   }
 
   async function deactivateRegistro(tabla, id) {
@@ -97,6 +112,7 @@ export function createCrudModule({ supabase, authStore, bag }) {
     getLocalListByTableName,
     createRegistro,
     updateRegistro,
+    deleteRegistro,
     deactivateRegistro,
   }
 }

@@ -132,7 +132,7 @@ const currentRoleName = computed(() => {
 })
 
 function getRoleColor(rol) {
-  if (rol === 'admin') return 'primary'
+  if (rol === 'superadmin' || rol === 'administrador' || rol === 'admin') return 'primary'
   if (rol === 'tecnico') return 'cyan'
   return 'grey-5'
 }

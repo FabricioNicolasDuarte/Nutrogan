@@ -2,12 +2,20 @@ import localforage from 'localforage'
 import { useDataStore } from 'stores/data-store'
 import { Notify } from 'quasar'
 import { calcularCalidadAgua } from 'src/utils/waterQuality'
+import { guardarVisionConfirmada } from 'src/services/visionSave'
 
 const QUEUE_KEY = 'pending'
 const FAILED_KEY = 'failed'
 const LAST_SYNC_KEY = 'last_sync_ok'
 const LEGACY_LS_KEY = 'nutrogan_offline_queue'
 const MAX_ATTEMPTS = 5
+
+function base64ToJpegBlob(base64) {
+  const binary = atob(base64)
+  const bytes = new Uint8Array(binary.length)
+  for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i)
+  return new Blob([bytes], { type: 'image/jpeg' })
+}
 
 const queueDb = localforage.createInstance({
   name: 'nutrogan',
@@ -142,6 +150,43 @@ class SyncService {
       return
     }
 
+    if (tipo === 'situacion' && Array.isArray(store.situaciones)) {
+      store.situaciones.unshift({
+        id: `local-${Date.now()}`,
+        ...payload,
+        _offline: true,
+      })
+      return
+    }
+
+    if (tipo === 'vision' && Array.isArray(store.registrosVision)) {
+      const hoy = new Date().toISOString().slice(0, 10)
+      store.registrosVision.unshift({
+        id: `local-${Date.now()}`,
+        lote_id: payload.lote_id,
+        modo: payload.modo,
+        fecha: hoy,
+        texto_confirmado: payload.propuesta?.nota || payload.propuesta?.descripcion || '',
+        condicion_corporal: payload.modo === 'condicion' ? payload.propuesta?.condicion_corporal : null,
+        gravedad: payload.modo === 'anomalia' ? payload.propuesta?.gravedad : null,
+        consistencia: payload.modo === 'fecal' ? payload.propuesta?.consistencia : null,
+        color: payload.modo === 'fecal' ? payload.propuesta?.color : null,
+        presencia_parasitos: payload.modo === 'fecal' ? !!payload.propuesta?.presencia_parasitos : null,
+        _offline: true,
+      })
+      if (payload.modo === 'condicion' && Array.isArray(store.evaluaciones)) {
+        store.evaluaciones.unshift({
+          id: `local-cc-${Date.now()}`,
+          lote_id: payload.lote_id,
+          fecha_evaluacion: hoy,
+          peso_promedio_kg: null,
+          condicion_corporal: payload.propuesta?.condicion_corporal,
+          _offline: true,
+        })
+      }
+      return
+    }
+
     if (tipo === 'analisis_agua' && Array.isArray(store.fuentesAgua)) {
       const fuente = store.fuentesAgua.find((f) => f.id === payload.fuente_id)
       if (fuente) {
@@ -239,6 +284,9 @@ class SyncService {
       case 'evento_reproductivo':
         await store.createRegistro('eventos_reproductivos', item.payload)
         break
+      case 'situacion':
+        await store.createRegistro('situaciones_lote', item.payload)
+        break
       case 'consumo':
         await store.registrarMovimientoInventario(item.payload)
         break
@@ -248,6 +296,38 @@ class SyncService {
       case 'analisis_agua':
         await store.agregarAnalisisDeAgua(item.payload)
         break
+      case 'vision':
+        await guardarVisionConfirmada({
+          loteId: item.payload.lote_id,
+          modo: item.payload.modo,
+          fotoBlob: item.payload.image_base64 ? base64ToJpegBlob(item.payload.image_base64) : null,
+          propuesta: item.payload.propuesta,
+          userId: item.payload.user_id,
+        })
+        break
+      case 'vision_lectura': {
+        const { supabase } = await import('boot/supabase')
+        const { parseVisionProposal } = await import('src/utils/visionParse')
+        const { guardarPropuestaPendiente } = await import('src/services/visionPendiente')
+        const { data, error } = await supabase.functions.invoke('analizar-vision', {
+          body: {
+            modo: item.payload.modo,
+            lote_id: item.payload.lote_id,
+            image_base64: item.payload.image_base64,
+          },
+        })
+        if (error) throw error
+        if (data?.error) throw new Error(data.error)
+        await guardarPropuestaPendiente({
+          id: item.id,
+          lote_id: item.payload.lote_id,
+          modo: item.payload.modo,
+          image_base64: item.payload.image_base64,
+          user_id: item.payload.user_id,
+          propuesta: parseVisionProposal(item.payload.modo, data.texto),
+        })
+        break
+      }
       default:
         throw new Error(`Tipo de acción desconocido: ${item.tipo}`)
     }

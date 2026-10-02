@@ -1,36 +1,60 @@
 /**
- * Matriz de permisos por rol (fuente única para UI/router tests).
- * Roles: admin | tecnico | operario
+ * Matriz de permisos.
+ * superadmin: todo, incluida la auditoría.
+ * administrador: todo el establecimiento, sin auditoría.
+ * tecnico: campo, sanidad, agua, mapas, reportes y decisiones. Sin equipo ni costos.
+ * peon: solo carga de datos (modo campo).
+ * admin y operario quedan como alias de los nombres anteriores.
  */
 
+export const ROLES_GESTORES = ['superadmin', 'administrador', 'admin']
+export const ROLES_TECNICOS = [...ROLES_GESTORES, 'tecnico']
+
+export const ROLE_LABELS = {
+  superadmin: 'Superadmin',
+  administrador: 'Administrador',
+  admin: 'Administrador',
+  tecnico: 'Técnico',
+  peon: 'Peón',
+  operario: 'Peón',
+}
+
 export function roleCapabilities(role) {
-  const isAdmin = role === 'admin'
+  const isSuperadmin = role === 'superadmin'
+  const isAdmin = ROLES_GESTORES.includes(role)
   const isTecnico = role === 'tecnico'
-  const isOperario = role === 'operario'
-  const known = isAdmin || isTecnico || isOperario
+  const isPeon = role === 'peon' || role === 'operario'
+  const known = isAdmin || isTecnico || isPeon
 
   return {
+    isSuperadmin,
     isAdmin,
     isTecnico,
-    isOperario,
+    isPeon,
+    isOperario: isPeon,
     canManageTeam: isAdmin,
+    canAssignSuperadmin: isSuperadmin,
+    canViewAudit: isSuperadmin,
     canViewEstablishmentData: isAdmin,
     canViewFinancials: isAdmin,
     canConfigureEstablishment: isAdmin,
     canViewReports: isAdmin || isTecnico,
+    canViewDecisions: isAdmin || isTecnico,
     canEditFieldStructure: isAdmin || isTecnico,
     canEditMaps: isAdmin || isTecnico,
     canViewEventHistory: isAdmin || isTecnico,
     canAccessOperational: known,
     canAccessFieldMode: known,
+    canDeleteRecords: isAdmin || isTecnico,
   }
 }
 
-/** Rutas con meta.requiresRole (debe coincidir con router/routes.js). */
 export const PROTECTED_ROUTE_ROLES = {
-  '/recursos/potreros/draw': ['admin', 'tecnico'],
-  '/recursos/satelital': ['admin', 'tecnico'],
-  '/reportes': ['admin', 'tecnico'],
-  '/equipo': ['admin'],
-  '/fundadores': ['admin'],
+  '/recursos/potreros/draw': ROLES_TECNICOS,
+  '/recursos/satelital': ROLES_TECNICOS,
+  '/reportes': ROLES_TECNICOS,
+  '/decisiones': ROLES_TECNICOS,
+  '/equipo': ROLES_GESTORES,
+  '/fundadores': ROLES_GESTORES,
+  '/auditoria': ['superadmin'],
 }
