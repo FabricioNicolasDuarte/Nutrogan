@@ -28,7 +28,9 @@ register(process.env.SERVICE_WORKER_FILE, {
   },
 
   updated (/* registration */) {
-    // console.log('New content is available; please refresh.')
+    // El sitio guarda la app en el navegador. Cuando hay una versión nueva,
+    // la primera pantalla sigue siendo la vieja hasta recargar.
+    window.location.reload()
   },
 
   offline () {

@@ -171,11 +171,10 @@
     border-radius: 14px; padding: 14px 18px; white-space: pre;
   }
   .mono i { font-style: normal; color: #9aafb8; }
-  .team { display: flex; gap: 22px; justify-content: center; }
-  .person { width: 280px; }
-  .person img { width: 112px; height: 112px; object-fit: cover; border-radius: 50%; border: 3px solid var(--lime); }
-  .person h3 { margin: 10px 0 2px; font-size: 22px; }
-  .person p { margin: 0; color: var(--muted); font-size: 15px; }
+  .team { display: flex; gap: 28px; justify-content: center; align-items: stretch; width: 100%; }
+  .person { flex: 1; max-width: 420px; text-align: center; padding: 36px 16px; }
+  .person h3 { margin: 0 0 10px; font-size: 28px; line-height: 1.15; }
+  .person p { margin: 0; color: var(--green); font-size: 20px; font-weight: 700; }
   .formula {
     font-size: 34px; font-weight: 800; letter-spacing: -.03em;
     padding: 10px 22px; border-radius: 16px;
@@ -869,24 +868,21 @@
   <div class="rule"></div>
   <div class="body">
     <div class="team">
-      <div class="person card">
-        <img src="assets/team/duarte.jpg" alt="Fabricio Duarte" />
-        <h3>Fabricio Duarte</h3>
-        <p>Legajo 29.154. La aplicación en el teléfono, el modo campo y que el dato no se pierda sin señal.</p>
+      <div class="person">
+        <h3>Fabricio Nicolás Duarte</h3>
+        <p>Tech Lead / Frontend</p>
       </div>
-      <div class="person card">
-        <img src="assets/team/ascona.jpg" alt="Enzo Ascona" />
-        <h3>Enzo Ascona</h3>
-        <p>Legajo 29.134. Cómo se relacionan los datos y que cada campo vea solo lo suyo.</p>
+      <div class="person">
+        <h3>Enzo Ariel Ascona</h3>
+        <p>Backend / Data</p>
       </div>
-      <div class="person card">
-        <img src="assets/team/amarilla.jpg" alt="Sebastián Amarilla" />
-        <h3>Sebastián Amarilla</h3>
-        <p>Legajo 29.132. Que la misma aplicación llegue a las tres máquinas y que un cambio roto no se publique.</p>
+      <div class="person">
+        <h3>Sebastián Emanuel Amarilla</h3>
+        <p>DevOps / QA</p>
       </div>
     </div>
   </div>
-  <footer class="def"><b>Definición</b><p>Cada parte se hace aparte, se revisa, y recién entonces pasa a la versión que usa todo el equipo.</p></footer>
+  <footer class="def"><b>Definición</b><p>Tres roles técnicos sobre el mismo sistema: interfaz, datos y publicación.</p></footer>
 </section>
 
 <section class="slide thanks">
